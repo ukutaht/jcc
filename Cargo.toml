@@ -1,0 +1,6 @@
+[package]
+name = "jcc"
+version = "0.1.0"
+authors = ["Uku Taht <uku.taht@gmail.com>"]
+
+[dependencies]
