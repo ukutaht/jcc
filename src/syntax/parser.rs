@@ -74,7 +74,7 @@ impl<'a> Parser<'a> {
         } else if character.is_digit(10) {
             self.scan_number()
         } else if character == '=' {
-            self.index += 1;
+            self.bump();
             return Token::Equals
         } else {
             panic!("Unknown character: {}", character);
@@ -82,16 +82,15 @@ impl<'a> Parser<'a> {
     }
 
     fn scan_number(&mut self) -> Token {
-        let start = self.index;
-        self.index += 1;
+        let start = self.bump();
 
         while !self.is_eof() {
             let ch = self.current_char().unwrap();
 
             if ch.is_digit(10) {
-                self.index += 1;
+                self.bump();
             } else if ch == '.' {
-                self.index += 1;
+                self.bump();
             } else {
                 break;
             }
@@ -113,14 +112,13 @@ impl<'a> Parser<'a> {
     }
 
     fn get_identifier(&mut self) -> Name {
-        let start = self.index;
-        self.index += 1;
+        let start = self.bump();
 
         while !self.is_eof() {
             let ch = self.current_char().unwrap();
 
             if ch.is_es_identifier_continue() {
-                self.index += 1;
+                self.bump();
             } else {
                 break;
             }
@@ -128,6 +126,12 @@ impl<'a> Parser<'a> {
 
         let result = intern(&self.source[start..self.index]);
         result
+    }
+
+    fn bump(&mut self) -> usize {
+        let current = self.index;
+        self.index += 1;
+        current
     }
 
     fn current_char(&mut self) -> Option<char> {
