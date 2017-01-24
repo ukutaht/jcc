@@ -21,6 +21,7 @@ macro_rules! match_char_class {
 pub trait ESCharExt {
     fn is_es_newline(self) -> bool;
     fn is_es_whitespace(self) -> bool;
+    fn is_es_quote(self) -> bool;
     fn is_es_identifier(self) -> bool;
     fn is_es_identifier_start(self) -> bool;
     fn is_es_identifier_continue(self) -> bool;
@@ -37,6 +38,13 @@ impl ESCharExt for char {
     fn is_es_newline(self) -> bool {
         match self {
             '\u{000a}' | '\u{000d}' | '\u{2028}' | '\u{2029}' => true,
+            _ => false
+        }
+    }
+
+    fn is_es_quote(self) -> bool {
+        match self {
+            '\u{0027}' | '\u{0022}' => true,
             _ => false
         }
     }

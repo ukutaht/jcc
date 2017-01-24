@@ -6,6 +6,7 @@ use syntax::intern::{intern, Name};
 enum Token {
     Var,
     Ident(Name),
+    String(Name),
     Eof,
     Number(f64),
     Equals
@@ -33,6 +34,7 @@ impl<'a> Parser<'a> {
             Token::Var => return self.parse_assignment(),
             Token::Ident(_) => panic!("Ident"),
             Token::Number(n) => Expression::Literal(Literal::Number(n)),
+            Token::String(s) => Expression::Literal(Literal::String(s)),
             Token::Equals => panic!("Equals")
         }
     }
@@ -65,12 +67,14 @@ impl<'a> Parser<'a> {
         let mut character = self.current_char().unwrap();
 
         while character.is_es_whitespace() {
-            self.index += 1;
+            self.bump();
             character = self.current_char().unwrap();
         }
 
         if character.is_es_identifier_start() {
             self.scan_identifier()
+        } else if character.is_es_quote() {
+            self.scan_string()
         } else if character.is_digit(10) {
             self.scan_number()
         } else if character == '=' {
@@ -99,6 +103,24 @@ impl<'a> Parser<'a> {
         let number_string = &self.source[start..self.index];
         let value: f64 = number_string.parse().unwrap();
         Token::Number(value)
+    }
+
+    fn scan_string(&mut self) -> Token {
+        let start = self.bump();
+        let quote = self.nth_char(start);
+
+        while !self.is_eof() {
+            let ch = self.current_char();
+
+            if ch == quote {
+                break;
+            } else {
+                self.bump();
+            }
+        }
+
+        let start_without_quote = start + 1;
+        Token::String(intern(&self.source[start_without_quote..self.index]))
     }
 
     fn scan_identifier(&mut self) -> Token {
@@ -136,6 +158,10 @@ impl<'a> Parser<'a> {
 
     fn current_char(&mut self) -> Option<char> {
         self.source.chars().nth(self.index)
+    }
+
+    fn nth_char(&mut self, nth: usize) -> Option<char> {
+        self.source.chars().nth(nth)
     }
 
     fn is_eof(&mut self) -> bool {

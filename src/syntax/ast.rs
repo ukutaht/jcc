@@ -9,7 +9,8 @@ pub enum AssignmentType {
 
 #[derive(Debug, PartialEq)]
 pub enum Literal {
-    Number(f64)
+    Number(f64),
+    String(Name)
 }
 
 #[derive(Debug, PartialEq)]

@@ -21,7 +21,8 @@ fn transpile_assign(ty: AssignmentType, left: Expression, right: Expression) -> 
 
 fn transpile_literal(lit: Literal) -> String {
     match lit {
-        Literal::Number(num) => format!("{}", num)
+        Literal::Number(num) => format!("{}", num),
+        Literal::String(s) => format!("\"{}\"", s.to_string())
     }
 }
 
