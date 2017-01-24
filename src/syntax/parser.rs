@@ -90,6 +90,8 @@ impl<'a> Parser<'a> {
 
             if ch.is_digit(10) {
                 self.index += 1;
+            } else if ch == '.' {
+                self.index += 1;
             } else {
                 break;
             }
@@ -97,7 +99,6 @@ impl<'a> Parser<'a> {
 
         let number_string = &self.source[start..self.index];
         let value: f64 = number_string.parse().unwrap();
-        self.index += 1;
         Token::Number(value)
     }
 
@@ -126,7 +127,6 @@ impl<'a> Parser<'a> {
         }
 
         let result = intern(&self.source[start..self.index]);
-        self.index += 1;
         result
     }
 
