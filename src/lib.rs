@@ -9,6 +9,6 @@ pub enum CompileError {
 
 pub fn transform(code: &str) -> Result<String, CompileError> {
     let ast = syntax::parse(code);
-    let output = trans::transpile(ast);
+    let output = trans::transpile(&ast);
     Ok(output)
 }

@@ -1,6 +1,7 @@
 use syntax::char::ESCharExt;
-use syntax::ast::{Expression, AssignmentType, Literal};
+use syntax::ast::*;
 use syntax::intern::{intern, Name};
+use std::mem;
 
 #[derive(Debug, PartialEq)]
 enum Token {
@@ -9,21 +10,34 @@ enum Token {
     String(Name),
     Eof,
     Number(f64),
-    Equals
+    Equals,
+    FunctionKeyword,
+    OpenParen,
+    CloseParen,
+    OpenCurly,
+    CloseCurly,
 }
 
 pub struct Parser<'a> {
     source: &'a str,
-    index: usize
+    index: usize,
+    lookahead: Token
 }
 
 lazy_static! {
     static ref KEYWORD_VAR: Name = intern("var");
+    static ref KEYWORD_FUNCTION: Name = intern("function");
 }
 
 impl<'a> Parser<'a> {
     pub fn new(source: &'a str) -> Parser {
-        Parser { source: source, index: 0 }
+        let mut parser = Parser { source: source, index: 0, lookahead: Token::Eof };
+        parser.position_at_start();
+        parser
+    }
+
+    fn position_at_start(&mut self) {
+        self.lookahead = self.lex();
     }
 
     pub fn parse(&mut self) -> Expression {
@@ -32,10 +46,67 @@ impl<'a> Parser<'a> {
         match tok {
             Token::Eof => panic!("END"),
             Token::Var => return self.parse_assignment(),
+            Token::FunctionKeyword => return self.parse_function(),
             Token::Ident(_) => panic!("Ident"),
             Token::Number(n) => Expression::Literal(Literal::Number(n)),
             Token::String(s) => Expression::Literal(Literal::String(s)),
-            Token::Equals => panic!("Equals")
+            Token::Equals => panic!("Equals"),
+            Token::OpenParen => panic!("OpenParen"),
+            Token::CloseParen => panic!("CloseParen"),
+            Token::OpenCurly => panic!("OpenCurly"),
+            Token::CloseCurly => panic!("CloseCurly"),
+        }
+    }
+
+    fn parse_variable_statement(&mut self) -> Statement {
+        let ident = self.next_token();
+
+        if let Token::Ident(name) = ident {
+            self.expect(Token::Equals);
+            let init = self.parse();
+            Statement::VariableDeclaration(VariableDeclaration {
+                kind: VariableDeclarationKind::Var,
+                declarations: vec![VariableDeclarator{id: name, init: Some(init)}]
+            })
+        } else {
+            panic!("Wat");
+        }
+    }
+
+    // https://tc39.github.io/ecma262/#sec-block
+    fn parse_statement_list_item(&mut self) -> StatementListItem {
+        let token = self.next_token();
+
+        if let Token::Var = token {
+            StatementListItem::Statement(self.parse_variable_statement())
+        } else {
+            panic!("Only var statement items please");
+        }
+    }
+
+    fn parse_block(&mut self) -> Block {
+      self.expect(Token::OpenCurly);
+      let mut statements = Vec::new();
+
+      while self.lookahead != Token::CloseCurly {
+        statements.push(self.parse_statement_list_item());
+      }
+
+      Block(statements)
+    }
+
+    fn parse_function(&mut self) -> Expression {
+        let next = self.next_token();
+
+        if let Token::Ident(name) = next {
+            self.expect(Token::OpenParen);
+            self.expect(Token::CloseParen);
+
+            let block = self.parse_block();
+
+            Expression::Function(Some(name), block)
+        } else {
+            panic!("Function needs a name!");
         }
     }
 
@@ -61,6 +132,12 @@ impl<'a> Parser<'a> {
     }
 
     fn next_token(&mut self) -> Token {
+        let token = mem::replace(&mut self.lookahead, Token::Eof);
+        self.lookahead = self.lex();
+        token
+    }
+
+    fn lex(&mut self) -> Token {
         if self.is_eof() {
             return Token::Eof;
         }
@@ -80,6 +157,18 @@ impl<'a> Parser<'a> {
         } else if character == '=' {
             self.bump();
             return Token::Equals
+        } else if character == '(' {
+            self.bump();
+            return Token::OpenParen
+        } else if character == ')' {
+            self.bump();
+            return Token::CloseParen
+        } else if character == '{' {
+            self.bump();
+            return Token::OpenCurly
+        } else if character == '}' {
+            self.bump();
+            return Token::CloseCurly
         } else {
             panic!("Unknown character: {}", character);
         }
@@ -127,7 +216,9 @@ impl<'a> Parser<'a> {
         let value = self.get_identifier();
 
         if value == *KEYWORD_VAR {
-            Token::Var
+           Token::Var
+        } else if value == *KEYWORD_FUNCTION {
+           Token::FunctionKeyword
         } else {
            Token::Ident(value)
         }
