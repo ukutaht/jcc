@@ -41,6 +41,7 @@ impl<'a> Parser<'a> {
         }
     }
 
+    // https://tc39.github.io/ecma262/#sec-block
     fn parse_variable_statement(&mut self) -> Statement {
         self.expect(Token::Var);
         let ident = self.scanner.next_token();
@@ -60,6 +61,7 @@ impl<'a> Parser<'a> {
         }
     }
 
+    // https://tc39.github.io/ecma262/#sec-function-definitions
     fn parse_function_declaration(&mut self) -> Statement {
         self.expect(Token::FunctionKeyword);
         let next = self.scanner.next_token();
@@ -98,6 +100,7 @@ impl<'a> Parser<'a> {
         }
     }
 
+    // https://tc39.github.io/ecma262/#sec-block
     fn parse_block(&mut self) -> Block {
         self.expect(Token::OpenCurly);
         let mut statements = Vec::new();
