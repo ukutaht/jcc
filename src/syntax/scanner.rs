@@ -49,19 +49,19 @@ impl<'a> Scanner<'a> {
             self.scan_number()
         } else if character == '=' {
             self.bump();
-            return Token::Equals
+            Token::Equals
         } else if character == '(' {
             self.bump();
-            return Token::OpenParen
+            Token::OpenParen
         } else if character == ')' {
             self.bump();
-            return Token::CloseParen
+            Token::CloseParen
         } else if character == '{' {
             self.bump();
-            return Token::OpenCurly
+            Token::OpenCurly
         } else if character == '}' {
             self.bump();
-            return Token::CloseCurly
+            Token::CloseCurly
         } else {
             panic!("Unknown character: {}", character);
         }
@@ -73,9 +73,7 @@ impl<'a> Scanner<'a> {
         while !self.is_eof() {
             let ch = self.current_char().unwrap();
 
-            if ch.is_digit(10) {
-                self.bump();
-            } else if ch == '.' {
+            if ch.is_digit(10) || ch == '.' {
                 self.bump();
             } else {
                 break;
@@ -130,8 +128,7 @@ impl<'a> Scanner<'a> {
             }
         }
 
-        let result = intern(&self.source[start..self.index]);
-        result
+        intern(&self.source[start..self.index])
     }
 
     fn bump(&mut self) -> usize {
