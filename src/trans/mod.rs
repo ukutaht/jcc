@@ -21,7 +21,7 @@ pub fn transpile_expression(expr: &Expression) -> String {
 fn transpile_declarator(dec: &VariableDeclarator) -> String {
     match dec.init {
         Some(ref initializer) => format!("var {} = {}", dec.id, transpile_expression(&initializer)),
-        None => format!("var {}", dec.id)
+        None => format!("var {}", dec.id),
     }
 }
 
@@ -35,7 +35,7 @@ fn transpile_function_declaration(fun: &FunctionDeclaration) -> String {
 
     match fun.id {
         Some(n) => format!("function {}() {{ {} }}", n.to_string(), body),
-        None => "function() {{  }}".to_owned()
+        None => "function() {{  }}".to_owned(),
     }
 }
 
@@ -43,14 +43,14 @@ fn transpile_statement(statement: &Statement) -> String {
     match *statement {
         Statement::Expression(ref e) => transpile_expression(e),
         Statement::VariableDeclaration(ref dec) => transpile_variable_declaration(dec),
-        Statement::FunctionDeclaration(ref dec) => transpile_function_declaration(dec)
+        Statement::FunctionDeclaration(ref dec) => transpile_function_declaration(dec),
     }
 }
 
 fn transpile_statement_list_item(item: &StatementListItem) -> String {
     match *item {
         StatementListItem::Statement(ref statement) => transpile_statement(statement),
-        StatementListItem::Declaration => panic!("How do I transpile a declaration")
+        StatementListItem::Declaration => panic!("How do I transpile a declaration"),
     }
 }
 
@@ -62,7 +62,7 @@ fn transpile_block(block: &Block) -> String {
 fn transpile_literal(lit: &Literal) -> String {
     match *lit {
         Literal::Number(num) => format!("{}", num),
-        Literal::String(s) => format!("\"{}\"", s.to_string())
+        Literal::String(s) => format!("\"{}\"", s.to_string()),
     }
 }
 

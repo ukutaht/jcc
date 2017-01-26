@@ -38,24 +38,24 @@ impl ESCharExt for char {
     fn is_es_newline(self) -> bool {
         match self {
             '\u{000a}' | '\u{000d}' | '\u{2028}' | '\u{2029}' => true,
-            _ => false
+            _ => false,
         }
     }
 
     fn is_es_quote(self) -> bool {
         match self {
             '\u{0027}' | '\u{0022}' => true,
-            _ => false
+            _ => false,
         }
     }
 
     fn is_es_whitespace(self) -> bool {
         match self {
-              '\u{0009}' | '\u{000b}' | '\u{000c}' | '\u{0020}' | '\u{00a0}'
-            | '\u{1680}' | '\u{2000}' | '\u{2001}' | '\u{2002}' | '\u{2003}' | '\u{2004}'
-            | '\u{2005}' | '\u{2006}' | '\u{2009}' | '\u{200a}' | '\u{202f}' | '\u{205f}'
-            | '\u{3000}' | '\u{feff}' => true,
-            _ => false
+            '\u{0009}' | '\u{000b}' | '\u{000c}' | '\u{0020}' | '\u{00a0}' | '\u{1680}' |
+            '\u{2000}' | '\u{2001}' | '\u{2002}' | '\u{2003}' | '\u{2004}' | '\u{2005}' |
+            '\u{2006}' | '\u{2009}' | '\u{200a}' | '\u{202f}' | '\u{205f}' | '\u{3000}' |
+            '\u{feff}' => true,
+            _ => false,
         }
     }
 
@@ -65,29 +65,24 @@ impl ESCharExt for char {
 
     fn is_es_identifier_start(self) -> bool {
         match self {
-              '$' | '_'
-            | 'a'...'z'
-            | 'A'...'Z' => true,
+            '$' | '_' | 'a'...'z' | 'A'...'Z' => true,
             ch if ch.is_es_nonascii_identifier_start() => true,
-            _ => false
+            _ => false,
         }
     }
 
     fn is_es_identifier_continue(self) -> bool {
         match self {
-              '$' | '_'
-            | 'a'...'z'
-            | 'A'...'Z'
-            | '0'...'9' => true,
+            '$' | '_' | 'a'...'z' | 'A'...'Z' | '0'...'9' => true,
             ch if ch.is_es_nonascii_identifier_continue() => true,
-            _ => false
+            _ => false,
         }
     }
 
     fn is_es_single_escape_char(self) -> bool {
         match self {
             '\'' | '"' | '\\' | 'b' | 'f' | 'n' | 'r' | 't' | 'v' => true,
-            _ => false
+            _ => false,
         }
     }
 
@@ -102,23 +97,21 @@ impl ESCharExt for char {
             'b' => '\x08',
             'v' => '\x0B',
             'f' => '\x0C',
-            _ => self
+            _ => self,
         }
     }
 
     fn is_es_hex_digit(self) -> bool {
         match self {
-              '0'...'9'
-            | 'a'...'f'
-            | 'A'...'F' => true,
-            _ => false
+            '0'...'9' | 'a'...'f' | 'A'...'F' => true,
+            _ => false,
         }
     }
 
     fn is_es_oct_digit(self) -> bool {
         match self {
             '0'...'7' => true,
-            _ => false
+            _ => false,
         }
     }
 

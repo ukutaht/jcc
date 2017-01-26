@@ -3,7 +3,7 @@ use syntax::token::Token;
 use syntax::scanner::Scanner;
 
 pub struct Parser<'a> {
-    scanner: Scanner<'a>
+    scanner: Scanner<'a>,
 }
 
 impl<'a> Parser<'a> {
@@ -50,7 +50,10 @@ impl<'a> Parser<'a> {
             let init = self.parse_expression();
             Statement::VariableDeclaration(VariableDeclaration {
                 kind: VariableDeclarationKind::Var,
-                declarations: vec![VariableDeclarator{id: name, init: Some(init)}]
+                declarations: vec![VariableDeclarator {
+                                       id: name,
+                                       init: Some(init),
+                                   }],
             })
         } else {
             panic!("Wat");
@@ -67,7 +70,10 @@ impl<'a> Parser<'a> {
 
             let block = self.parse_block();
 
-            Statement::FunctionDeclaration(FunctionDeclaration{id: Some(name), body: block})
+            Statement::FunctionDeclaration(FunctionDeclaration {
+                id: Some(name),
+                body: block,
+            })
         } else {
             panic!("Function needs a name!");
         }
@@ -82,22 +88,26 @@ impl<'a> Parser<'a> {
     fn parse_statement_list_item(&mut self) -> StatementListItem {
         match self.scanner.lookahead {
             Token::Var => StatementListItem::Statement(self.parse_variable_statement()),
-            Token::FunctionKeyword => StatementListItem::Statement(self.parse_function_declaration()),
-            Token::Number(_) | Token::String(_) => StatementListItem::Statement(self.parse_expression_statement()),
-            token => panic!("Could not parse statement list item. Got {:?}", token)
+            Token::FunctionKeyword => {
+                StatementListItem::Statement(self.parse_function_declaration())
+            }
+            Token::Number(_) | Token::String(_) => {
+                StatementListItem::Statement(self.parse_expression_statement())
+            }
+            token => panic!("Could not parse statement list item. Got {:?}", token),
         }
     }
 
     fn parse_block(&mut self) -> Block {
-      self.expect(Token::OpenCurly);
-      let mut statements = Vec::new();
+        self.expect(Token::OpenCurly);
+        let mut statements = Vec::new();
 
-      while self.scanner.lookahead != Token::CloseCurly {
-        statements.push(self.parse_statement_list_item());
-      }
+        while self.scanner.lookahead != Token::CloseCurly {
+            statements.push(self.parse_statement_list_item());
+        }
 
-      self.expect(Token::CloseCurly);
-      Block(statements)
+        self.expect(Token::CloseCurly);
+        Block(statements)
     }
 
     fn expect(&mut self, expected: Token) {

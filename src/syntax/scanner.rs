@@ -12,12 +12,16 @@ lazy_static! {
 pub struct Scanner<'a> {
     source: &'a str,
     index: usize,
-    pub lookahead: Token
+    pub lookahead: Token,
 }
 
 impl<'a> Scanner<'a> {
     pub fn new(source: &'a str) -> Scanner {
-        Scanner { source: source, index: 0, lookahead: Token::Eof }
+        Scanner {
+            source: source,
+            index: 0,
+            lookahead: Token::Eof,
+        }
     }
 
     pub fn position_at_start(&mut self) {
@@ -107,11 +111,11 @@ impl<'a> Scanner<'a> {
         let value = self.get_identifier();
 
         if value == *KEYWORD_VAR {
-           Token::Var
+            Token::Var
         } else if value == *KEYWORD_FUNCTION {
-           Token::FunctionKeyword
+            Token::FunctionKeyword
         } else {
-           Token::Ident(value)
+            Token::Ident(value)
         }
     }
 

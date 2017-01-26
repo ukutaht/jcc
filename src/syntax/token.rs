@@ -1,4 +1,4 @@
-use syntax::intern::{Name};
+use syntax::intern::Name;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Token {
@@ -14,4 +14,3 @@ pub enum Token {
     OpenCurly,
     CloseCurly,
 }
-
