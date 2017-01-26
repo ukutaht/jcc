@@ -22,9 +22,16 @@ pub enum Expression {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct FunctionDeclaration {
+    pub id: Option<Name>,
+    pub body: Block
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Statement {
     Expression(Expression),
-    VariableDeclaration(VariableDeclaration)
+    VariableDeclaration(VariableDeclaration),
+    FunctionDeclaration(FunctionDeclaration)
 }
 
 #[derive(Debug, PartialEq)]
@@ -34,11 +41,7 @@ pub enum StatementListItem {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum VariableDeclarationKind {
-    Var,
-    Let,
-    Const
-}
+pub enum VariableDeclarationKind { Var, Let, Const }
 
 #[derive(Debug, PartialEq)]
 pub struct VariableDeclarator {
@@ -54,3 +57,4 @@ pub struct VariableDeclaration {
 
 #[derive(Debug, PartialEq)]
 pub struct Block(pub Vec<StatementListItem>);
+pub struct Program(pub Vec<StatementListItem>);

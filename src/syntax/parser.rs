@@ -40,7 +40,17 @@ impl<'a> Parser<'a> {
         self.lookahead = self.lex();
     }
 
-    pub fn parse(&mut self) -> Expression {
+    pub fn parse(&mut self) -> Program {
+        let mut body = Vec::new();
+
+        while self.lookahead != Token::Eof {
+            body.push(self.parse_statement_list_item());
+        }
+
+        Program(body)
+    }
+
+    pub fn parse_expression(&mut self) -> Expression {
         let tok = self.next_token();
 
         match tok {
@@ -63,7 +73,7 @@ impl<'a> Parser<'a> {
 
         if let Token::Ident(name) = ident {
             self.expect(Token::Equals);
-            let init = self.parse();
+            let init = self.parse_expression();
             Statement::VariableDeclaration(VariableDeclaration {
                 kind: VariableDeclarationKind::Var,
                 declarations: vec![VariableDeclarator{id: name, init: Some(init)}]
@@ -73,14 +83,27 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn parse_function_declaration(&mut self) -> Statement {
+        let next = self.next_token();
+
+        if let Token::Ident(name) = next {
+            self.expect(Token::OpenParen);
+            self.expect(Token::CloseParen);
+
+            let block = self.parse_block();
+
+            Statement::FunctionDeclaration(FunctionDeclaration{id: Some(name), body: block})
+        } else {
+            panic!("Function needs a name!");
+        }
+    }
+
     // https://tc39.github.io/ecma262/#sec-block
     fn parse_statement_list_item(&mut self) -> StatementListItem {
-        let token = self.next_token();
-
-        if let Token::Var = token {
-            StatementListItem::Statement(self.parse_variable_statement())
-        } else {
-            panic!("Only var statement items please");
+        match self.next_token() {
+            Token::Var => StatementListItem::Statement(self.parse_variable_statement()),
+            Token::FunctionKeyword => StatementListItem::Statement(self.parse_function_declaration()),
+            token => panic!("Could not parse statement list item. Got {:?}", token)
         }
     }
 
@@ -92,6 +115,7 @@ impl<'a> Parser<'a> {
         statements.push(self.parse_statement_list_item());
       }
 
+      self.expect(Token::CloseCurly);
       Block(statements)
     }
 
@@ -116,7 +140,7 @@ impl<'a> Parser<'a> {
         if let Token::Ident(n) = ident {
             let left = Box::new(Expression::Identifier(n));
             self.expect(Token::Equals);
-            let right = Box::new(self.parse());
+            let right = Box::new(self.parse_expression());
             Expression::Assign(AssignmentType::Var, left, right)
         } else {
             panic!("Wat");
