@@ -1,13 +1,6 @@
 use syntax::intern::Name;
 
 #[derive(Debug, PartialEq)]
-pub enum AssignmentType {
-    Var,
-    Let,
-    Const
-}
-
-#[derive(Debug, PartialEq)]
 pub enum Literal {
     Number(f64),
     String(Name)
@@ -15,10 +8,8 @@ pub enum Literal {
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
-    Assign(AssignmentType, Box<Expression>, Box<Expression>),
     Literal(Literal),
     Identifier(Name),
-    Function(Option<Name>, Block)
 }
 
 #[derive(Debug, PartialEq)]
@@ -26,7 +17,6 @@ pub struct FunctionDeclaration {
     pub id: Option<Name>,
     pub body: Block
 }
-
 #[derive(Debug, PartialEq)]
 pub enum Statement {
     Expression(Expression),

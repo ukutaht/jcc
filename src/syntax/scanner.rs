@@ -93,16 +93,16 @@ impl<'a> Scanner<'a> {
 
         while !self.is_eof() {
             let ch = self.current_char();
+            self.bump();
 
             if ch == quote {
                 break;
-            } else {
-                self.bump();
             }
         }
 
         let start_without_quote = start + 1;
-        Token::String(intern(&self.source[start_without_quote..self.index]))
+        let end_without_quote = self.index - 1;
+        Token::String(intern(&self.source[start_without_quote..end_without_quote]))
     }
 
     fn scan_identifier(&mut self) -> Token {

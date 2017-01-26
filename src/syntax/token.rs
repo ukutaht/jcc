@@ -1,6 +1,6 @@
 use syntax::intern::{Name};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Token {
     Var,
     Ident(Name),

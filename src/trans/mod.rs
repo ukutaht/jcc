@@ -13,29 +13,8 @@ pub fn transpile(program: &Program) -> String {
 
 pub fn transpile_expression(expr: &Expression) -> String {
     match expr {
-        &Expression::Assign(ref ty, ref left, ref right) => transpile_assign(&ty, &left, &right),
         &Expression::Literal(ref lit) => transpile_literal(&lit),
         &Expression::Identifier(name) => transpile_ident(name),
-        &Expression::Function(name, ref block) => transpile_function(name, &block)
-    }
-}
-
-fn transpile_assign(ty: &AssignmentType, left: &Expression, right: &Expression) -> String {
-    let assign_word = match ty {
-        &AssignmentType::Var => "var",
-        &AssignmentType::Let => "let",
-        &AssignmentType::Const => "const",
-    };
-
-    format!("{} {} = {}", assign_word, transpile_expression(left), transpile_expression(right))
-}
-
-fn transpile_function(name: Option<Name>, block: &Block) -> String {
-    let block_content = transpile_block(block);
-
-    match name {
-        Some(n) => format!("function {}() {{ {} }}", n.to_string(), block_content),
-        None => format!("function() {{  }}")
     }
 }
 
