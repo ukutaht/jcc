@@ -1,71 +1,79 @@
 use syntax::ast::*;
 use syntax::intern::Name;
+use std::io::{Write, Result};
 
-pub fn transpile(program: &Program) -> String {
-    let mut buf = "".to_owned();
 
-    for item in &program.0 {
-        buf.push_str(&transpile_statement_list_item(item))
+pub fn transpile<W: Write>(out: &mut W, program: &Program) -> Result<()> {
+    for item in program.0.iter() {
+        try!(transpile_statement_list_item(out, item))
     }
-
-    buf
+    Ok(())
 }
 
-pub fn transpile_expression(expr: &Expression) -> String {
+pub fn transpile_expression<W: Write>(out: &mut W, expr: &Expression) -> Result<()> {
     match *expr {
-        Expression::Literal(ref lit) => transpile_literal(lit),
-        Expression::Identifier(name) => transpile_ident(name),
+        Expression::Literal(ref lit) => transpile_literal(out, lit),
+        Expression::Identifier(name) => transpile_ident(out, name),
     }
 }
 
-fn transpile_declarator(dec: &VariableDeclarator) -> String {
+fn transpile_declarator<W: Write>(out: &mut W, dec: &VariableDeclarator) -> Result<()> {
     match dec.init {
-        Some(ref initializer) => format!("var {} = {}", dec.id, transpile_expression(&initializer)),
-        None => format!("var {}", dec.id),
+        Some(ref initializer) => {
+            try!(write!(out, "var {} = ", dec.id));
+            transpile_expression(out, &initializer)
+        },
+        None => write!(out, "var {}", dec.id),
     }
 }
 
-fn transpile_variable_declaration(dec: &VariableDeclaration) -> String {
-    let declarations: Vec<String> = dec.declarations.iter().map(transpile_declarator).collect();
-    declarations.join(";")
+fn transpile_variable_declaration<W: Write>(out: &mut W, dec: &VariableDeclaration) -> Result<()> {
+    for declarator in dec.declarations.iter() {
+        try!(transpile_declarator(out, declarator))
+    }
+    Ok(())
 }
 
-fn transpile_function_declaration(fun: &FunctionDeclaration) -> String {
-    let body = transpile_block(&fun.body);
-
+fn transpile_function_declaration<W: Write>(out: &mut W, fun: &FunctionDeclaration) -> Result<()> {
     match fun.id {
-        Some(n) => format!("function {}() {{ {} }}", n.to_string(), body),
-        None => "function() {{  }}".to_owned(),
+        Some(n) => {
+            try!(write!(out, "function {}() {{ ", n.to_string()));
+            try!(transpile_block(out, &fun.body));
+            write!(out, " }}")
+        }
+        None => write!(out, "function() {{  }}"),
     }
 }
 
-fn transpile_statement(statement: &Statement) -> String {
+fn transpile_statement<W: Write>(out: &mut W, statement: &Statement) -> Result<()> {
     match *statement {
-        Statement::Expression(ref e) => transpile_expression(e),
-        Statement::VariableDeclaration(ref dec) => transpile_variable_declaration(dec),
-        Statement::FunctionDeclaration(ref dec) => transpile_function_declaration(dec),
+        Statement::Expression(ref e) => transpile_expression(out, e),
+        Statement::VariableDeclaration(ref dec) => transpile_variable_declaration(out, dec),
+        Statement::FunctionDeclaration(ref dec) => transpile_function_declaration(out, dec),
     }
 }
 
-fn transpile_statement_list_item(item: &StatementListItem) -> String {
+fn transpile_statement_list_item<W: Write>(out: &mut W, item: &StatementListItem) -> Result<()> {
     match *item {
-        StatementListItem::Statement(ref statement) => transpile_statement(statement),
+        StatementListItem::Statement(ref statement) => transpile_statement(out, statement),
         StatementListItem::Declaration => panic!("How do I transpile a declaration"),
     }
 }
 
-fn transpile_block(block: &Block) -> String {
-    let watness: Vec<String> = block.0.iter().map(transpile_statement_list_item).collect();
-    watness.join("\n")
+fn transpile_block<W: Write>(out: &mut W, block: &Block) -> Result<()> {
+    for item in block.0.iter() {
+        try!(transpile_statement_list_item(out, item))
+    }
+    Ok(())
 }
 
-fn transpile_literal(lit: &Literal) -> String {
+fn transpile_literal<W: Write>(out: &mut W, lit: &Literal) -> Result<()> {
     match *lit {
-        Literal::Number(num) => format!("{}", num),
-        Literal::String(s) => format!("\"{}\"", s.to_string()),
+        Literal::Number(num) => write!(out, "{}", num),
+        Literal::String(s) => write!(out, "\"{}\"", s.to_string()),
     }
 }
 
-fn transpile_ident(ident: Name) -> String {
-    ident.to_string().to_owned()
+fn transpile_ident<W: Write>(out: &mut W, ident: Name) -> Result<()> {
+    write!(out, "{}", ident.to_string())
 }
