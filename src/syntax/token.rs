@@ -13,4 +13,5 @@ pub enum Token {
     CloseParen,
     OpenCurly,
     CloseCurly,
+    Comma
 }

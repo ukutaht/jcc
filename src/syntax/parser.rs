@@ -29,15 +29,7 @@ impl<'a> Parser<'a> {
         match tok {
             Token::Number(n) => Expression::Literal(Literal::Number(n)),
             Token::String(s) => Expression::Literal(Literal::String(s)),
-            Token::Eof => panic!("END"),
-            Token::Var => panic!("VAR"),
-            Token::FunctionKeyword => panic!("FUNCTION"),
-            Token::Ident(_) => panic!("Ident"),
-            Token::Equals => panic!("Equals"),
-            Token::OpenParen => panic!("OpenParen"),
-            Token::CloseParen => panic!("CloseParen"),
-            Token::OpenCurly => panic!("OpenCurly"),
-            Token::CloseCurly => panic!("CloseCurly"),
+            t => panic!("Bad token to start expression: {:?}", t)
         }
     }
 
@@ -61,20 +53,49 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn parse_function_parameter(&mut self) -> FunctionParameter {
+        let token = self.scanner.next_token();
+
+        if let Token::Ident(name) = token {
+            FunctionParameter::Binding(Binding::Identifier(name))
+        } else {
+            panic!("ONLY IDENTIFIERS IN PARAMETERS PLZ")
+        }
+    }
+
+    fn parse_function_parameters(&mut self) -> Vec<FunctionParameter> {
+        self.expect(Token::OpenParen);
+        let mut parameters = Vec::new();
+
+        loop {
+            if let Token::CloseParen = self.scanner.lookahead {
+                break;
+            }
+            parameters.push(self.parse_function_parameter());
+            if let Token::CloseParen = self.scanner.lookahead {
+                break;
+            }
+            self.expect(Token::Comma);
+        }
+
+        self.expect(Token::CloseParen);
+
+        parameters
+    }
+
     // https://tc39.github.io/ecma262/#sec-function-definitions
     fn parse_function_declaration(&mut self) -> Statement {
         self.expect(Token::FunctionKeyword);
         let next = self.scanner.next_token();
 
         if let Token::Ident(name) = next {
-            self.expect(Token::OpenParen);
-            self.expect(Token::CloseParen);
-
+            let parameters = self.parse_function_parameters();
             let block = self.parse_block();
 
             Statement::FunctionDeclaration(FunctionDeclaration {
                 id: Some(name),
                 body: block,
+                parameters: parameters
             })
         } else {
             panic!("Function needs a name!");

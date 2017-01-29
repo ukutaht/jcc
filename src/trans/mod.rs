@@ -34,15 +34,34 @@ fn transpile_variable_declaration<W: Write>(out: &mut W, dec: &VariableDeclarati
     Ok(())
 }
 
-fn transpile_function_declaration<W: Write>(out: &mut W, fun: &FunctionDeclaration) -> Result<()> {
-    match fun.id {
-        Some(n) => {
-            try!(write!(out, "function {}() {{ ", n.to_string()));
-            try!(transpile_block(out, &fun.body));
-            write!(out, " }}")
-        }
-        None => write!(out, "function() {{  }}"),
+fn transpile_function_parameter<W: Write>(out: &mut W, par: &FunctionParameter) -> Result<()> {
+    match *par {
+        FunctionParameter::Binding(ref b) => {
+            match *b {
+                Binding::Identifier(n) => {
+                    try!(write!(out, "{}", n.to_string()))
+                }
+            }
+        },
+        _ => panic!("ONLY BINDINGS IN PARAMETERS PLZ")
     }
+    Ok(())
+}
+
+fn transpile_function_declaration<W: Write>(out: &mut W, fun: &FunctionDeclaration) -> Result<()> {
+    let name = fun.id.map(|n| n.to_string()).unwrap_or("");
+
+    try!(write!(out, "function {}(", name));
+    for (idx, parameter) in fun.parameters.iter().enumerate() {
+        try!(transpile_function_parameter(out, parameter));
+        if idx != fun.parameters.len() - 1 {
+            try!(write!(out, ", "))
+        }
+    }
+
+    try!(write!(out, ") {{ "));
+    try!(transpile_block(out, &fun.body));
+    write!(out, " }}")
 }
 
 fn transpile_statement<W: Write>(out: &mut W, statement: &Statement) -> Result<()> {

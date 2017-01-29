@@ -13,10 +13,29 @@ pub enum Expression {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum Binding {
+    Identifier(Name)
+}
+
+#[derive(Debug, PartialEq)]
+pub struct AssignmentPattern {
+    pub left: Binding,
+    pub right: Expression
+}
+
+#[derive(Debug, PartialEq)]
+pub enum FunctionParameter {
+    AssignmentPattern,
+    Binding(Binding)
+}
+
+#[derive(Debug, PartialEq)]
 pub struct FunctionDeclaration {
     pub id: Option<Name>,
     pub body: Block,
+    pub parameters: Vec<FunctionParameter>
 }
+
 #[derive(Debug, PartialEq)]
 pub enum Statement {
     Expression(Expression),

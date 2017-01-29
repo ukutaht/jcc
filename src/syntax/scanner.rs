@@ -66,6 +66,9 @@ impl<'a> Scanner<'a> {
         } else if character == '}' {
             self.bump();
             Token::CloseCurly
+        } else if character == ',' {
+            self.bump();
+            Token::Comma
         } else {
             panic!("Unknown character: {}", character);
         }
