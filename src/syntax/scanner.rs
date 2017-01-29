@@ -35,14 +35,18 @@ impl<'a> Scanner<'a> {
     }
 
     fn lex(&mut self) -> Token {
-        if self.is_eof() {
-            return Token::Eof;
-        }
-        let mut character = self.current_char().unwrap();
+        let character;
 
-        while character.is_es_whitespace() {
-            self.bump();
-            character = self.current_char().unwrap();
+        loop {
+            match self.current_char() {
+                None => return Token::Eof,
+                Some('\n') => self.bump(),
+                Some(c) if c.is_es_whitespace() => self.bump(),
+                Some(c) => {
+                    character = c;
+                    break;
+                }
+            };
         }
 
         if character.is_es_identifier_start() {
