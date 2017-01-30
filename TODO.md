@@ -12,3 +12,6 @@ https://github.com/tc39/test262-parser-tests
 
 5. Use es6 compatilibility table to get transpilation right:
 https://github.com/kangax/compat-table
+
+6. Add comparison benchmarking to travis:
+https://beachape.com/blog/2016/11/02/rust-performance-testing-on-travis-ci/
