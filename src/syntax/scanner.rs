@@ -70,6 +70,12 @@ impl<'a> Scanner<'a> {
         } else if character == '}' {
             self.bump();
             Token::CloseCurly
+        } else if character == '[' {
+            self.bump();
+            Token::OpenSquare
+        } else if character == ']' {
+            self.bump();
+            Token::CloseSquare
         } else if character == ',' {
             self.bump();
             Token::Comma

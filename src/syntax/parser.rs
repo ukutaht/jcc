@@ -23,14 +23,60 @@ impl<'a> Parser<'a> {
         Program(body)
     }
 
-    pub fn parse_expression(&mut self) -> Expression {
+    pub fn parse_primary_expression(&mut self) -> Expression {
         let tok = self.scanner.next_token();
 
         match tok {
             Token::Number(n) => Expression::Literal(Literal::Number(n)),
             Token::String(s) => Expression::Literal(Literal::String(s)),
+            Token::Ident(n) => Expression::Identifier(n),
+            Token::OpenSquare => self.parse_array_initializer(),
             t => panic!("Bad token to start expression: {:?}", t)
         }
+    }
+
+    fn parse_call_expression(&mut self) -> Expression {
+        self.parse_primary_expression()
+    }
+
+    // https://tc39.github.io/ecma262/#sec-left-hand-side-expressions
+    fn parse_lhs_expression(&mut self) -> Expression {
+        self.parse_call_expression()
+    }
+
+    // https://tc39.github.io/ecma262/#sec-unary-operators
+    fn parse_unary_expression(&mut self) -> Expression {
+        self.parse_lhs_expression()
+    }
+
+    // https://tc39.github.io/ecma262/#sec-conditional-operator
+    fn parse_conditional_expression(&mut self) -> Expression {
+        self.parse_unary_expression()
+    }
+
+    // https://tc39.github.io/ecma262/#sec-assignment-operators
+    fn parse_assignment_expression(&mut self) -> Expression {
+        self.parse_conditional_expression()
+    }
+
+    // https://tc39.github.io/ecma262/#sec-array-initializer
+    fn parse_array_initializer(&mut self) -> Expression {
+        let mut elements = Vec::new();
+
+        loop {
+            if let Token::CloseSquare = self.scanner.lookahead {
+                break;
+            } else {
+                elements.push(self.parse_assignment_expression());
+
+                if self.scanner.lookahead != Token::CloseSquare {
+                    self.expect(Token::Comma);
+                }
+            }
+        }
+
+        self.expect(Token::CloseSquare);
+        Expression::Array(elements)
     }
 
     // https://tc39.github.io/ecma262/#sec-block
@@ -40,7 +86,7 @@ impl<'a> Parser<'a> {
 
         if let Token::Ident(name) = ident {
             self.expect(Token::Equals);
-            let init = self.parse_expression();
+            let init = self.parse_primary_expression();
             Statement::VariableDeclaration(VariableDeclaration {
                 kind: VariableDeclarationKind::Var,
                 declarations: vec![VariableDeclarator {
@@ -103,7 +149,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_expression_statement(&mut self) -> Statement {
-        let expr = self.parse_expression();
+        let expr = self.parse_primary_expression();
         Statement::Expression(expr)
     }
 
@@ -114,7 +160,7 @@ impl<'a> Parser<'a> {
             Token::FunctionKeyword => {
                 StatementListItem::Statement(self.parse_function_declaration())
             }
-            Token::Number(_) | Token::String(_) => {
+            Token::Number(_) | Token::String(_) | Token::OpenSquare => {
                 StatementListItem::Statement(self.parse_expression_statement())
             }
             token => panic!("Could not parse statement list item. Got {:?}", token),

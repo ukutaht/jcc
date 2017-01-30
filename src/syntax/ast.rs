@@ -10,6 +10,7 @@ pub enum Literal {
 pub enum Expression {
     Literal(Literal),
     Identifier(Name),
+    Array(Vec<Expression>)
 }
 
 #[derive(Debug, PartialEq)]
