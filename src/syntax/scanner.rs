@@ -115,9 +115,7 @@ impl<'a> Scanner<'a> {
             }
         }
 
-        let start_without_quote = start + 1;
-        let end_without_quote = self.index - 1;
-        Token::String(intern(&self.source[start_without_quote..end_without_quote]))
+        Token::String(intern(&self.source[start..self.index]))
     }
 
     fn scan_identifier(&mut self) -> Token {
