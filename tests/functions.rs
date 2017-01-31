@@ -11,7 +11,7 @@ fn transforms_named_function() {
 fn transforms_unnamed_function() {
     let result = jcc::transform("function() { var a = 1 }").unwrap();
 
-    assert_eq!(result, "function() { var a = 1 }".to_owned());
+    assert_eq!(result, "function () { var a = 1 }".to_owned());
 }
 
 #[test]
