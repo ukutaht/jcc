@@ -8,6 +8,13 @@ fn transforms_named_function() {
 }
 
 #[test]
+fn transforms_unnamed_function() {
+    let result = jcc::transform("function() { var a = 1 }").unwrap();
+
+    assert_eq!(result, "function() { var a = 1 }".to_owned());
+}
+
+#[test]
 fn transforms_named_function_with_single_parameter() {
     let result = jcc::transform("function hello(a) { var a = 1 }").unwrap();
 

@@ -77,9 +77,11 @@ fn transpile_function_parameter<W: Write>(out: &mut W, par: &FunctionParameter) 
 }
 
 fn transpile_function_declaration<W: Write>(out: &mut W, fun: &FunctionDeclaration) -> Result<()> {
-    let name = fun.id.map(|n| n.to_string()).unwrap_or("");
+    match fun.id {
+        Some(name) => try!(write!(out, "function {}(", name)),
+        None => try!(write!(out, "function("))
+    }
 
-    try!(write!(out, "function {}(", name));
     for (idx, parameter) in fun.parameters.iter().enumerate() {
         try!(transpile_function_parameter(out, parameter));
         if idx != fun.parameters.len() - 1 {

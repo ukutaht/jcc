@@ -18,3 +18,6 @@ https://beachape.com/blog/2016/11/02/rust-performance-testing-on-travis-ci/
 
 7. Compiler errors for humans:
 http://elm-lang.org/blog/compiler-errors-for-humans
+
+8. How babel works with Commonjs
+http://www.2ality.com/2015/12/babel-commonjs.html

@@ -157,20 +157,24 @@ impl<'a> Parser<'a> {
     // https://tc39.github.io/ecma262/#sec-function-definitions
     fn parse_function_declaration(&mut self) -> Statement {
         self.expect(Token::FunctionKeyword);
-        let next = self.scanner.next_token();
 
-        if let Token::Ident(name) = next {
-            let parameters = self.parse_function_parameters();
-            let block = self.parse_block();
+        let id = match self.scanner.lookahead {
+            Token::Ident(name) => {
+                self.scanner.next_token();
+                Some(name)
+            },
+            Token::OpenParen => None,
+            _ => panic!("Unexpected token")
+        };
 
-            Statement::FunctionDeclaration(FunctionDeclaration {
-                id: Some(name),
-                body: block,
-                parameters: parameters
-            })
-        } else {
-            panic!("Function needs a name!");
-        }
+        let parameters = self.parse_function_parameters();
+        let block = self.parse_block();
+
+        Statement::FunctionDeclaration(FunctionDeclaration {
+            id: id,
+            body: block,
+            parameters: parameters
+        })
     }
 
     fn parse_expression_statement(&mut self) -> Statement {
