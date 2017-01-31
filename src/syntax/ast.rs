@@ -7,10 +7,16 @@ pub enum Literal {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum ArgumentListElement {
+    Expression(Expression)
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Expression {
     Literal(Literal),
     Identifier(Name),
-    Array(Vec<Expression>)
+    Array(Vec<Expression>),
+    Call(Box<Expression>, Vec<ArgumentListElement>)
 }
 
 #[derive(Debug, PartialEq)]

@@ -35,8 +35,33 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn parse_arguments(&mut self, base: Expression) -> Expression {
+        self.expect(Token::OpenParen);
+        let mut arguments = Vec::new();
+
+        loop {
+            if let Token::CloseParen = self.scanner.lookahead {
+                break;
+            } else {
+                let argument = ArgumentListElement::Expression(self.parse_assignment_expression());
+                arguments.push(argument);
+
+                if self.scanner.lookahead != Token::CloseParen {
+                    self.expect(Token::Comma);
+                }
+            }
+        }
+
+        self.expect(Token::CloseParen);
+        Expression::Call(Box::new(base), arguments)
+    }
+
     fn parse_call_expression(&mut self) -> Expression {
-        self.parse_primary_expression()
+        let base = self.parse_primary_expression();
+        match self.scanner.lookahead {
+            Token::OpenParen => self.parse_arguments(base),
+            _ => base
+        }
     }
 
     // https://tc39.github.io/ecma262/#sec-left-hand-side-expressions
@@ -149,7 +174,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_expression_statement(&mut self) -> Statement {
-        let expr = self.parse_primary_expression();
+        let expr = self.parse_assignment_expression();
         Statement::Expression(expr)
     }
 
@@ -161,6 +186,9 @@ impl<'a> Parser<'a> {
                 StatementListItem::Statement(self.parse_function_declaration())
             }
             Token::Number(_) | Token::String(_) | Token::OpenSquare => {
+                StatementListItem::Statement(self.parse_expression_statement())
+            },
+            Token::Ident(_) => {
                 StatementListItem::Statement(self.parse_expression_statement())
             }
             token => panic!("Could not parse statement list item. Got {:?}", token),

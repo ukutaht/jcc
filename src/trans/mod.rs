@@ -14,8 +14,24 @@ pub fn transpile_expression<W: Write>(out: &mut W, expr: &Expression) -> Result<
     match *expr {
         Expression::Literal(ref lit) => transpile_literal(out, lit),
         Expression::Identifier(name) => transpile_ident(out, name),
-        Expression::Array(ref elements) => transpile_array(out, elements)
+        Expression::Array(ref elements) => transpile_array(out, elements),
+        Expression::Call(ref callee, ref arguments) => transpile_call(out, &*callee, arguments)
     }
+}
+
+fn transpile_call<W: Write>(out: &mut W, callee: &Expression, arguments: &Vec<ArgumentListElement>) -> Result<()> {
+    try!(transpile_expression(out, callee));
+    try!(write!(out, "("));
+    for (idx, arg) in arguments.iter().enumerate() {
+        match *arg {
+            ArgumentListElement::Expression(ref e) => try!(transpile_expression(out, e))
+        }
+
+        if idx != arguments.len() - 1 {
+            try!(write!(out, ", "))
+        }
+    }
+    write!(out, ")")
 }
 
 fn transpile_array<W: Write>(out: &mut W, elements: &Vec<Expression>) -> Result<()> {
