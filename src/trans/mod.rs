@@ -15,16 +15,19 @@ pub fn transpile_expression<W: Write>(out: &mut W, expr: &Expression) -> Result<
         Expression::Literal(ref lit) => transpile_literal(out, lit),
         Expression::Identifier(name) => transpile_ident(out, name),
         Expression::Array(ref elements) => transpile_array(out, elements),
-        Expression::Call(ref callee, ref arguments) => transpile_call(out, &*callee, arguments)
+        Expression::Call(ref callee, ref arguments) => transpile_call(out, &*callee, arguments),
     }
 }
 
-fn transpile_call<W: Write>(out: &mut W, callee: &Expression, arguments: &[ArgumentListElement]) -> Result<()> {
+fn transpile_call<W: Write>(out: &mut W,
+                            callee: &Expression,
+                            arguments: &[ArgumentListElement])
+                            -> Result<()> {
     try!(transpile_expression(out, callee));
     try!(write!(out, "("));
     for (idx, arg) in arguments.iter().enumerate() {
         match *arg {
-            ArgumentListElement::Expression(ref e) => try!(transpile_expression(out, e))
+            ArgumentListElement::Expression(ref e) => try!(transpile_expression(out, e)),
         }
 
         if idx != arguments.len() - 1 {
@@ -50,7 +53,7 @@ fn transpile_declarator<W: Write>(out: &mut W, dec: &VariableDeclarator) -> Resu
         Some(ref initializer) => {
             try!(write!(out, "var {} = ", dec.id));
             transpile_expression(out, initializer)
-        },
+        }
         None => write!(out, "var {}", dec.id),
     }
 }
@@ -66,12 +69,10 @@ fn transpile_function_parameter<W: Write>(out: &mut W, par: &FunctionParameter) 
     match *par {
         FunctionParameter::Binding(ref b) => {
             match *b {
-                Binding::Identifier(n) => {
-                    try!(write!(out, "{}", n.to_string()))
-                }
+                Binding::Identifier(n) => try!(write!(out, "{}", n.to_string())),
             }
-        },
-        _ => panic!("ONLY BINDINGS IN PARAMETERS PLZ")
+        }
+        _ => panic!("ONLY BINDINGS IN PARAMETERS PLZ"),
     }
     Ok(())
 }

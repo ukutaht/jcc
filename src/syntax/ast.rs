@@ -8,7 +8,7 @@ pub enum Literal {
 
 #[derive(Debug, PartialEq)]
 pub enum ArgumentListElement {
-    Expression(Expression)
+    Expression(Expression),
 }
 
 #[derive(Debug, PartialEq)]
@@ -16,31 +16,31 @@ pub enum Expression {
     Literal(Literal),
     Identifier(Name),
     Array(Vec<Expression>),
-    Call(Box<Expression>, Vec<ArgumentListElement>)
+    Call(Box<Expression>, Vec<ArgumentListElement>),
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Binding {
-    Identifier(Name)
+    Identifier(Name),
 }
 
 #[derive(Debug, PartialEq)]
 pub struct AssignmentPattern {
     pub left: Binding,
-    pub right: Expression
+    pub right: Expression,
 }
 
 #[derive(Debug, PartialEq)]
 pub enum FunctionParameter {
     AssignmentPattern,
-    Binding(Binding)
+    Binding(Binding),
 }
 
 #[derive(Debug, PartialEq)]
 pub struct FunctionDeclaration {
     pub id: Option<Name>,
     pub body: Block,
-    pub parameters: Vec<FunctionParameter>
+    pub parameters: Vec<FunctionParameter>,
 }
 
 #[derive(Debug, PartialEq)]

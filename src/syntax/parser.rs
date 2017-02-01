@@ -31,7 +31,7 @@ impl<'a> Parser<'a> {
             Token::String(s) => Expression::Literal(Literal::String(s)),
             Token::Ident(n) => Expression::Identifier(n),
             Token::OpenSquare => self.parse_array_initializer(),
-            t => panic!("Bad token to start expression: {:?}", t)
+            t => panic!("Bad token to start expression: {:?}", t),
         }
     }
 
@@ -60,7 +60,7 @@ impl<'a> Parser<'a> {
         let base = self.parse_primary_expression();
         match self.scanner.lookahead {
             Token::OpenParen => self.parse_arguments(base),
-            _ => base
+            _ => base,
         }
     }
 
@@ -162,9 +162,9 @@ impl<'a> Parser<'a> {
             Token::Ident(name) => {
                 self.scanner.next_token();
                 Some(name)
-            },
+            }
             Token::OpenParen => None,
-            _ => panic!("Unexpected token")
+            _ => panic!("Unexpected token"),
         };
 
         let parameters = self.parse_function_parameters();
@@ -173,7 +173,7 @@ impl<'a> Parser<'a> {
         Statement::FunctionDeclaration(FunctionDeclaration {
             id: id,
             body: block,
-            parameters: parameters
+            parameters: parameters,
         })
     }
 
@@ -191,7 +191,7 @@ impl<'a> Parser<'a> {
             }
             Token::Number(_) | Token::String(_) | Token::OpenSquare | Token::Ident(_) => {
                 StatementListItem::Statement(self.parse_expression_statement())
-            },
+            }
             token => panic!("Could not parse statement list item. Got {:?}", token),
         }
     }

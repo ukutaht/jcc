@@ -7,7 +7,7 @@ use std::io::Cursor;
 
 #[derive(Debug)]
 pub enum CompileError {
-    Io(std::io::Error)
+    Io(std::io::Error),
 }
 
 impl std::convert::From<std::io::Error> for CompileError {
