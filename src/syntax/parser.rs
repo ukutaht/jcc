@@ -189,12 +189,9 @@ impl<'a> Parser<'a> {
             Token::FunctionKeyword => {
                 StatementListItem::Statement(self.parse_function_declaration())
             }
-            Token::Number(_) | Token::String(_) | Token::OpenSquare => {
+            Token::Number(_) | Token::String(_) | Token::OpenSquare | Token::Ident(_) => {
                 StatementListItem::Statement(self.parse_expression_statement())
             },
-            Token::Ident(_) => {
-                StatementListItem::Statement(self.parse_expression_statement())
-            }
             token => panic!("Could not parse statement list item. Got {:?}", token),
         }
     }

@@ -4,7 +4,7 @@ use std::io::{Write, Result};
 
 
 pub fn transpile<W: Write>(out: &mut W, program: &Program) -> Result<()> {
-    for item in program.0.iter() {
+    for item in &program.0 {
         try!(transpile_statement_list_item(out, item))
     }
     Ok(())
@@ -19,7 +19,7 @@ pub fn transpile_expression<W: Write>(out: &mut W, expr: &Expression) -> Result<
     }
 }
 
-fn transpile_call<W: Write>(out: &mut W, callee: &Expression, arguments: &Vec<ArgumentListElement>) -> Result<()> {
+fn transpile_call<W: Write>(out: &mut W, callee: &Expression, arguments: &[ArgumentListElement]) -> Result<()> {
     try!(transpile_expression(out, callee));
     try!(write!(out, "("));
     for (idx, arg) in arguments.iter().enumerate() {
@@ -34,7 +34,7 @@ fn transpile_call<W: Write>(out: &mut W, callee: &Expression, arguments: &Vec<Ar
     write!(out, ")")
 }
 
-fn transpile_array<W: Write>(out: &mut W, elements: &Vec<Expression>) -> Result<()> {
+fn transpile_array<W: Write>(out: &mut W, elements: &[Expression]) -> Result<()> {
     try!(write!(out, "["));
     for (idx, element) in elements.iter().enumerate() {
         try!(transpile_expression(out, element));
@@ -49,14 +49,14 @@ fn transpile_declarator<W: Write>(out: &mut W, dec: &VariableDeclarator) -> Resu
     match dec.init {
         Some(ref initializer) => {
             try!(write!(out, "var {} = ", dec.id));
-            transpile_expression(out, &initializer)
+            transpile_expression(out, initializer)
         },
         None => write!(out, "var {}", dec.id),
     }
 }
 
 fn transpile_variable_declaration<W: Write>(out: &mut W, dec: &VariableDeclaration) -> Result<()> {
-    for declarator in dec.declarations.iter() {
+    for declarator in &dec.declarations {
         try!(transpile_declarator(out, declarator))
     }
     Ok(())
@@ -108,7 +108,7 @@ fn transpile_statement_list_item<W: Write>(out: &mut W, item: &StatementListItem
 }
 
 fn transpile_block<W: Write>(out: &mut W, block: &Block) -> Result<()> {
-    for item in block.0.iter() {
+    for item in &block.0 {
         try!(transpile_statement_list_item(out, item))
     }
     Ok(())

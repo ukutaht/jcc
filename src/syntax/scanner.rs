@@ -152,15 +152,15 @@ impl<'a> Scanner<'a> {
         current
     }
 
-    fn current_char(&mut self) -> Option<char> {
+    fn current_char(&self) -> Option<char> {
         self.source.chars().nth(self.index)
     }
 
-    fn nth_char(&mut self, nth: usize) -> Option<char> {
+    fn nth_char(&self, nth: usize) -> Option<char> {
         self.source.chars().nth(nth)
     }
 
-    fn is_eof(&mut self) -> bool {
+    fn is_eof(&self) -> bool {
         self.current_char().is_none()
     }
 }
