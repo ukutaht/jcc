@@ -48,6 +48,8 @@ pub enum Statement {
     Expression(Expression),
     VariableDeclaration(VariableDeclaration),
     FunctionDeclaration(FunctionDeclaration),
+    If(Expression, Box<Statement>, Option<Box<Statement>>),
+    Block(Block)
 }
 
 #[derive(Debug, PartialEq)]

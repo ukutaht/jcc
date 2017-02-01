@@ -3,6 +3,7 @@ use syntax::intern::Name;
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Token {
     Var,
+    If,
     Ident(Name),
     String(Name),
     Eof,

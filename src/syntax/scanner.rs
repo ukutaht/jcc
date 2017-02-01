@@ -6,6 +6,7 @@ use std::mem;
 lazy_static! {
     static ref KEYWORD_VAR: Name = intern("var");
     static ref KEYWORD_FUNCTION: Name = intern("function");
+    static ref KEYWORD_IF: Name = intern("if");
 }
 
 
@@ -125,6 +126,8 @@ impl<'a> Scanner<'a> {
             Token::Var
         } else if value == *KEYWORD_FUNCTION {
             Token::FunctionKeyword
+        } else if value == *KEYWORD_IF {
+            Token::If
         } else {
             Token::Ident(value)
         }

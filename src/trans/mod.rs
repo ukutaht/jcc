@@ -88,9 +88,8 @@ fn transpile_function_declaration<W: Write>(out: &mut W, fun: &FunctionDeclarati
         }
     }
 
-    try!(write!(out, ") {{ "));
-    try!(transpile_block(out, &fun.body));
-    write!(out, " }}")
+    try!(write!(out, ") "));
+    transpile_block(out, &fun.body)
 }
 
 fn transpile_statement<W: Write>(out: &mut W, statement: &Statement) -> Result<()> {
@@ -98,7 +97,16 @@ fn transpile_statement<W: Write>(out: &mut W, statement: &Statement) -> Result<(
         Statement::Expression(ref e) => transpile_expression(out, e),
         Statement::VariableDeclaration(ref dec) => transpile_variable_declaration(out, dec),
         Statement::FunctionDeclaration(ref dec) => transpile_function_declaration(out, dec),
+        Statement::Block(ref b) => transpile_block(out, b),
+        Statement::If(ref e, ref then, ref alternate) => transpile_if(out, e, then, alternate)
     }
+}
+
+fn transpile_if<W: Write>(out: &mut W, test: &Expression, then: &Statement, alternate: &Option<Box<Statement>>) -> Result<()> {
+    write!(out, "if (")?;
+    transpile_expression(out, test)?;
+    write!(out, ") ")?;
+    transpile_statement(out, then)
 }
 
 fn transpile_statement_list_item<W: Write>(out: &mut W, item: &StatementListItem) -> Result<()> {
@@ -109,10 +117,11 @@ fn transpile_statement_list_item<W: Write>(out: &mut W, item: &StatementListItem
 }
 
 fn transpile_block<W: Write>(out: &mut W, block: &Block) -> Result<()> {
+    write!(out, "{{ ")?;
     for item in &block.0 {
         try!(transpile_statement_list_item(out, item))
     }
-    Ok(())
+    write!(out, " }}")
 }
 
 fn transpile_literal<W: Write>(out: &mut W, lit: &Literal) -> Result<()> {

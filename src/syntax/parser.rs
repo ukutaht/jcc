@@ -177,9 +177,23 @@ impl<'a> Parser<'a> {
         })
     }
 
+    fn parse_expression(&mut self) -> Expression {
+        self.parse_assignment_expression()
+    }
+
     fn parse_expression_statement(&mut self) -> Statement {
         let expr = self.parse_assignment_expression();
         Statement::Expression(expr)
+    }
+
+    fn parse_if_statement(&mut self) -> Statement {
+        self.expect(Token::If);
+        self.expect(Token::OpenParen);
+        let test = self.parse_expression();
+        self.expect(Token::CloseParen);
+        let then = Statement::Block(self.parse_block());
+
+        Statement::If(test, Box::new(then), None)
     }
 
     // https://tc39.github.io/ecma262/#sec-block
@@ -191,7 +205,8 @@ impl<'a> Parser<'a> {
             }
             Token::Number(_) | Token::String(_) | Token::OpenSquare | Token::Ident(_) => {
                 StatementListItem::Statement(self.parse_expression_statement())
-            }
+            },
+            Token::If => StatementListItem::Statement(self.parse_if_statement()),
             token => panic!("Could not parse statement list item. Got {:?}", token),
         }
     }
