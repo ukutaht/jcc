@@ -186,29 +186,39 @@ impl<'a> Parser<'a> {
         Statement::Expression(expr)
     }
 
+    fn parse_statement(&mut self) -> Statement {
+        match self.scanner.lookahead {
+            Token::Var => self.parse_variable_statement(),
+            Token::FunctionKeyword => self.parse_function_declaration(),
+            Token::If => self.parse_if_statement(),
+            Token::Number(_) | Token::String(_) | Token::OpenSquare | Token::Ident(_) => {
+                self.parse_expression_statement()
+            },
+            Token::OpenCurly => Statement::Block(self.parse_block()),
+            token => panic!("Could not parse statement. Got {:?}", token),
+        }
+    }
+
     fn parse_if_statement(&mut self) -> Statement {
         self.expect(Token::If);
         self.expect(Token::OpenParen);
         let test = self.parse_expression();
         self.expect(Token::CloseParen);
-        let then = Statement::Block(self.parse_block());
+        let then = self.parse_statement();
+        let alternate = match self.scanner.lookahead {
+            Token::Else => {
+                self.scanner.next_token();
+                Some(Box::new(self.parse_statement()))
+            },
+            _ => None
+        };
 
-        Statement::If(test, Box::new(then), None)
+        Statement::If(test, Box::new(then), alternate)
     }
 
     // https://tc39.github.io/ecma262/#sec-block
     fn parse_statement_list_item(&mut self) -> StatementListItem {
-        match self.scanner.lookahead {
-            Token::Var => StatementListItem::Statement(self.parse_variable_statement()),
-            Token::FunctionKeyword => {
-                StatementListItem::Statement(self.parse_function_declaration())
-            }
-            Token::Number(_) | Token::String(_) | Token::OpenSquare | Token::Ident(_) => {
-                StatementListItem::Statement(self.parse_expression_statement())
-            },
-            Token::If => StatementListItem::Statement(self.parse_if_statement()),
-            token => panic!("Could not parse statement list item. Got {:?}", token),
-        }
+        StatementListItem::Statement(self.parse_statement())
     }
 
     // https://tc39.github.io/ecma262/#sec-block

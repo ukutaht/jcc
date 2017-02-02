@@ -106,7 +106,14 @@ fn transpile_if<W: Write>(out: &mut W, test: &Expression, then: &Statement, alte
     write!(out, "if (")?;
     transpile_expression(out, test)?;
     write!(out, ") ")?;
-    transpile_statement(out, then)
+    transpile_statement(out, then)?;
+    match *alternate {
+        Some(ref stmt) => {
+            write!(out, " else ")?;
+            transpile_statement(out, &*stmt)
+        },
+        None => Ok(())
+    }
 }
 
 fn transpile_statement_list_item<W: Write>(out: &mut W, item: &StatementListItem) -> Result<()> {

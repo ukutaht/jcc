@@ -4,6 +4,7 @@ use syntax::intern::Name;
 pub enum Token {
     Var,
     If,
+    Else,
     Ident(Name),
     String(Name),
     Eof,
