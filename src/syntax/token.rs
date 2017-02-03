@@ -18,4 +18,5 @@ pub enum Token {
     OpenSquare,
     CloseSquare,
     Comma,
+    Plus,
 }

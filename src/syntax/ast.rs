@@ -12,11 +12,17 @@ pub enum ArgumentListElement {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum BinOp {
+    Plus
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Expression {
     Literal(Literal),
     Identifier(Name),
     Array(Vec<Expression>),
     Call(Box<Expression>, Vec<ArgumentListElement>),
+    Binary(BinOp, Box<Expression>, Box<Expression>)
 }
 
 #[derive(Debug, PartialEq)]

@@ -78,6 +78,9 @@ impl<'a> Scanner<'a> {
         } else if character == ']' {
             self.bump();
             Token::CloseSquare
+        } else if character == '+' {
+            self.bump();
+            Token::Plus
         } else if character == ',' {
             self.bump();
             Token::Comma

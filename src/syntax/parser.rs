@@ -71,7 +71,27 @@ impl<'a> Parser<'a> {
 
     // https://tc39.github.io/ecma262/#sec-unary-operators
     fn parse_unary_expression(&mut self) -> Expression {
-        self.parse_lhs_expression()
+        let left = self.parse_lhs_expression();
+        self.parse_more_infix_expressions(left)
+    }
+
+    fn parse_more_infix_expressions(&mut self, left: Expression) -> Expression {
+        if let Some(op) = self.match_infix() {
+            let right = self.parse_unary_expression();
+            Expression::Binary(op, Box::new(left), Box::new(right))
+        } else {
+            left
+        }
+    }
+
+    fn match_infix(&mut self) -> Option<BinOp> {
+        match self.scanner.lookahead {
+            Token::Plus => {
+                self.scanner.next_token();
+                Some(BinOp::Plus)
+            }
+            _ => None
+        }
     }
 
     // https://tc39.github.io/ecma262/#sec-conditional-operator
