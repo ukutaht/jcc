@@ -9,4 +9,4 @@ doc = false
 bench = false
 
 [dependencies]
-lazy_static = "0.1.*"
+lazy_static = "0.2.*"
