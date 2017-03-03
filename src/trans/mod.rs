@@ -74,14 +74,11 @@ fn transpile_variable_declaration<W: Write>(out: &mut W, dec: &VariableDeclarati
     Ok(())
 }
 
-fn transpile_function_parameter<W: Write>(out: &mut W, par: &FunctionParameter) -> Result<()> {
-    match *par {
-        FunctionParameter::Binding(ref b) => {
-            match *b {
-                Binding::Identifier(n) => try!(write!(out, "{}", n.to_string())),
-            }
+fn transpile_function_parameter<W: Write>(out: &mut W, pat: &Pattern) -> Result<()> {
+    match *pat {
+        Pattern::Identifier(ref n) => {
+            try!(write!(out, "{}", n.to_string()))
         }
-        _ => panic!("ONLY BINDINGS IN PARAMETERS PLZ"),
     }
     Ok(())
 }

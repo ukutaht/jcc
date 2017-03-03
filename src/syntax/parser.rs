@@ -144,17 +144,17 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_function_parameter(&mut self) -> FunctionParameter {
+    fn parse_function_parameter(&mut self) -> Pattern {
         let token = self.scanner.next_token();
 
         if let Token::Ident(name) = token {
-            FunctionParameter::Binding(Binding::Identifier(name))
+            Pattern::Identifier(name)
         } else {
             panic!("ONLY IDENTIFIERS IN PARAMETERS PLZ")
         }
     }
 
-    fn parse_function_parameters(&mut self) -> Vec<FunctionParameter> {
+    fn parse_function_parameters(&mut self) -> Vec<Pattern> {
         self.expect(Token::OpenParen);
         let mut parameters = Vec::new();
 
