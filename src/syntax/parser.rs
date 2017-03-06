@@ -82,8 +82,33 @@ impl<'a> Parser<'a> {
 
     // https://tc39.github.io/ecma262/#sec-unary-operators
     fn parse_unary_expression(&mut self) -> Expression {
-        let left = self.parse_lhs_expression();
-        self.parse_more_infix_expressions(left)
+        let mut prefixes = Vec::new();
+
+        while let Some(prefix) = self.match_unary_operator() {
+            prefixes.push(prefix);
+        }
+
+        let mut expr = self.parse_lhs_expression();
+
+        for prefix in prefixes.into_iter().rev() {
+            expr = Expression::Unary(prefix, Box::new(expr))
+        }
+
+        return expr;
+    }
+
+    fn match_unary_operator(&mut self) -> Option<UnOp> {
+        match self.scanner.lookahead {
+            Token::Bang => {
+                self.scanner.next_token();
+                Some(UnOp::Not)
+            },
+            Token::Minus => {
+                self.scanner.next_token();
+                Some(UnOp::Minus)
+            },
+            _ => None
+        }
     }
 
     fn parse_more_infix_expressions(&mut self, left: Expression) -> Expression {
@@ -107,7 +132,8 @@ impl<'a> Parser<'a> {
 
     // https://tc39.github.io/ecma262/#sec-conditional-operator
     fn parse_conditional_expression(&mut self) -> Expression {
-        self.parse_unary_expression()
+        let left = self.parse_unary_expression();
+        self.parse_more_infix_expressions(left)
     }
 
     // https://tc39.github.io/ecma262/#sec-assignment-operators
@@ -239,11 +265,8 @@ impl<'a> Parser<'a> {
             Token::Var => self.parse_variable_statement(),
             Token::FunctionKeyword => self.parse_function_declaration(),
             Token::If => self.parse_if_statement(),
-            Token::Number(_) | Token::String(_) | Token::OpenSquare | Token::Ident(_) => {
-                self.parse_expression_statement()
-            },
             Token::OpenCurly => Statement::Block(self.parse_block()),
-            token => panic!("Could not parse statement. Got {:?}", token),
+            _ => self.parse_expression_statement(),
         }
     }
 

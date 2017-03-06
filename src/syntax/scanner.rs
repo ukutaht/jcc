@@ -87,6 +87,12 @@ impl<'a> Scanner<'a> {
         } else if character == '.' {
             self.bump();
             Token::Dot
+        } else if character == '!' {
+            self.bump();
+            Token::Bang
+        } else if character == '-' {
+            self.bump();
+            Token::Minus
         } else {
             panic!("Unknown character: {}", character);
         }

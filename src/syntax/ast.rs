@@ -17,12 +17,19 @@ pub enum BinOp {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum UnOp {
+    Not,
+    Minus
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Expression {
     Literal(Literal),
     Identifier(Name),
     Array(Vec<Expression>),
     Call(Box<Expression>, Vec<ArgumentListElement>),
     Binary(BinOp, Box<Expression>, Box<Expression>),
+    Unary(UnOp, Box<Expression>),
     StaticMember(Box<Expression>, Name)
 }
 
