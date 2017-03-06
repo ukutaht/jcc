@@ -56,10 +56,21 @@ impl<'a> Parser<'a> {
         Expression::Call(Box::new(base), arguments)
     }
 
+    fn parse_static_member_property(&mut self, base: Expression) -> Expression {
+        self.expect(Token::Dot);
+        match self.scanner.next_token() {
+            Token::Ident(name) => {
+                Expression::StaticMember(Box::new(base), name)
+            },
+            _ => panic!("Unexpected thing in member property")
+        }
+    }
+
     fn parse_call_expression(&mut self) -> Expression {
         let base = self.parse_primary_expression();
         match self.scanner.lookahead {
             Token::OpenParen => self.parse_arguments(base),
+            Token::Dot       => self.parse_static_member_property(base),
             _ => base,
         }
     }
@@ -202,21 +213,8 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_expression_statement(&mut self) -> Statement {
-        let expr = self.parse_assignment_expression();
+        let expr = self.parse_expression();
         Statement::Expression(expr)
-    }
-
-    fn parse_statement(&mut self) -> Statement {
-        match self.scanner.lookahead {
-            Token::Var => self.parse_variable_statement(),
-            Token::FunctionKeyword => self.parse_function_declaration(),
-            Token::If => self.parse_if_statement(),
-            Token::Number(_) | Token::String(_) | Token::OpenSquare | Token::Ident(_) => {
-                self.parse_expression_statement()
-            },
-            Token::OpenCurly => Statement::Block(self.parse_block()),
-            token => panic!("Could not parse statement. Got {:?}", token),
-        }
     }
 
     fn parse_if_statement(&mut self) -> Statement {
@@ -234,6 +232,19 @@ impl<'a> Parser<'a> {
         };
 
         Statement::If(test, Box::new(then), alternate)
+    }
+
+    fn parse_statement(&mut self) -> Statement {
+        match self.scanner.lookahead {
+            Token::Var => self.parse_variable_statement(),
+            Token::FunctionKeyword => self.parse_function_declaration(),
+            Token::If => self.parse_if_statement(),
+            Token::Number(_) | Token::String(_) | Token::OpenSquare | Token::Ident(_) => {
+                self.parse_expression_statement()
+            },
+            Token::OpenCurly => Statement::Block(self.parse_block()),
+            token => panic!("Could not parse statement. Got {:?}", token),
+        }
     }
 
     // https://tc39.github.io/ecma262/#sec-block

@@ -84,6 +84,9 @@ impl<'a> Scanner<'a> {
         } else if character == ',' {
             self.bump();
             Token::Comma
+        } else if character == '.' {
+            self.bump();
+            Token::Dot
         } else {
             panic!("Unknown character: {}", character);
         }

@@ -16,8 +16,14 @@ pub fn transpile_expression<W: Write>(out: &mut W, expr: &Expression) -> Result<
         Expression::Identifier(name) => transpile_ident(out, name),
         Expression::Array(ref elements) => transpile_array(out, elements),
         Expression::Call(ref callee, ref arguments) => transpile_call(out, &*callee, arguments),
-        Expression::Binary(ref op, ref left, ref right) => transpile_binop(out, op, &*left, &*right)
+        Expression::Binary(ref op, ref left, ref right) => transpile_binop(out, op, &*left, &*right),
+        Expression::StaticMember(ref object, property) => transpile_static_member(out, &*object, property)
     }
+}
+
+fn transpile_static_member<W: Write>(out: &mut W, base: &Expression, property: Name) -> Result<()> {
+    try!(transpile_expression(out, base));
+    write!(out, ".{}", property)
 }
 
 fn transpile_binop<W: Write>(out: &mut W, op: &BinOp, left: &Expression, right: &Expression) -> Result<()> {

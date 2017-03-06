@@ -22,7 +22,8 @@ pub enum Expression {
     Identifier(Name),
     Array(Vec<Expression>),
     Call(Box<Expression>, Vec<ArgumentListElement>),
-    Binary(BinOp, Box<Expression>, Box<Expression>)
+    Binary(BinOp, Box<Expression>, Box<Expression>),
+    StaticMember(Box<Expression>, Name)
 }
 
 #[derive(Debug, PartialEq)]
