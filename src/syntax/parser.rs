@@ -67,12 +67,17 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_call_expression(&mut self) -> Expression {
-        let base = self.parse_primary_expression();
-        match self.scanner.lookahead {
-            Token::OpenParen => self.parse_arguments(base),
-            Token::Dot       => self.parse_static_member_property(base),
-            _ => base,
+        let mut result = self.parse_primary_expression();
+
+        loop {
+            match self.scanner.lookahead {
+                Token::OpenParen => result = self.parse_arguments(result),
+                Token::Dot       => result = self.parse_static_member_property(result),
+                _ => break,
+            }
         }
+
+        result
     }
 
     // https://tc39.github.io/ecma262/#sec-left-hand-side-expressions
@@ -114,17 +119,24 @@ impl<'a> Parser<'a> {
     fn parse_more_infix_expressions(&mut self, left: Expression) -> Expression {
         if let Some(op) = self.match_infix() {
             let right = self.parse_unary_expression();
-            Expression::Binary(op, Box::new(left), Box::new(right))
+            match op {
+                InfixOp::BinOp(bin_op) => Expression::Binary(bin_op, Box::new(left), Box::new(right)),
+                InfixOp::LogOp(log_op) => Expression::Logical(log_op, Box::new(left), Box::new(right)),
+            }
         } else {
             left
         }
     }
 
-    fn match_infix(&mut self) -> Option<BinOp> {
+    fn match_infix(&mut self) -> Option<InfixOp> {
         match self.scanner.lookahead {
             Token::Plus => {
                 self.scanner.next_token();
-                Some(BinOp::Plus)
+                Some(InfixOp::BinOp(BinOp::Plus))
+            }
+            Token::LogicalAnd => {
+                self.scanner.next_token();
+                Some(InfixOp::LogOp(LogOp::AndAnd))
             }
             _ => None
         }

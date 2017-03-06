@@ -22,4 +22,5 @@ pub enum Token {
     Plus,
     Minus,
     Bang,
+    LogicalAnd,
 }

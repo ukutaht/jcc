@@ -93,6 +93,15 @@ impl<'a> Scanner<'a> {
         } else if character == '-' {
             self.bump();
             Token::Minus
+        } else if character == '&' {
+            self.bump();
+            match self.current_char() {
+                Some('&') => {
+                    self.bump();
+                    Token::LogicalAnd
+                },
+                _ => panic!("Something with &")
+            }
         } else {
             panic!("Unknown character: {}", character);
         }

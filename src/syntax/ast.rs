@@ -23,12 +23,24 @@ pub enum UnOp {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum LogOp {
+    AndAnd,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum InfixOp {
+    BinOp(BinOp),
+    LogOp(LogOp)
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Expression {
     Literal(Literal),
     Identifier(Name),
     Array(Vec<Expression>),
     Call(Box<Expression>, Vec<ArgumentListElement>),
     Binary(BinOp, Box<Expression>, Box<Expression>),
+    Logical(LogOp, Box<Expression>, Box<Expression>),
     Unary(UnOp, Box<Expression>),
     StaticMember(Box<Expression>, Name)
 }
