@@ -59,7 +59,20 @@ impl<'a> Scanner<'a> {
             self.scan_number()
         } else if character == '=' {
             self.bump();
-            Token::Equals
+            match self.expect_current_char() {
+                '=' => {
+                    self.bump();
+                    match self.expect_current_char() {
+                        '=' => {
+                            self.bump();
+                            Token::EqEqEq
+                        },
+                        _ => Token::EqEq
+                    }
+                },
+                _ => Token::Eq
+            }
+
         } else if character == '(' {
             self.bump();
             Token::OpenParen
@@ -95,8 +108,8 @@ impl<'a> Scanner<'a> {
             Token::Minus
         } else if character == '&' {
             self.bump();
-            match self.current_char() {
-                Some('&') => {
+            match self.expect_current_char() {
+                '&' => {
                     self.bump();
                     Token::LogicalAnd
                 },
@@ -177,6 +190,10 @@ impl<'a> Scanner<'a> {
         let current = self.index;
         self.index += 1;
         current
+    }
+
+    fn expect_current_char(&self) -> char {
+        self.source.chars().nth(self.index).expect("Unexpected end of input")
     }
 
     fn current_char(&self) -> Option<char> {

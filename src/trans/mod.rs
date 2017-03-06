@@ -40,7 +40,9 @@ fn transpile_static_member<W: Write>(out: &mut W, base: &Expression, property: N
 fn transpile_binop<W: Write>(out: &mut W, op: &BinOp, left: &Expression, right: &Expression) -> Result<()> {
     try!(transpile_expression(out, left));
     match *op {
-        BinOp::Plus => write!(out, " + ")?
+        BinOp::Plus => write!(out, " + ")?,
+        BinOp::EqEq => write!(out, " == ")?,
+        BinOp::EqEqEq => write!(out, " === ")?,
     }
     transpile_expression(out, right)
 }

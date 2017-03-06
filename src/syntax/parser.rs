@@ -134,6 +134,14 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::Plus))
             }
+            Token::EqEq => {
+                self.scanner.next_token();
+                Some(InfixOp::BinOp(BinOp::EqEq))
+            }
+            Token::EqEqEq => {
+                self.scanner.next_token();
+                Some(InfixOp::BinOp(BinOp::EqEqEq))
+            }
             Token::LogicalAnd => {
                 self.scanner.next_token();
                 Some(InfixOp::LogOp(LogOp::AndAnd))
@@ -179,7 +187,7 @@ impl<'a> Parser<'a> {
         let ident = self.scanner.next_token();
 
         if let Token::Ident(name) = ident {
-            self.expect(Token::Equals);
+            self.expect(Token::Eq);
             let init = self.parse_primary_expression();
             Statement::VariableDeclaration(VariableDeclaration {
                 kind: VariableDeclarationKind::Var,

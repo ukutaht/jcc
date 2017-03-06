@@ -13,13 +13,15 @@ pub enum ArgumentListElement {
 
 #[derive(Debug, PartialEq)]
 pub enum BinOp {
-    Plus
+    Plus,
+    EqEq,
+    EqEqEq
 }
 
 #[derive(Debug, PartialEq)]
 pub enum UnOp {
     Not,
-    Minus
+    Minus,
 }
 
 #[derive(Debug, PartialEq)]
