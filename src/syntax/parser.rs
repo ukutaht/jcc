@@ -24,18 +24,28 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse_primary_expression(&mut self) -> Expression {
-        let tok = self.scanner.next_token();
-
-        match tok {
-            Token::Number(n) => Expression::Literal(Literal::Number(n)),
-            Token::String(s) => Expression::Literal(Literal::String(s)),
-            Token::Ident(n) => Expression::Identifier(n),
+        match self.scanner.lookahead {
+            Token::Number(n) => {
+                self.scanner.next_token();
+                Expression::Literal(Literal::Number(n))
+            }
+            Token::String(s) => {
+                self.scanner.next_token();
+                Expression::Literal(Literal::String(s))
+            }
+            Token::Ident(n) => {
+                self.scanner.next_token();
+                Expression::Identifier(n)
+            }
             Token::OpenSquare => self.parse_array_initializer(),
+            Token::FunctionKeyword => {
+                Expression::Function(self.parse_function())
+            },
             t => panic!("Bad token to start expression: {:?}", t),
         }
     }
 
-    fn parse_arguments(&mut self, base: Expression) -> Expression {
+    fn parse_arguments(&mut self) -> Vec<ArgumentListElement> {
         self.expect(Token::OpenParen);
         let mut arguments = Vec::new();
 
@@ -53,7 +63,7 @@ impl<'a> Parser<'a> {
         }
 
         self.expect(Token::CloseParen);
-        Expression::Call(Box::new(base), arguments)
+        arguments
     }
 
     fn parse_static_member_property(&mut self, base: Expression) -> Expression {
@@ -71,7 +81,10 @@ impl<'a> Parser<'a> {
 
         loop {
             match self.scanner.lookahead {
-                Token::OpenParen => result = self.parse_arguments(result),
+                Token::OpenParen => {
+                    let args = self.parse_arguments();
+                    result = Expression::Call(Box::new(result), args);
+                },
                 Token::Dot       => result = self.parse_static_member_property(result),
                 _ => break,
             }
@@ -80,9 +93,26 @@ impl<'a> Parser<'a> {
         result
     }
 
+    fn parse_new_expression(&mut self) -> Expression {
+        self.expect(Token::New);
+        let base = self.parse_primary_expression();
+        let args;
+        if self.scanner.lookahead == Token::OpenParen {
+            args = self.parse_arguments();
+        } else {
+            args = Vec::new();
+        }
+
+        Expression::New(Box::new(base), args)
+    }
+
     // https://tc39.github.io/ecma262/#sec-left-hand-side-expressions
     fn parse_lhs_expression(&mut self) -> Expression {
-        self.parse_call_expression()
+        if self.scanner.lookahead == Token::New {
+            self.parse_new_expression()
+        } else {
+            self.parse_call_expression()
+        }
     }
 
     // https://tc39.github.io/ecma262/#sec-unary-operators
@@ -163,6 +193,7 @@ impl<'a> Parser<'a> {
 
     // https://tc39.github.io/ecma262/#sec-array-initializer
     fn parse_array_initializer(&mut self) -> Expression {
+        self.expect(Token::OpenSquare);
         let mut elements = Vec::new();
 
         loop {
@@ -232,7 +263,7 @@ impl<'a> Parser<'a> {
     }
 
     // https://tc39.github.io/ecma262/#sec-function-definitions
-    fn parse_function_declaration(&mut self) -> Statement {
+    fn parse_function(&mut self) -> Function {
         self.expect(Token::FunctionKeyword);
 
         let id = match self.scanner.lookahead {
@@ -247,11 +278,7 @@ impl<'a> Parser<'a> {
         let parameters = self.parse_function_parameters();
         let block = self.parse_block();
 
-        Statement::FunctionDeclaration(FunctionDeclaration {
-            id: id,
-            body: block,
-            parameters: parameters,
-        })
+        Function { id: id, body: block, parameters: parameters }
     }
 
     fn parse_expression(&mut self) -> Expression {
@@ -283,7 +310,9 @@ impl<'a> Parser<'a> {
     fn parse_statement(&mut self) -> Statement {
         match self.scanner.lookahead {
             Token::Var => self.parse_variable_statement(),
-            Token::FunctionKeyword => self.parse_function_declaration(),
+            Token::FunctionKeyword => {
+                Statement::FunctionDeclaration(self.parse_function())
+            },
             Token::If => self.parse_if_statement(),
             Token::OpenCurly => Statement::Block(self.parse_block()),
             _ => self.parse_expression_statement(),

@@ -41,10 +41,12 @@ pub enum Expression {
     Identifier(Name),
     Array(Vec<Expression>),
     Call(Box<Expression>, Vec<ArgumentListElement>),
+    New(Box<Expression>, Vec<ArgumentListElement>),
     Binary(BinOp, Box<Expression>, Box<Expression>),
     Logical(LogOp, Box<Expression>, Box<Expression>),
     Unary(UnOp, Box<Expression>),
-    StaticMember(Box<Expression>, Name)
+    StaticMember(Box<Expression>, Name),
+    Function(Function)
 }
 
 #[derive(Debug, PartialEq)]
@@ -53,7 +55,7 @@ pub enum Pattern {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct FunctionDeclaration {
+pub struct Function {
     pub id: Option<Name>,
     pub body: Block,
     pub parameters: Vec<Pattern>,
@@ -63,7 +65,7 @@ pub struct FunctionDeclaration {
 pub enum Statement {
     Expression(Expression),
     VariableDeclaration(VariableDeclaration),
-    FunctionDeclaration(FunctionDeclaration),
+    FunctionDeclaration(Function),
     If(Expression, Box<Statement>, Option<Box<Statement>>),
     Block(Block)
 }

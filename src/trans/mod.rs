@@ -16,10 +16,12 @@ pub fn transpile_expression<W: Write>(out: &mut W, expr: &Expression) -> Result<
         Expression::Identifier(name) => transpile_ident(out, name),
         Expression::Array(ref elements) => transpile_array(out, elements),
         Expression::Call(ref callee, ref arguments) => transpile_call(out, &*callee, arguments),
+        Expression::New(ref callee, ref arguments) => transpile_new(out, &*callee, arguments),
         Expression::Binary(ref op, ref left, ref right) => transpile_binop(out, op, &*left, &*right),
         Expression::Logical(ref op, ref left, ref right) => transpile_logop(out, op, &*left, &*right),
         Expression::StaticMember(ref object, property) => transpile_static_member(out, &*object, property),
         Expression::Unary(ref op, ref expr) => transpile_unary_operator(out, op, &*expr),
+        Expression::Function(ref func) => transpile_function(out, func),
         ref expr => panic!("Cannot trans expr: {:?}", expr)
     }
 }
@@ -59,7 +61,20 @@ fn transpile_call<W: Write>(out: &mut W,
                             callee: &Expression,
                             arguments: &[ArgumentListElement])
                             -> Result<()> {
-    try!(transpile_expression(out, callee));
+    transpile_expression(out, callee)?;
+    transpile_arguments(out, arguments)
+}
+
+fn transpile_new<W: Write>(out: &mut W,
+                            callee: &Expression,
+                            arguments: &[ArgumentListElement])
+                            -> Result<()> {
+    write!(out, "new ")?;
+    transpile_expression(out, callee)?;
+    transpile_arguments(out, arguments)
+}
+
+fn transpile_arguments<W: Write>(out: &mut W, arguments: &[ArgumentListElement]) -> Result<()> {
     try!(write!(out, "("));
     for (idx, arg) in arguments.iter().enumerate() {
         match *arg {
@@ -110,7 +125,7 @@ fn transpile_function_parameter<W: Write>(out: &mut W, pat: &Pattern) -> Result<
     Ok(())
 }
 
-fn transpile_function_declaration<W: Write>(out: &mut W, fun: &FunctionDeclaration) -> Result<()> {
+fn transpile_function<W: Write>(out: &mut W, fun: &Function) -> Result<()> {
     let name = fun.id.map(|n| n.to_string()).unwrap_or("");
 
     try!(write!(out, "function {}(", name));
@@ -129,7 +144,7 @@ fn transpile_statement<W: Write>(out: &mut W, statement: &Statement) -> Result<(
     match *statement {
         Statement::Expression(ref e) => transpile_expression(out, e),
         Statement::VariableDeclaration(ref dec) => transpile_variable_declaration(out, dec),
-        Statement::FunctionDeclaration(ref dec) => transpile_function_declaration(out, dec),
+        Statement::FunctionDeclaration(ref dec) => transpile_function(out, dec),
         Statement::Block(ref b) => transpile_block(out, b),
         Statement::If(ref e, ref then, ref alternate) => transpile_if(out, e, then, alternate)
     }

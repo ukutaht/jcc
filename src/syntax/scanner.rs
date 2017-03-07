@@ -8,6 +8,7 @@ lazy_static! {
     static ref KEYWORD_FUNCTION: Name = intern("function");
     static ref KEYWORD_IF: Name = intern("if");
     static ref KEYWORD_ELSE: Name = intern("else");
+    static ref KEYWORD_NEW: Name = intern("new");
 }
 
 
@@ -165,6 +166,8 @@ impl<'a> Scanner<'a> {
             Token::If
         } else if value == *KEYWORD_ELSE {
             Token::Else
+        } else if value == *KEYWORD_NEW {
+            Token::New
         } else {
             Token::Ident(value)
         }

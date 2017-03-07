@@ -5,6 +5,7 @@ pub enum Token {
     Var,
     If,
     Else,
+    New,
     Ident(Name),
     String(Name),
     Eof,
