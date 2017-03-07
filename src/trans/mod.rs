@@ -151,9 +151,11 @@ fn transpile_if<W: Write>(out: &mut W, test: &Expression, then: &Statement, alte
 
 fn transpile_statement_list_item<W: Write>(out: &mut W, item: &StatementListItem) -> Result<()> {
     match *item {
-        StatementListItem::Statement(ref statement) => transpile_statement(out, statement),
+        StatementListItem::Statement(ref statement) => transpile_statement(out, statement)?,
         StatementListItem::Declaration => panic!("How do I transpile a declaration"),
     }
+
+    write!(out, ";")
 }
 
 fn transpile_block<W: Write>(out: &mut W, block: &Block) -> Result<()> {

@@ -1,8 +1,8 @@
 extern crate jcc;
 
 #[test]
-fn transforms_plus_op() {
+fn transforms_logical_and() {
     let result = jcc::transform("1 && 2").unwrap();
 
-    assert_eq!(result, "1 && 2".to_owned());
+    assert_eq!(result, "1 && 2;".to_owned());
 }
