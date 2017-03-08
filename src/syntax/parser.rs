@@ -1,6 +1,10 @@
+use errors::CompileError;
 use syntax::ast::*;
 use syntax::token::Token;
 use syntax::scanner::Scanner;
+use std;
+
+pub type Result<T> = std::result::Result<T, CompileError>;
 
 pub struct Parser<'a> {
     scanner: Scanner<'a>,
@@ -13,35 +17,36 @@ impl<'a> Parser<'a> {
         Parser { scanner: scanner }
     }
 
-    pub fn parse(&mut self) -> Program {
+    pub fn parse(&mut self) -> Result<Program> {
         let mut body = Vec::new();
 
         while self.scanner.lookahead != Token::Eof {
-            body.push(self.parse_statement_list_item());
+            body.push(self.parse_statement_list_item()?);
         }
 
-        Program(body)
+        Ok(Program(body))
     }
 
-    pub fn parse_primary_expression(&mut self) -> Expression {
-        match self.scanner.lookahead {
+    pub fn parse_primary_expression(&mut self) -> Result<Expression> {
+        match self.scanner.next_token() {
             Token::Number(n) => {
-                self.scanner.next_token();
-                Expression::Literal(Literal::Number(n))
+                Ok(Expression::Literal(Literal::Number(n)))
             }
-            Token::String(s) => {
-                self.scanner.next_token();
-                Expression::Literal(Literal::String(s))
+            Token::String(ref s) => {
+                Ok(Expression::Literal(Literal::String(s.clone())))
             }
             Token::Ident(n) => {
-                self.scanner.next_token();
-                Expression::Identifier(n)
+                Ok(Expression::Identifier(n))
             }
-            Token::OpenSquare => self.parse_array_initializer(),
-            Token::FunctionKeyword => {
-                Expression::Function(self.parse_function())
+            t@Token::OpenSquare => {
+                self.scanner.back(t);
+                self.parse_array_initializer()
             },
-            t => panic!("Bad token to start expression: {:?}", t),
+            t@Token::FunctionKeyword => {
+                self.scanner.back(t);
+                self.parse_function().map(Expression::Function)
+            },
+            ref t => Err(CompileError::UnexpectedToken(t.clone()))
         }
     }
 
@@ -53,7 +58,7 @@ impl<'a> Parser<'a> {
             if let Token::CloseParen = self.scanner.lookahead {
                 break;
             } else {
-                let argument = ArgumentListElement::Expression(self.parse_assignment_expression());
+                let argument = ArgumentListElement::Expression(self.parse_assignment_expression().unwrap());
                 arguments.push(argument);
 
                 if self.scanner.lookahead != Token::CloseParen {
@@ -76,8 +81,8 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_call_expression(&mut self) -> Expression {
-        let mut result = self.parse_primary_expression();
+    fn parse_call_expression(&mut self) -> Result<Expression> {
+        let mut result = self.parse_primary_expression()?;
 
         loop {
             match self.scanner.lookahead {
@@ -85,29 +90,28 @@ impl<'a> Parser<'a> {
                     let args = self.parse_arguments();
                     result = Expression::Call(Box::new(result), args);
                 },
-                Token::Dot       => result = self.parse_static_member_property(result),
+                Token::Dot => result = self.parse_static_member_property(result),
                 _ => break,
             }
         }
 
-        result
+        Ok(result)
     }
 
-    fn parse_new_expression(&mut self) -> Expression {
+    fn parse_new_expression(&mut self) -> Result<Expression> {
         self.expect(Token::New);
-        let base = self.parse_primary_expression();
-        let args;
-        if self.scanner.lookahead == Token::OpenParen {
-            args = self.parse_arguments();
+        let base = self.parse_primary_expression()?;
+        let args = if self.scanner.lookahead == Token::OpenParen {
+            self.parse_arguments()
         } else {
-            args = Vec::new();
-        }
+            Vec::new()
+        };
 
-        Expression::New(Box::new(base), args)
+        Ok(Expression::New(Box::new(base), args))
     }
 
     // https://tc39.github.io/ecma262/#sec-left-hand-side-expressions
-    fn parse_lhs_expression(&mut self) -> Expression {
+    fn parse_lhs_expression(&mut self) -> Result<Expression> {
         if self.scanner.lookahead == Token::New {
             self.parse_new_expression()
         } else {
@@ -116,20 +120,20 @@ impl<'a> Parser<'a> {
     }
 
     // https://tc39.github.io/ecma262/#sec-unary-operators
-    fn parse_unary_expression(&mut self) -> Expression {
+    fn parse_unary_expression(&mut self) -> Result<Expression> {
         let mut prefixes = Vec::new();
 
         while let Some(prefix) = self.match_unary_operator() {
             prefixes.push(prefix);
         }
 
-        let mut expr = self.parse_lhs_expression();
+        let mut expr = self.parse_lhs_expression()?;
 
         for prefix in prefixes.into_iter().rev() {
             expr = Expression::Unary(prefix, Box::new(expr))
         }
 
-        return expr;
+        Ok(expr)
     }
 
     fn match_unary_operator(&mut self) -> Option<UnOp> {
@@ -146,15 +150,15 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_more_infix_expressions(&mut self, left: Expression) -> Expression {
+    fn parse_more_infix_expressions(&mut self, left: Expression) -> Result<Expression> {
         if let Some(op) = self.match_infix() {
-            let right = self.parse_unary_expression();
+            let right = self.parse_unary_expression()?;
             match op {
-                InfixOp::BinOp(bin_op) => Expression::Binary(bin_op, Box::new(left), Box::new(right)),
-                InfixOp::LogOp(log_op) => Expression::Logical(log_op, Box::new(left), Box::new(right)),
+                InfixOp::BinOp(bin_op) => Ok(Expression::Binary(bin_op, Box::new(left), Box::new(right))),
+                InfixOp::LogOp(log_op) => Ok(Expression::Logical(log_op, Box::new(left), Box::new(right))),
             }
         } else {
-            left
+            Ok(left)
         }
     }
 
@@ -181,18 +185,18 @@ impl<'a> Parser<'a> {
     }
 
     // https://tc39.github.io/ecma262/#sec-conditional-operator
-    fn parse_conditional_expression(&mut self) -> Expression {
-        let left = self.parse_unary_expression();
+    fn parse_conditional_expression(&mut self) -> Result<Expression> {
+        let left = self.parse_unary_expression()?;
         self.parse_more_infix_expressions(left)
     }
 
     // https://tc39.github.io/ecma262/#sec-assignment-operators
-    fn parse_assignment_expression(&mut self) -> Expression {
+    fn parse_assignment_expression(&mut self) -> Result<Expression> {
         self.parse_conditional_expression()
     }
 
     // https://tc39.github.io/ecma262/#sec-array-initializer
-    fn parse_array_initializer(&mut self) -> Expression {
+    fn parse_array_initializer(&mut self) -> Result<Expression> {
         self.expect(Token::OpenSquare);
         let mut elements = Vec::new();
 
@@ -200,7 +204,7 @@ impl<'a> Parser<'a> {
             if let Token::CloseSquare = self.scanner.lookahead {
                 break;
             } else {
-                elements.push(self.parse_assignment_expression());
+                elements.push(self.parse_assignment_expression()?);
 
                 if self.scanner.lookahead != Token::CloseSquare {
                     self.expect(Token::Comma);
@@ -209,24 +213,24 @@ impl<'a> Parser<'a> {
         }
 
         self.expect(Token::CloseSquare);
-        Expression::Array(elements)
+        Ok(Expression::Array(elements))
     }
 
     // https://tc39.github.io/ecma262/#sec-block
-    fn parse_variable_statement(&mut self) -> Statement {
+    fn parse_variable_statement(&mut self) -> Result<Statement> {
         self.expect(Token::Var);
         let ident = self.scanner.next_token();
 
         if let Token::Ident(name) = ident {
             self.expect(Token::Eq);
-            let init = self.parse_primary_expression();
-            Statement::VariableDeclaration(VariableDeclaration {
+            let init = self.parse_primary_expression()?;
+            Ok(Statement::VariableDeclaration(VariableDeclaration {
                 kind: VariableDeclarationKind::Var,
                 declarations: vec![VariableDeclarator {
                                        id: name,
                                        init: Some(init),
                                    }],
-            })
+            }))
         } else {
             panic!("Wat");
         }
@@ -263,78 +267,78 @@ impl<'a> Parser<'a> {
     }
 
     // https://tc39.github.io/ecma262/#sec-function-definitions
-    fn parse_function(&mut self) -> Function {
+    fn parse_function(&mut self) -> Result<Function> {
         self.expect(Token::FunctionKeyword);
 
-        let id = match self.scanner.lookahead {
-            Token::Ident(name) => {
-                self.scanner.next_token();
-                Some(name)
+        let id = match self.scanner.next_token() {
+            Token::Ident(name) => Some(name),
+            t@Token::OpenParen => {
+                self.scanner.back(t);
+                None
             }
-            Token::OpenParen => None,
             _ => panic!("Unexpected token"),
         };
 
         let parameters = self.parse_function_parameters();
-        let block = self.parse_block();
+        let block = self.parse_block()?;
 
-        Function { id: id, body: block, parameters: parameters }
+        Ok(Function { id: id, body: block, parameters: parameters })
     }
 
-    fn parse_expression(&mut self) -> Expression {
+    fn parse_expression(&mut self) -> Result<Expression> {
         self.parse_assignment_expression()
     }
 
-    fn parse_expression_statement(&mut self) -> Statement {
-        let expr = self.parse_expression();
-        Statement::Expression(expr)
+    fn parse_expression_statement(&mut self) -> Result<Statement> {
+        let expr = self.parse_expression()?;
+        Ok(Statement::Expression(expr))
     }
 
-    fn parse_if_statement(&mut self) -> Statement {
+    fn parse_if_statement(&mut self) -> Result<Statement> {
         self.expect(Token::If);
         self.expect(Token::OpenParen);
-        let test = self.parse_expression();
+        let test = self.parse_expression()?;
         self.expect(Token::CloseParen);
-        let then = self.parse_statement();
+        let then = self.parse_statement()?;
         let alternate = match self.scanner.lookahead {
             Token::Else => {
                 self.scanner.next_token();
-                Some(Box::new(self.parse_statement()))
+                Some(Box::new(self.parse_statement()?))
             },
             _ => None
         };
 
-        Statement::If(test, Box::new(then), alternate)
+        Ok(Statement::If(test, Box::new(then), alternate))
     }
 
-    fn parse_statement(&mut self) -> Statement {
+    fn parse_statement(&mut self) -> Result<Statement> {
         match self.scanner.lookahead {
             Token::Var => self.parse_variable_statement(),
             Token::FunctionKeyword => {
-                Statement::FunctionDeclaration(self.parse_function())
+                self.parse_function().map(Statement::FunctionDeclaration)
             },
             Token::If => self.parse_if_statement(),
-            Token::OpenCurly => Statement::Block(self.parse_block()),
+            Token::OpenCurly => self.parse_block().map(Statement::Block),
             _ => self.parse_expression_statement(),
         }
     }
 
     // https://tc39.github.io/ecma262/#sec-block
-    fn parse_statement_list_item(&mut self) -> StatementListItem {
-        StatementListItem::Statement(self.parse_statement())
+    fn parse_statement_list_item(&mut self) -> Result<StatementListItem> {
+        self.parse_statement().map(StatementListItem::Statement)
     }
 
     // https://tc39.github.io/ecma262/#sec-block
-    fn parse_block(&mut self) -> Block {
+    fn parse_block(&mut self) -> Result<Block> {
         self.expect(Token::OpenCurly);
         let mut statements = Vec::new();
 
         while self.scanner.lookahead != Token::CloseCurly {
-            statements.push(self.parse_statement_list_item());
+            statements.push(self.parse_statement_list_item()?);
         }
 
         self.expect(Token::CloseCurly);
-        Block(statements)
+        Ok(Block(statements))
     }
 
     fn expect(&mut self, expected: Token) {

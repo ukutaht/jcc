@@ -1,16 +1,12 @@
 use syntax::char::ESCharExt;
 use syntax::token::Token;
-use syntax::intern::{intern, Name};
 use std::mem;
 
-lazy_static! {
-    static ref KEYWORD_VAR: Name = intern("var");
-    static ref KEYWORD_FUNCTION: Name = intern("function");
-    static ref KEYWORD_IF: Name = intern("if");
-    static ref KEYWORD_ELSE: Name = intern("else");
-    static ref KEYWORD_NEW: Name = intern("new");
-}
-
+static KEYWORD_VAR: &'static str = "var";
+static KEYWORD_FUNCTION: &'static str = "function";
+static KEYWORD_IF: &'static str = "if";
+static KEYWORD_ELSE: &'static str = "else";
+static KEYWORD_NEW: &'static str = "new";
 
 pub struct Scanner<'a> {
     source: &'a str,
@@ -35,6 +31,11 @@ impl<'a> Scanner<'a> {
         let token = mem::replace(&mut self.lookahead, Token::Eof);
         self.lookahead = self.lex();
         token
+    }
+
+    pub fn back(&mut self, token: Token) {
+        self.lookahead = token;
+        self.index -= 1;
     }
 
     fn lex(&mut self) -> Token {
@@ -152,7 +153,7 @@ impl<'a> Scanner<'a> {
             }
         }
 
-        Token::String(intern(&self.source[start..self.index]))
+        Token::String(self.source[start..self.index].to_string())
     }
 
     fn scan_identifier(&mut self) -> Token {
@@ -173,7 +174,7 @@ impl<'a> Scanner<'a> {
         }
     }
 
-    fn get_identifier(&mut self) -> Name {
+    fn get_identifier(&mut self) -> String {
         let start = self.bump();
 
         while !self.is_eof() {
@@ -186,7 +187,7 @@ impl<'a> Scanner<'a> {
             }
         }
 
-        intern(&self.source[start..self.index])
+        self.source[start..self.index].to_string()
     }
 
     fn bump(&mut self) -> usize {

@@ -1,9 +1,7 @@
-use syntax::intern::Name;
-
 #[derive(Debug, PartialEq)]
 pub enum Literal {
     Number(f64),
-    String(Name),
+    String(String),
 }
 
 #[derive(Debug, PartialEq)]
@@ -38,25 +36,25 @@ pub enum InfixOp {
 #[derive(Debug, PartialEq)]
 pub enum Expression {
     Literal(Literal),
-    Identifier(Name),
+    Identifier(String),
     Array(Vec<Expression>),
     Call(Box<Expression>, Vec<ArgumentListElement>),
     New(Box<Expression>, Vec<ArgumentListElement>),
     Binary(BinOp, Box<Expression>, Box<Expression>),
     Logical(LogOp, Box<Expression>, Box<Expression>),
     Unary(UnOp, Box<Expression>),
-    StaticMember(Box<Expression>, Name),
+    StaticMember(Box<Expression>, String),
     Function(Function)
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Pattern {
-    Identifier(Name),
+    Identifier(String),
 }
 
 #[derive(Debug, PartialEq)]
 pub struct Function {
-    pub id: Option<Name>,
+    pub id: Option<String>,
     pub body: Block,
     pub parameters: Vec<Pattern>,
 }
@@ -85,7 +83,7 @@ pub enum VariableDeclarationKind {
 
 #[derive(Debug, PartialEq)]
 pub struct VariableDeclarator {
-    pub id: Name,
+    pub id: String,
     pub init: Option<Expression>,
 }
 
@@ -97,4 +95,5 @@ pub struct VariableDeclaration {
 
 #[derive(Debug, PartialEq)]
 pub struct Block(pub Vec<StatementListItem>);
+#[derive(Debug, PartialEq)]
 pub struct Program(pub Vec<StatementListItem>);

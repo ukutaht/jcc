@@ -1,25 +1,24 @@
 use syntax::ast::*;
-use syntax::intern::Name;
 use std::io::{Write, Result};
-
 
 pub fn transpile<W: Write>(out: &mut W, program: &Program) -> Result<()> {
     for item in &program.0 {
         try!(transpile_statement_list_item(out, item))
     }
+    write!(out, "\n")?;
     Ok(())
 }
 
 pub fn transpile_expression<W: Write>(out: &mut W, expr: &Expression) -> Result<()> {
     match *expr {
         Expression::Literal(ref lit) => transpile_literal(out, lit),
-        Expression::Identifier(name) => transpile_ident(out, name),
+        Expression::Identifier(ref name) => transpile_ident(out, name),
         Expression::Array(ref elements) => transpile_array(out, elements),
         Expression::Call(ref callee, ref arguments) => transpile_call(out, &*callee, arguments),
         Expression::New(ref callee, ref arguments) => transpile_new(out, &*callee, arguments),
         Expression::Binary(ref op, ref left, ref right) => transpile_binop(out, op, &*left, &*right),
         Expression::Logical(ref op, ref left, ref right) => transpile_logop(out, op, &*left, &*right),
-        Expression::StaticMember(ref object, property) => transpile_static_member(out, &*object, property),
+        Expression::StaticMember(ref object, ref property) => transpile_static_member(out, &*object, property),
         Expression::Unary(ref op, ref expr) => transpile_unary_operator(out, op, &*expr),
         Expression::Function(ref func) => transpile_function(out, func),
         ref expr => panic!("Cannot trans expr: {:?}", expr)
@@ -34,7 +33,7 @@ fn transpile_unary_operator<W: Write>(out: &mut W, operator: &UnOp, expr: &Expre
     transpile_expression(out, expr)
 }
 
-fn transpile_static_member<W: Write>(out: &mut W, base: &Expression, property: Name) -> Result<()> {
+fn transpile_static_member<W: Write>(out: &mut W, base: &Expression, property: &str) -> Result<()> {
     try!(transpile_expression(out, base));
     write!(out, ".{}", property)
 }
@@ -126,9 +125,11 @@ fn transpile_function_parameter<W: Write>(out: &mut W, pat: &Pattern) -> Result<
 }
 
 fn transpile_function<W: Write>(out: &mut W, fun: &Function) -> Result<()> {
-    let name = fun.id.map(|n| n.to_string()).unwrap_or("");
+    match fun.id {
+        Some(ref name) => write!(out, "function {}(", name)?,
+        None => write!(out, "function(")?,
+    }
 
-    try!(write!(out, "function {}(", name));
     for (idx, parameter) in fun.parameters.iter().enumerate() {
         try!(transpile_function_parameter(out, parameter));
         if idx != fun.parameters.len() - 1 {
@@ -184,10 +185,10 @@ fn transpile_block<W: Write>(out: &mut W, block: &Block) -> Result<()> {
 fn transpile_literal<W: Write>(out: &mut W, lit: &Literal) -> Result<()> {
     match *lit {
         Literal::Number(num) => write!(out, "{}", num),
-        Literal::String(s) => write!(out, "{}", s.to_string()),
+        Literal::String(ref s) => write!(out, "{}", s),
     }
 }
 
-fn transpile_ident<W: Write>(out: &mut W, ident: Name) -> Result<()> {
-    write!(out, "{}", ident.to_string())
+fn transpile_ident<W: Write>(out: &mut W, ident: &str) -> Result<()> {
+    write!(out, "{}", ident)
 }

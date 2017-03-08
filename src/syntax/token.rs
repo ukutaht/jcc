@@ -1,13 +1,11 @@
-use syntax::intern::Name;
-
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     Var,
     If,
     Else,
     New,
-    Ident(Name),
-    String(Name),
+    Ident(String),
+    String(String),
     Eof,
     Number(f64),
     Eq,

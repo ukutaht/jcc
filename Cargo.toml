@@ -6,7 +6,14 @@ authors = ["Uku Taht <uku.taht@gmail.com>"]
 [lib]
 doctest = false
 doc = false
-bench = false
+
+[[test]]
+name = "suite"
+harness = false
 
 [dependencies]
-lazy_static = "0.2.*"
+serde_json = "0.9"
+
+[dev-dependencies]
+rustc-test = "0.1"
+glob = "0.2"
