@@ -15,12 +15,12 @@ fn expect_value<'a>(node: &'a Value, key: &str) -> &'a Value {
 }
 
 fn binary_expression(node: &Value) -> Result<Expression> {
+    let left = expression(expect_value(node, "left"))?;
+    let right = expression(expect_value(node, "right"))?;
+
     match expect_string(node, "operator") {
-        "==" => {
-            let left = expression(expect_value(node, "left"))?;
-            let right = expression(expect_value(node, "right"))?;
-            Ok(Expression::Binary(BinOp::EqEq, Box::new(left), Box::new(right)))
-        },
+        "==" => Ok(Expression::Binary(BinOp::EqEq, Box::new(left), Box::new(right))),
+        "===" => Ok(Expression::Binary(BinOp::EqEqEq, Box::new(left), Box::new(right))),
         _ => Err(())
     }
 }

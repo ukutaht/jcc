@@ -22,7 +22,6 @@ expression/bitwise-shift/**
 expression/complex/**
 expression/conditional/**
 expression/equality/migrated_0001
-expression/equality/migrated_0002
 expression/equality/migrated_0003
 expression/grouping/**
 expression/left-hand-side/**
