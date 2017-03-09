@@ -7,9 +7,9 @@ extern crate serde_json;
 
 mod json;
 use std::env;
-use std::fs::{File, read_dir};
+use std::fs::File;
 use std::io::Read;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use glob::glob;
 use test::{TestDesc, TestDescAndFn, TestName, TestFn, test_main};
 use test::ShouldPanic::No;
@@ -26,52 +26,52 @@ fn add_test<F: FnOnce() + Send + 'static>(tests: &mut Vec<TestDescAndFn>, name: 
     });
 }
 
-fn unit_tests(target: &mut Vec<TestDescAndFn>) {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let fixtures = root.join(Path::new("tests/esprima-fixtures"));
-
-    let testignore: Vec<_> =
-        include_str!(".esprima-ignore")
-        .lines()
+fn ignores_from(ignore_file: &str) -> Vec<glob::Pattern> {
+    ignore_file.lines()
         .filter(|s| !s.is_empty() && !s.starts_with("#"))
         .map(|s| glob::Pattern::new(s).unwrap())
-        .collect();
+        .collect()
+}
 
-    let files =
-        read_dir(fixtures.as_path()).unwrap()
-        .flat_map(|dir| glob(&format!("{}/**/*.tree.json", dir.unwrap().path().to_str().unwrap())).unwrap())
+fn file_pairs(base_str: &str, pair_extension: &str, ignore_file: &str) -> Vec<(PathBuf, PathBuf, String, bool)> {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let base = root.join(Path::new(base_str));
+    let testignore = ignores_from(ignore_file);
+
+    glob(&format!("{}/**/*{}", base.to_str().unwrap(), pair_extension)).unwrap()
         .filter_map(|entry| {
             let tree_path = entry.unwrap();
-            let source_path = {
-                let tree_file_name = tree_path.file_name().unwrap().to_str().unwrap();
-                let source_file_name = tree_file_name[..tree_file_name.len() - 9].to_string() + "js";
-                tree_path.with_file_name(source_file_name)
-            };
+            let source_path = PathBuf::from(&tree_path.to_str().unwrap().replace(pair_extension, ".js"));
             if source_path.exists() {
+                let name = source_path.strip_prefix(&root).unwrap().to_str().unwrap().to_string();
                 let ignore = {
-                    let local_test_path = source_path.strip_prefix(&fixtures).unwrap().with_extension("");
+                    let local_test_path = source_path.strip_prefix(&base).unwrap().with_extension("");
                     testignore.iter().any(|ignore| ignore.matches_path(&local_test_path))
                 };
-                Some((tree_path, source_path, ignore))
+                Some((tree_path, source_path, name, ignore))
             } else {
                 None
             }
-        });
+        }).collect()
+}
 
-    for (tree_path, source_path, ignore) in files {
-        add_test(target, source_path.strip_prefix(&root).unwrap().to_str().unwrap().to_string(), ignore, move || {
+fn esprima_tests(target: &mut Vec<TestDescAndFn>) {
+    let pairs = file_pairs("tests/esprima-fixtures", ".tree.json", include_str!(".esprima-ignore"));
+
+    for (tree_path, source_path, name, ignore) in pairs {
+        add_test(target, name, ignore, move || {
             let expected_json: Value = serde_json::de::from_reader(File::open(tree_path).unwrap()).unwrap();
             let expected = json::parse_program(&expected_json);
             let mut source = String::new();
             File::open(source_path).unwrap().read_to_string(&mut source).unwrap();
             match (jcc::parse(&source[..]), expected) {
                 (Ok(actual_ast), expected) => {
-                    assert!(actual_ast == expected, "unit test got wrong result\n\
+                    assert!(actual_ast == expected, "esprima test got wrong result\n\
                     expected: {:#?}\n\
                     actual AST: {:#?}", expected, actual_ast);
                 }
                 (Err(actual_err), _) => {
-                    assert!(false, "unit test failed to parse:\n{:#?}", actual_err);
+                    assert!(false, "esprima test failed to parse:\n{:#?}", actual_err);
                 }
             }
         });
@@ -79,29 +79,8 @@ fn unit_tests(target: &mut Vec<TestDescAndFn>) {
 }
 
 fn trans_tests(target: &mut Vec<TestDescAndFn>) {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let fixtures = root.join(Path::new("tests/trans-fixtures"));
-
-    let files =
-        read_dir(fixtures.as_path()).unwrap()
-        .flat_map(|dir| glob(&format!("{}/**/*.out.js", dir.unwrap().path().to_str().unwrap())).unwrap())
-        .filter_map(|entry| {
-            let tree_path = entry.unwrap();
-            let source_path = {
-                let tree_file_name = tree_path.file_name().unwrap().to_str().unwrap();
-                let source_file_name = tree_file_name[..tree_file_name.len() - 6].to_string() + "js";
-                tree_path.with_file_name(source_file_name)
-            };
-            if source_path.exists() {
-                let ignore = false;
-                Some((tree_path, source_path, ignore))
-            } else {
-                None
-            }
-        });
-
-    for (out_path, source_path, ignore) in files {
-        add_test(target, source_path.strip_prefix(&root).unwrap().to_str().unwrap().to_string(), ignore, move || {
+    for (out_path, source_path, name, _) in file_pairs("tests/trans-fixtures", ".out.js", "") {
+        add_test(target, name, false, move || {
             let mut expected = String::new();
             File::open(out_path).unwrap().read_to_string(&mut expected).unwrap();
             let mut source = String::new();
@@ -113,7 +92,7 @@ fn trans_tests(target: &mut Vec<TestDescAndFn>) {
                     actual AST: {:#?}", expected, out);
                 }
                 (Err(actual_err), _) => {
-                    assert!(false, "unit test failed to parse:\n{:#?}", actual_err);
+                    assert!(false, "trans test failed to parse:\n{:#?}", actual_err);
                 }
             }
         });
@@ -123,7 +102,7 @@ fn trans_tests(target: &mut Vec<TestDescAndFn>) {
 fn main() {
     let args: Vec<_> = env::args().collect();
     let mut tests = Vec::new();
-    unit_tests(&mut tests);
+    esprima_tests(&mut tests);
     trans_tests(&mut tests);
     test_main(&args, tests);
 }
