@@ -1,5 +1,7 @@
+use syntax::span::Span;
+
 #[derive(Debug, PartialEq, Clone)]
-pub enum Token {
+pub enum TokenValue {
     Var,
     If,
     Else,
@@ -24,4 +26,10 @@ pub enum Token {
     Minus,
     Bang,
     LogicalAnd,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Token {
+    pub value: TokenValue,
+    pub span: Span
 }

@@ -1,5 +1,6 @@
 pub mod ast;
 pub mod token;
+pub mod span;
 mod parser;
 mod char;
 mod scanner;

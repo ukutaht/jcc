@@ -1,3 +1,5 @@
+use syntax::span::{Tracking, Span};
+
 #[derive(Debug, PartialEq)]
 pub enum Literal {
     Number(f64),
@@ -35,16 +37,26 @@ pub enum InfixOp {
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
-    Literal(Literal),
-    Identifier(String),
+    Literal(Span, Literal),
+    Identifier(Span, String),
     Array(Vec<Expression>),
     Call(Box<Expression>, Vec<ArgumentListElement>),
     New(Box<Expression>, Vec<ArgumentListElement>),
-    Binary(BinOp, Box<Expression>, Box<Expression>),
+    Binary(Span, BinOp, Box<Expression>, Box<Expression>),
     Logical(LogOp, Box<Expression>, Box<Expression>),
     Unary(UnOp, Box<Expression>),
     StaticMember(Box<Expression>, String),
     Function(Function)
+}
+
+impl Tracking for Expression {
+    fn span(&self) -> &Span {
+        match self {
+            &Expression::Literal(ref s, _) => s,
+            &Expression::Identifier(ref s, _) => s,
+            e => panic!("Cannot get span for: {:?}", e)
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]

@@ -1,5 +1,6 @@
 use syntax::char::ESCharExt;
-use syntax::token::Token;
+use syntax::span::{Span, Position};
+use syntax::token::{Token, TokenValue};
 use std::mem;
 
 static KEYWORD_VAR: &'static str = "var";
@@ -11,6 +12,8 @@ static KEYWORD_NEW: &'static str = "new";
 pub struct Scanner<'a> {
     source: &'a str,
     index: usize,
+    line: u32,
+    column: u32,
     pub lookahead: Token,
 }
 
@@ -19,7 +22,9 @@ impl<'a> Scanner<'a> {
         Scanner {
             source: source,
             index: 0,
-            lookahead: Token::Eof,
+            column: 0,
+            line: 1,
+            lookahead: Token {value: TokenValue::Eof, span: Span::initial() }
         }
     }
 
@@ -28,7 +33,7 @@ impl<'a> Scanner<'a> {
     }
 
     pub fn next_token(&mut self) -> Token {
-        let token = mem::replace(&mut self.lookahead, Token::Eof);
+        let token = mem::replace(&mut self.lookahead, Token {value: TokenValue::Eof, span: Span::initial() });
         self.lookahead = self.lex();
         token
     }
@@ -39,19 +44,39 @@ impl<'a> Scanner<'a> {
     }
 
     fn lex(&mut self) -> Token {
-        let character;
+        self.skip_whitespace();
+        let start = self.pos();
+        let value = self.lex_value();
+        Token { value:  value, span: Span { start: start, end: self.pos() } }
+    }
 
+    fn pos(&self) -> Position {
+        Position { column: self.column, line: self.line }
+    }
+
+    fn skip_whitespace(&mut self) {
         loop {
             match self.current_char() {
-                None => return Token::Eof,
-                Some('\n') => self.bump(),
-                Some(c) if c.is_es_whitespace() => self.bump(),
-                Some(c) => {
-                    character = c;
-                    break;
+                Some('\n') => {
+                    self.line += 1;
+                    self.column = 0;
+                    self.bump();
                 }
+                Some(c) if c.is_es_whitespace() => {
+                    self.column += 1;
+                    self.bump();
+                },
+                _ => break
             };
         }
+    }
+
+    fn lex_value(&mut self) -> TokenValue {
+        if let None = self.current_char() {
+            return TokenValue::Eof;
+        }
+
+        let character = self.expect_current_char();
 
         if character.is_es_identifier_start() {
             self.scan_identifier()
@@ -61,59 +86,62 @@ impl<'a> Scanner<'a> {
             self.scan_number()
         } else if character == '=' {
             self.bump();
+            self.column += 1;
             match self.expect_current_char() {
                 '=' => {
                     self.bump();
+                    self.column += 1;
                     match self.expect_current_char() {
                         '=' => {
                             self.bump();
-                            Token::EqEqEq
+                            self.column += 1;
+                            TokenValue::EqEqEq
                         },
-                        _ => Token::EqEq
+                        _ => TokenValue::EqEq
                     }
                 },
-                _ => Token::Eq
+                _ => TokenValue::Eq
             }
 
         } else if character == '(' {
             self.bump();
-            Token::OpenParen
+            TokenValue::OpenParen
         } else if character == ')' {
             self.bump();
-            Token::CloseParen
+            TokenValue::CloseParen
         } else if character == '{' {
             self.bump();
-            Token::OpenCurly
+            TokenValue::OpenCurly
         } else if character == '}' {
             self.bump();
-            Token::CloseCurly
+            TokenValue::CloseCurly
         } else if character == '[' {
             self.bump();
-            Token::OpenSquare
+            TokenValue::OpenSquare
         } else if character == ']' {
             self.bump();
-            Token::CloseSquare
+            TokenValue::CloseSquare
         } else if character == '+' {
             self.bump();
-            Token::Plus
+            TokenValue::Plus
         } else if character == ',' {
             self.bump();
-            Token::Comma
+            TokenValue::Comma
         } else if character == '.' {
             self.bump();
-            Token::Dot
+            TokenValue::Dot
         } else if character == '!' {
             self.bump();
-            Token::Bang
+            TokenValue::Bang
         } else if character == '-' {
             self.bump();
-            Token::Minus
+            TokenValue::Minus
         } else if character == '&' {
             self.bump();
             match self.expect_current_char() {
                 '&' => {
                     self.bump();
-                    Token::LogicalAnd
+                    TokenValue::LogicalAnd
                 },
                 _ => panic!("Something with &")
             }
@@ -122,7 +150,7 @@ impl<'a> Scanner<'a> {
         }
     }
 
-    fn scan_number(&mut self) -> Token {
+    fn scan_number(&mut self) -> TokenValue {
         let start = self.bump();
 
         while !self.is_eof() {
@@ -137,10 +165,10 @@ impl<'a> Scanner<'a> {
 
         let number_string = &self.source[start..self.index];
         let value: f64 = number_string.parse().unwrap();
-        Token::Number(value)
+        TokenValue::Number(value)
     }
 
-    fn scan_string(&mut self) -> Token {
+    fn scan_string(&mut self) -> TokenValue {
         let start = self.bump();
         let quote = self.nth_char(start);
 
@@ -153,29 +181,30 @@ impl<'a> Scanner<'a> {
             }
         }
 
-        Token::String(self.source[start..self.index].to_string())
+        TokenValue::String(self.source[start..self.index].to_string())
     }
 
-    fn scan_identifier(&mut self) -> Token {
+    fn scan_identifier(&mut self) -> TokenValue {
         let value = self.get_identifier();
 
         if value == *KEYWORD_VAR {
-            Token::Var
+            TokenValue::Var
         } else if value == *KEYWORD_FUNCTION {
-            Token::FunctionKeyword
+            TokenValue::FunctionKeyword
         } else if value == *KEYWORD_IF {
-            Token::If
+            TokenValue::If
         } else if value == *KEYWORD_ELSE {
-            Token::Else
+            TokenValue::Else
         } else if value == *KEYWORD_NEW {
-            Token::New
+            TokenValue::New
         } else {
-            Token::Ident(value)
+            TokenValue::Ident(value)
         }
     }
 
     fn get_identifier(&mut self) -> String {
-        let start = self.bump();
+        let start_index = self.bump();
+        self.column += 1;
 
         while !self.is_eof() {
             let ch = self.current_char().unwrap();
@@ -187,7 +216,7 @@ impl<'a> Scanner<'a> {
             }
         }
 
-        self.source[start..self.index].to_string()
+        self.source[start_index..self.index].to_string()
     }
 
     fn bump(&mut self) -> usize {
