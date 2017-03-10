@@ -45,6 +45,8 @@ fn binary_expression(node: &Value) -> Result<Expression> {
     match expect_string(node, "operator") {
         "==" => Ok(Expression::Binary(span, BinOp::EqEq, Box::new(left), Box::new(right))),
         "===" => Ok(Expression::Binary(span, BinOp::EqEqEq, Box::new(left), Box::new(right))),
+        "!=" => Ok(Expression::Binary(span, BinOp::NotEq, Box::new(left), Box::new(right))),
+        "!==" => Ok(Expression::Binary(span, BinOp::NotEqEq, Box::new(left), Box::new(right))),
         _ => Err(())
     }
 }

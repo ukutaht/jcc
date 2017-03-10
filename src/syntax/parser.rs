@@ -177,6 +177,14 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::EqEq))
             }
+            TokenValue::NotEq => {
+                self.scanner.next_token();
+                Some(InfixOp::BinOp(BinOp::NotEq))
+            }
+            TokenValue::NotEqEq => {
+                self.scanner.next_token();
+                Some(InfixOp::BinOp(BinOp::NotEqEq))
+            }
             TokenValue::EqEqEq => {
                 self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::EqEqEq))

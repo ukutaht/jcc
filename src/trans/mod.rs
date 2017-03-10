@@ -43,6 +43,8 @@ fn transpile_binop<W: Write>(out: &mut W, op: &BinOp, left: &Expression, right: 
         BinOp::Plus => write!(out, " + ")?,
         BinOp::EqEq => write!(out, " == ")?,
         BinOp::EqEqEq => write!(out, " === ")?,
+        BinOp::NotEq => write!(out, " != ")?,
+        BinOp::NotEqEq => write!(out, " !== ")?,
     }
     transpile_expression(out, right)
 }

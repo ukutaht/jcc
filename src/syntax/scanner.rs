@@ -63,7 +63,6 @@ impl<'a> Scanner<'a> {
                     self.bump();
                 }
                 Some(c) if c.is_es_whitespace() => {
-                    self.column += 1;
                     self.bump();
                 },
                 _ => break
@@ -86,15 +85,12 @@ impl<'a> Scanner<'a> {
             self.scan_number()
         } else if character == '=' {
             self.bump();
-            self.column += 1;
             match self.expect_current_char() {
                 '=' => {
                     self.bump();
-                    self.column += 1;
                     match self.expect_current_char() {
                         '=' => {
                             self.bump();
-                            self.column += 1;
                             TokenValue::EqEqEq
                         },
                         _ => TokenValue::EqEq
@@ -132,7 +128,19 @@ impl<'a> Scanner<'a> {
             TokenValue::Dot
         } else if character == '!' {
             self.bump();
-            TokenValue::Bang
+            match self.expect_current_char() {
+                '=' => {
+                    self.bump();
+                    match self.expect_current_char() {
+                        '=' => {
+                            self.bump();
+                            TokenValue::NotEqEq
+                        },
+                        _ => TokenValue::NotEq
+                    }
+                },
+                _ => TokenValue::Bang
+            }
         } else if character == '-' {
             self.bump();
             TokenValue::Minus
@@ -204,7 +212,6 @@ impl<'a> Scanner<'a> {
 
     fn get_identifier(&mut self) -> String {
         let start_index = self.bump();
-        self.column += 1;
 
         while !self.is_eof() {
             let ch = self.current_char().unwrap();
@@ -222,6 +229,7 @@ impl<'a> Scanner<'a> {
     fn bump(&mut self) -> usize {
         let current = self.index;
         self.index += 1;
+        self.column += 1;
         current
     }
 

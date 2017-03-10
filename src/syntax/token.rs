@@ -13,6 +13,8 @@ pub enum TokenValue {
     Eq,
     EqEq,
     EqEqEq,
+    NotEq,
+    NotEqEq,
     FunctionKeyword,
     OpenParen,
     CloseParen,
