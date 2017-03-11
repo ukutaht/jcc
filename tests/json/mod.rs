@@ -11,6 +11,10 @@ fn expect_string<'a>(node: &'a Value, key: &str) -> &'a str {
     node.as_object().unwrap().get(key).unwrap().as_str().unwrap()
 }
 
+fn expect_array<'a>(node: &'a Value, key: &str) -> &'a Vec<Value> {
+    node.as_object().unwrap().get(key).unwrap().as_array().unwrap()
+}
+
 fn expect_u64<'a>(node: &'a Value, key: &str) -> u64 {
     node.as_object().unwrap().get(key).unwrap().as_u64().unwrap()
 }
@@ -51,12 +55,39 @@ fn binary_expression(node: &Value) -> Result<Expression> {
     }
 }
 
+fn assignment_expression(node: &Value) -> Result<Expression> {
+    let left = expression(expect_value(node, "left"))?;
+    let right = expression(expect_value(node, "right"))?;
+    let span = span(node)?;
+
+    match expect_string(node, "operator") {
+        "=" => {
+            Ok(Expression::Assignment(span, AssignOp::Eq, Box::new(left), Box::new(right)))
+        }
+        _ => Err(())
+    }
+}
+
+fn array_expression(node: &Value) -> Result<Expression> {
+    let span = span(node)?;
+    let mut elements = Vec::new();
+
+    for element in expect_array(node, "elements") {
+        elements.push(expression(element)?);
+    }
+
+    Ok(Expression::Array(span, elements))
+}
+
 fn expression(node: &Value) -> Result<Expression> {
     let span = span(node)?;
 
     match expect_string(node, "type") {
-        "FunctionExpression" => {
-            Err(())
+        "AssignmentExpression" => {
+            assignment_expression(node)
+        },
+        "ArrayExpression" => {
+            array_expression(node)
         },
         "Identifier" => {
             Ok(Expression::Identifier(span, expect_string(node, "name").to_owned()))

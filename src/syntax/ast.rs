@@ -38,17 +38,23 @@ pub enum InfixOp {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum AssignOp {
+    Eq
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Expression {
     Literal(Span, Literal),
     Identifier(Span, String),
-    Array(Vec<Expression>),
+    Array(Span, Vec<Expression>),
     Call(Box<Expression>, Vec<ArgumentListElement>),
     New(Box<Expression>, Vec<ArgumentListElement>),
     Binary(Span, BinOp, Box<Expression>, Box<Expression>),
     Logical(LogOp, Box<Expression>, Box<Expression>),
     Unary(UnOp, Box<Expression>),
     StaticMember(Box<Expression>, String),
-    Function(Function)
+    Function(Function),
+    Assignment(Span, AssignOp, Box<Expression>, Box<Expression>),
 }
 
 impl Tracking for Expression {
@@ -56,6 +62,7 @@ impl Tracking for Expression {
         match self {
             &Expression::Literal(ref s, _) => s,
             &Expression::Identifier(ref s, _) => s,
+            &Expression::Array(ref s, _) => s,
             e => panic!("Cannot get span for: {:?}", e)
         }
     }

@@ -41,6 +41,7 @@ impl<'a> Scanner<'a> {
     pub fn back(&mut self, token: Token) {
         self.lookahead = token;
         self.index -= 1;
+        self.column -= 1;
     }
 
     fn lex(&mut self) -> Token {

@@ -1,7 +1,7 @@
 use errors::CompileError;
 use syntax::ast::*;
 use syntax::span::Tracking;
-use syntax::token::{TokenValue};
+use syntax::token::{Token, TokenValue};
 use syntax::scanner::Scanner;
 use std;
 
@@ -205,12 +205,26 @@ impl<'a> Parser<'a> {
 
     // https://tc39.github.io/ecma262/#sec-assignment-operators
     fn parse_assignment_expression(&mut self) -> Result<Expression> {
-        self.parse_conditional_expression()
+        let left = self.parse_conditional_expression()?;
+        match self.scanner.lookahead.value {
+            TokenValue::Eq => {
+                self.scanner.next_token();
+                match left {
+                    Expression::Identifier(_, _) => {
+                        let right = self.parse_assignment_expression()?;
+                        let span = left.span().to(right.span());
+                        Ok(Expression::Assignment(span, AssignOp::Eq, Box::new(left), Box::new(right)))
+                    }
+                    _ => panic!("Invalid assignment target")
+                }
+            }
+            _ => Ok(left)
+        }
     }
 
     // https://tc39.github.io/ecma262/#sec-array-initializer
     fn parse_array_initializer(&mut self) -> Result<Expression> {
-        self.expect(TokenValue::OpenSquare);
+        let start = self.expect(TokenValue::OpenSquare);
         let mut elements = Vec::new();
 
         loop {
@@ -225,8 +239,8 @@ impl<'a> Parser<'a> {
             }
         }
 
-        self.expect(TokenValue::CloseSquare);
-        Ok(Expression::Array(elements))
+        let end = self.expect(TokenValue::CloseSquare);
+        Ok(Expression::Array(start.span.to(&end.span), elements))
     }
 
     // https://tc39.github.io/ecma262/#sec-block
@@ -351,11 +365,13 @@ impl<'a> Parser<'a> {
         Ok(Block(statements))
     }
 
-    fn expect(&mut self, expected: TokenValue) {
+    fn expect(&mut self, expected: TokenValue) -> Token {
         let next = self.scanner.next_token();
 
         if next.value != expected {
             panic!("Expected {:?}, got {:?}", expected, next);
         }
+
+        next
     }
 }
