@@ -38,12 +38,6 @@ impl<'a> Scanner<'a> {
         token
     }
 
-    pub fn back(&mut self, token: Token) {
-        self.lookahead = token;
-        self.index -= 1;
-        self.column -= 1;
-    }
-
     fn lex(&mut self) -> Token {
         self.skip_whitespace();
         let start = self.pos();

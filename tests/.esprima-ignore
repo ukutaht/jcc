@@ -27,8 +27,6 @@ expression/left-hand-side/**
 expression/multiplicative/**
 expression/postfix/**
 
-expression/primary/array/migrated_0001
-expression/primary/array/migrated_0002
 expression/primary/array/migrated_0003
 expression/primary/array/migrated_0004
 expression/primary/array/migrated_0005

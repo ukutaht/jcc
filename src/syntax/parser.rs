@@ -29,23 +29,24 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse_primary_expression(&mut self) -> Result<Expression> {
-        let token = self.scanner.next_token();
+        let token = self.scanner.lookahead.clone();
         match token.value {
             TokenValue::Number(n) => {
+                self.scanner.next_token();
                 Ok(Expression::Literal(token.span.clone(), Literal::Number(n)))
             }
             TokenValue::String(ref s) => {
+                self.scanner.next_token();
                 Ok(Expression::Literal(token.span.clone(), Literal::String(s.clone())))
             }
             TokenValue::Ident(n) => {
+                self.scanner.next_token();
                 Ok(Expression::Identifier(token.span.clone(), n))
             }
             TokenValue::OpenSquare => {
-                self.scanner.back(token);
                 self.parse_array_initializer()
             },
             TokenValue::FunctionKeyword => {
-                self.scanner.back(token);
                 self.parse_function().map(Expression::Function)
             },
             _ => Err(CompileError::UnexpectedToken(token.clone()))
@@ -293,11 +294,12 @@ impl<'a> Parser<'a> {
     fn parse_function(&mut self) -> Result<Function> {
         self.expect(TokenValue::FunctionKeyword);
 
-        let token = self.scanner.next_token();
-        let id = match token.value {
-            TokenValue::Ident(name) => Some(name),
+        let id = match self.scanner.lookahead.clone().value {
+            TokenValue::Ident(name) => {
+                self.scanner.next_token();
+                Some(name)
+            }
             TokenValue::OpenParen => {
-                self.scanner.back(token);
                 None
             }
             _ => panic!("Unexpected token"),
@@ -314,8 +316,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_expression_statement(&mut self) -> Result<Statement> {
-        let expr = self.parse_expression()?;
-        Ok(Statement::Expression(expr))
+        Ok(Statement::Expression(self.parse_expression()?))
     }
 
     fn parse_if_statement(&mut self) -> Result<Statement> {

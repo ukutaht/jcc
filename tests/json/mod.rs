@@ -79,6 +79,16 @@ fn array_expression(node: &Value) -> Result<Expression> {
     Ok(Expression::Array(span, elements))
 }
 
+fn literal(node: &Value) -> Result<Literal> {
+    let val = expect_value(node, "value");
+
+    if val.is_number() {
+        Ok(Literal::Number(val.as_f64().unwrap()))
+    } else {
+        Err(())
+    }
+}
+
 fn expression(node: &Value) -> Result<Expression> {
     let span = span(node)?;
 
@@ -91,6 +101,9 @@ fn expression(node: &Value) -> Result<Expression> {
         },
         "Identifier" => {
             Ok(Expression::Identifier(span, expect_string(node, "name").to_owned()))
+        }
+        "Literal" => {
+            Ok(Expression::Literal(span, literal(node)?))
         }
         "BinaryExpression" => {
             binary_expression(node)
