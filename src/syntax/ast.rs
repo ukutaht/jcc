@@ -46,7 +46,7 @@ pub enum AssignOp {
 pub enum Expression {
     Literal(Span, Literal),
     Identifier(Span, String),
-    Array(Span, Vec<Expression>),
+    Array(Span, Vec<Option<Expression>>),
     Call(Box<Expression>, Vec<ArgumentListElement>),
     New(Box<Expression>, Vec<ArgumentListElement>),
     Binary(Span, BinOp, Box<Expression>, Box<Expression>),

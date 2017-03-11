@@ -231,12 +231,17 @@ impl<'a> Parser<'a> {
         loop {
             if let TokenValue::CloseSquare = self.scanner.lookahead.value {
                 break;
+            }
+            if let TokenValue::Comma = self.scanner.lookahead.value {
+                self.scanner.next_token();
+                elements.push(None);
+                continue;
             } else {
-                elements.push(self.parse_assignment_expression()?);
+                elements.push(Some(self.parse_assignment_expression()?));
+            }
 
-                if self.scanner.lookahead.value != TokenValue::CloseSquare {
-                    self.expect(TokenValue::Comma);
-                }
+            if self.scanner.lookahead.value != TokenValue::CloseSquare {
+                self.expect(TokenValue::Comma);
             }
         }
 

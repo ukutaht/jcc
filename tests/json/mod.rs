@@ -73,7 +73,11 @@ fn array_expression(node: &Value) -> Result<Expression> {
     let mut elements = Vec::new();
 
     for element in expect_array(node, "elements") {
-        elements.push(expression(element)?);
+        if element.is_null() {
+            elements.push(None)
+        } else {
+            elements.push(Some(expression(element)?));
+        }
     }
 
     Ok(Expression::Array(span, elements))
