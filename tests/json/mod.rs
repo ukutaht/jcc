@@ -83,6 +83,18 @@ fn array_expression(node: &Value) -> Result<Expression> {
     Ok(Expression::Array(span, elements))
 }
 
+fn new_expression(node: &Value) -> Result<Expression> {
+    let span = span(node)?;
+    let callee = expression(expect_value(node, "callee"))?;
+    let mut arguments = Vec::new();
+
+    for argument in expect_array(node, "arguments") {
+        arguments.push(ArgumentListElement::Expression(expression(argument)?));
+    }
+
+    Ok(Expression::New(span, Box::new(callee), arguments))
+}
+
 fn literal(node: &Value) -> Result<Literal> {
     let val = expect_value(node, "value");
 
@@ -103,14 +115,17 @@ fn expression(node: &Value) -> Result<Expression> {
         "ArrayExpression" => {
             array_expression(node)
         },
+        "BinaryExpression" => {
+            binary_expression(node)
+        },
         "Identifier" => {
             Ok(Expression::Identifier(span, expect_string(node, "name").to_owned()))
         }
         "Literal" => {
             Ok(Expression::Literal(span, literal(node)?))
         }
-        "BinaryExpression" => {
-            binary_expression(node)
+        "NewExpression" => {
+            new_expression(node)
         },
         _ => Err(())
     }

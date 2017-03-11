@@ -30,6 +30,13 @@ impl Span {
             end: other.end
         }
     }
+
+    pub fn to_pos(&self, end: Position) -> Span {
+        Span {
+            start: self.start,
+            end: end
+        }
+    }
 }
 
 pub trait Tracking {

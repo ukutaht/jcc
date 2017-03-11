@@ -102,15 +102,16 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_new_expression(&mut self) -> Result<Expression> {
-        self.expect(TokenValue::New);
+        let start = self.expect(TokenValue::New);
         let base = self.parse_primary_expression()?;
         let args = if self.scanner.lookahead.value == TokenValue::OpenParen {
             self.parse_arguments()
         } else {
             Vec::new()
         };
+        let span = start.span.to_pos(self.scanner.pos());
 
-        Ok(Expression::New(Box::new(base), args))
+        Ok(Expression::New(span, Box::new(base), args))
     }
 
     // https://tc39.github.io/ecma262/#sec-left-hand-side-expressions
