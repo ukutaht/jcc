@@ -89,7 +89,7 @@ fn trans_tests(target: &mut Vec<TestDescAndFn>) {
                 (Ok(out), expected) => {
                     assert!(out == expected, "trans test got wrong result\n\
                     expected: {:#?}\n\
-                    actual AST: {:#?}", expected, out);
+                    actual: {:#?}", expected, out);
                 }
                 (Err(actual_err), _) => {
                     assert!(false, "trans test failed to parse:\n{:#?}", actual_err);
