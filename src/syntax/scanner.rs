@@ -2,7 +2,6 @@ use syntax::char::ESCharExt;
 use syntax::span::{Span, Position};
 use syntax::token::{Token, TokenValue};
 use std::str::Chars;
-use std::iter::Enumerate;
 use std::mem;
 
 static KEYWORD_VAR: &'static str = "var";
@@ -13,7 +12,7 @@ static KEYWORD_NEW: &'static str = "new";
 
 pub struct Scanner<'a> {
     source: &'a str,
-    chars: Enumerate<Chars<'a>>,
+    chars: Chars<'a>,
     current_char: Option<char>,
     index: usize,
     line: u32,
@@ -25,7 +24,7 @@ impl<'a> Scanner<'a> {
     pub fn new(source: &'a str) -> Scanner {
         Scanner {
             source: source,
-            chars: source.chars().enumerate(),
+            chars: source.chars(),
             current_char: None,
             index: 0,
             column: 0,
@@ -35,7 +34,7 @@ impl<'a> Scanner<'a> {
     }
 
     pub fn position_at_start(&mut self) {
-        self.chars.next().map(|(_, c)| self.current_char = Some(c));
+        self.current_char = self.chars.next();
         self.lookahead = self.lex();
     }
 
@@ -232,9 +231,9 @@ impl<'a> Scanner<'a> {
         let current = self.index;
 
         match self.chars.next() {
-            Some((i, c)) => {
+            Some(c) => {
                 self.current_char = Some(c);
-                self.index = i;
+                self.index += 1;
                 self.column += 1;
             }
             None => {
