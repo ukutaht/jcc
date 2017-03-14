@@ -157,9 +157,7 @@ impl<'a> Scanner<'a> {
     fn scan_number(&mut self) -> TokenValue {
         let start = self.bump();
 
-        while !self.is_eof() {
-            let ch = self.current_char().unwrap();
-
+        while let Some(ch) = self.current_char {
             if ch.is_digit(10) || ch == '.' {
                 self.bump();
             } else {
@@ -176,8 +174,7 @@ impl<'a> Scanner<'a> {
         let quote = self.expect_current_char();
         let start = self.bump();
 
-        while !self.is_eof() {
-            let ch = self.expect_current_char();
+        while let Some(ch) = self.current_char {
             self.bump();
 
             if ch == quote {
@@ -209,9 +206,7 @@ impl<'a> Scanner<'a> {
     fn get_identifier(&mut self) -> String {
         let start_index = self.bump();
 
-        while !self.is_eof() {
-            let ch = self.current_char().unwrap();
-
+        while let Some(ch) = self.current_char {
             if ch.is_es_identifier_continue() {
                 self.bump();
             } else {
@@ -246,9 +241,5 @@ impl<'a> Scanner<'a> {
 
     fn current_char(&self) -> Option<char> {
         self.current_char
-    }
-
-    fn is_eof(&self) -> bool {
-        self.current_char.is_none()
     }
 }
