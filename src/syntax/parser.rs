@@ -79,7 +79,7 @@ impl<'a> Parser<'a> {
         let token = self.scanner.next_token();
         match token.value {
             TokenValue::Ident(name) => {
-                Expression::StaticMember(base.span().to(&token.span), Box::new(base), name)
+                Expression::StaticMember(base.span().merge(&token.span), Box::new(base), name)
             },
             _ => panic!("Unexpected thing in member property")
         }
@@ -92,7 +92,7 @@ impl<'a> Parser<'a> {
             match self.scanner.lookahead.value {
                 TokenValue::OpenParen => {
                     let args = self.parse_arguments();
-                    let span = result.span().to_pos(self.scanner.pos());
+                    let span = result.span().to(&self.scanner.lookahead.span);
                     result = Expression::Call(span, Box::new(result), args);
                 },
                 TokenValue::Dot => result = self.parse_static_member_property(result),
@@ -111,7 +111,7 @@ impl<'a> Parser<'a> {
         } else {
             Vec::new()
         };
-        let span = start.span.to_pos(self.scanner.pos());
+        let span = start.span.to(&self.scanner.lookahead.span);
 
         Ok(Expression::New(span, Box::new(base), args))
     }
@@ -161,7 +161,7 @@ impl<'a> Parser<'a> {
             let right = self.parse_unary_expression()?;
             match op {
                 InfixOp::BinOp(bin_op) => {
-                    let span = left.span().to(right.span());
+                    let span = left.span().merge(right.span());
                     Ok(Expression::Binary(span, bin_op, Box::new(left), Box::new(right)))
                 }
                 InfixOp::LogOp(log_op) => Ok(Expression::Logical(log_op, Box::new(left), Box::new(right))),
@@ -216,7 +216,7 @@ impl<'a> Parser<'a> {
                 match left {
                     Expression::Identifier(_, _) => {
                         let right = self.parse_assignment_expression()?;
-                        let span = left.span().to(right.span());
+                        let span = left.span().merge(right.span());
                         Ok(Expression::Assignment(span, AssignOp::Eq, Box::new(left), Box::new(right)))
                     }
                     _ => panic!("Invalid assignment target")
@@ -249,7 +249,7 @@ impl<'a> Parser<'a> {
         }
 
         let end = self.expect(TokenValue::CloseSquare);
-        Ok(Expression::Array(start.span.to(&end.span), elements))
+        Ok(Expression::Array(start.span.merge(&end.span), elements))
     }
 
     // https://tc39.github.io/ecma262/#sec-block

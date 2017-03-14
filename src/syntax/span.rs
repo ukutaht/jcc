@@ -24,17 +24,17 @@ impl Span {
         }
     }
 
-    pub fn to(&self, other: &Span) -> Span {
+    pub fn merge(&self, other: &Span) -> Span {
         Span {
             start: self.start,
             end: other.end
         }
     }
 
-    pub fn to_pos(&self, end: Position) -> Span {
+    pub fn to(&self, other: &Span) -> Span {
         Span {
             start: self.start,
-            end: end
+            end: other.start
         }
     }
 }

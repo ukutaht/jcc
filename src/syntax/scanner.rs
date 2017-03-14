@@ -45,7 +45,7 @@ impl<'a> Scanner<'a> {
         Token { value:  value, span: Span { start: start, end: self.pos() } }
     }
 
-    pub fn pos(&self) -> Position {
+    fn pos(&self) -> Position {
         Position { column: self.column, line: self.line }
     }
 
