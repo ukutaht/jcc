@@ -103,23 +103,33 @@ impl<'a> Parser<'a> {
         Ok(result)
     }
 
-    fn parse_new_expression(&mut self) -> Result<Expression> {
-        let start = self.expect(TokenValue::New);
-        let base = self.parse_primary_expression()?;
-        let args = if self.scanner.lookahead.value == TokenValue::OpenParen {
-            self.parse_arguments()
-        } else {
-            Vec::new()
-        };
-        let span = start.span.to(&self.scanner.lookahead.span);
+    fn parse_new_expression(&mut self, news: Vec<Token>) -> Result<Expression> {
+        let mut result = self.parse_primary_expression()?;
 
-        Ok(Expression::New(span, Box::new(base), args))
+        for new in news.iter().rev() {
+            let args = if self.scanner.lookahead.value == TokenValue::OpenParen {
+                self.parse_arguments()
+            } else {
+                Vec::new()
+            };
+
+            let span = new.span.to(&self.scanner.lookahead.span);
+
+            result = Expression::New(span, Box::new(result), args);
+        }
+
+        Ok(result)
     }
 
     // https://tc39.github.io/ecma262/#sec-left-hand-side-expressions
     fn parse_lhs_expression(&mut self) -> Result<Expression> {
-        if self.scanner.lookahead.value == TokenValue::New {
-            self.parse_new_expression()
+        let mut news = Vec::new();
+        while let TokenValue::New = self.scanner.lookahead.value {
+            news.push(self.scanner.next_token());
+        }
+
+        if news.len() > 0 {
+            self.parse_new_expression(news)
         } else {
             self.parse_call_expression()
         }
