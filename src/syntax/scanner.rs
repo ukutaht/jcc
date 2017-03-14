@@ -45,17 +45,8 @@ impl<'a> Scanner<'a> {
     }
 
     fn lex(&mut self) -> Token {
-        self.skip_whitespace();
-        let start = self.pos();
-        let value = self.lex_value();
-        Token { value:  value, span: Span { start: start, end: self.pos() } }
-    }
+        let character;
 
-    fn pos(&self) -> Position {
-        Position { column: self.column, line: self.line }
-    }
-
-    fn skip_whitespace(&mut self) {
         loop {
             match self.current_char() {
                 Some('\n') => {
@@ -65,20 +56,19 @@ impl<'a> Scanner<'a> {
                 }
                 Some(c) if c.is_es_whitespace() => {
                     self.bump();
-                },
-                _ => break
+                }
+                Some(c) => {
+                    character = c;
+                    break;
+                }
+                None => {
+                    return Token { value: TokenValue::Eof, span: Span { start: self.pos(), end: self.pos() } }
+                }
             };
         }
-    }
 
-    fn lex_value(&mut self) -> TokenValue {
-        if let None = self.current_char() {
-            return TokenValue::Eof;
-        }
-
-        let character = self.expect_current_char();
-
-        if character.is_es_identifier_start() {
+        let start = self.pos();
+        let value = if character.is_es_identifier_start() {
             self.scan_identifier()
         } else if character.is_es_quote() {
             self.scan_string()
@@ -156,7 +146,13 @@ impl<'a> Scanner<'a> {
             }
         } else {
             panic!("Unknown character: {}", character);
-        }
+        };
+
+        Token { value: value, span: Span { start: start, end: self.pos() } }
+    }
+
+    fn pos(&self) -> Position {
+        Position { column: self.column, line: self.line }
     }
 
     fn scan_number(&mut self) -> TokenValue {
