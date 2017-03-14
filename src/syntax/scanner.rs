@@ -1,6 +1,8 @@
 use syntax::char::ESCharExt;
 use syntax::span::{Span, Position};
 use syntax::token::{Token, TokenValue};
+use std::str::Chars;
+use std::iter::Enumerate;
 use std::mem;
 
 static KEYWORD_VAR: &'static str = "var";
@@ -11,6 +13,8 @@ static KEYWORD_NEW: &'static str = "new";
 
 pub struct Scanner<'a> {
     source: &'a str,
+    chars: Enumerate<Chars<'a>>,
+    current_char: Option<char>,
     index: usize,
     line: u32,
     column: u32,
@@ -21,6 +25,8 @@ impl<'a> Scanner<'a> {
     pub fn new(source: &'a str) -> Scanner {
         Scanner {
             source: source,
+            chars: source.chars().enumerate(),
+            current_char: None,
             index: 0,
             column: 0,
             line: 1,
@@ -29,6 +35,7 @@ impl<'a> Scanner<'a> {
     }
 
     pub fn position_at_start(&mut self) {
+        self.chars.next().map(|(_, c)| self.current_char = Some(c));
         self.lookahead = self.lex();
     }
 
@@ -223,20 +230,31 @@ impl<'a> Scanner<'a> {
 
     fn bump(&mut self) -> usize {
         let current = self.index;
-        self.index += 1;
-        self.column += 1;
+
+        match self.chars.next() {
+            Some((i, c)) => {
+                self.current_char = Some(c);
+                self.index = i;
+                self.column += 1;
+            }
+            None => {
+                self.current_char = None;
+                self.index = self.source.len();
+                self.column += 1;
+            }
+        }
         current
     }
 
     fn expect_current_char(&self) -> char {
-        self.source.chars().nth(self.index).expect("Unexpected end of input")
+        self.current_char.expect("Unexpected end of input")
     }
 
     fn current_char(&self) -> Option<char> {
-        self.source.chars().nth(self.index)
+        self.current_char
     }
 
     fn is_eof(&self) -> bool {
-        self.current_char().is_none()
+        self.current_char.is_none()
     }
 }
