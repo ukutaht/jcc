@@ -39,9 +39,8 @@ impl<'a> Scanner<'a> {
     }
 
     pub fn next_token(&mut self) -> Token {
-        let token = mem::replace(&mut self.lookahead, Token {value: TokenValue::Eof, span: Span::initial() });
-        self.lookahead = self.lex();
-        token
+        let tok = self.lex();
+        mem::replace(&mut self.lookahead, tok)
     }
 
     fn lex(&mut self) -> Token {
