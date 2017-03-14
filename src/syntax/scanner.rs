@@ -172,11 +172,11 @@ impl<'a> Scanner<'a> {
     }
 
     fn scan_string(&mut self) -> TokenValue {
+        let quote = self.expect_current_char();
         let start = self.bump();
-        let quote = self.nth_char(start);
 
         while !self.is_eof() {
-            let ch = self.current_char();
+            let ch = self.expect_current_char();
             self.bump();
 
             if ch == quote {
@@ -234,10 +234,6 @@ impl<'a> Scanner<'a> {
 
     fn current_char(&self) -> Option<char> {
         self.source.chars().nth(self.index)
-    }
-
-    fn nth_char(&self, nth: usize) -> Option<char> {
-        self.source.chars().nth(nth)
     }
 
     fn is_eof(&self) -> bool {
