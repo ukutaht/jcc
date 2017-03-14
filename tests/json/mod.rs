@@ -19,6 +19,10 @@ fn expect_u64<'a>(node: &'a Value, key: &str) -> u64 {
     node.as_object().unwrap().get(key).unwrap().as_u64().unwrap()
 }
 
+fn expect_bool<'a>(node: &'a Value, key: &str) -> bool {
+    node.as_object().unwrap().get(key).unwrap().as_bool().unwrap()
+}
+
 fn expect_value<'a>(node: &'a Value, key: &str) -> &'a Value {
     node.as_object().unwrap().get(key).unwrap()
 }
@@ -95,6 +99,22 @@ fn new_expression(node: &Value) -> Result<Expression> {
     Ok(Expression::New(span, Box::new(callee), arguments))
 }
 
+fn member_expression(node: &Value) -> Result<Expression> {
+    if expect_bool(node, "computed") {
+        Err(())
+    } else {
+        let object = expression(expect_value(node, "object"))?;
+        let prop = expression(expect_value(node, "property"))?;
+
+        match prop {
+            Expression::Identifier(_, ref s) => {
+                Ok(Expression::StaticMember(span(node)?, Box::new(object), s.clone()))
+            }
+            _ => Err(())
+        }
+    }
+}
+
 fn literal(node: &Value) -> Result<Literal> {
     let val = expect_value(node, "value");
 
@@ -124,6 +144,9 @@ fn expression(node: &Value) -> Result<Expression> {
         "Literal" => {
             Ok(Expression::Literal(span, literal(node)?))
         }
+        "MemberExpression" => {
+            member_expression(node)
+        },
         "NewExpression" => {
             new_expression(node)
         },

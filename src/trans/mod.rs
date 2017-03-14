@@ -14,11 +14,11 @@ pub fn transpile_expression<W: Write>(out: &mut W, expr: &Expression) -> Result<
         Expression::Literal(_, ref lit) => transpile_literal(out, lit),
         Expression::Identifier(_, ref name) => transpile_ident(out, name),
         Expression::Array(_, ref elements) => transpile_array(out, elements),
-        Expression::Call(ref callee, ref arguments) => transpile_call(out, &*callee, arguments),
+        Expression::Call(_, ref callee, ref arguments) => transpile_call(out, &*callee, arguments),
         Expression::New(_, ref callee, ref arguments) => transpile_new(out, &*callee, arguments),
         Expression::Binary(_, ref op, ref left, ref right) => transpile_binop(out, op, &*left, &*right),
         Expression::Logical(ref op, ref left, ref right) => transpile_logop(out, op, &*left, &*right),
-        Expression::StaticMember(ref object, ref property) => transpile_static_member(out, &*object, property),
+        Expression::StaticMember(_, ref object, ref property) => transpile_static_member(out, &*object, property),
         Expression::Unary(ref op, ref expr) => transpile_unary_operator(out, op, &*expr),
         Expression::Function(ref func) => transpile_function(out, func),
         ref e => panic!("Cannot trans: {:?}", e)

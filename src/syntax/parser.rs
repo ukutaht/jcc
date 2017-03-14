@@ -76,9 +76,10 @@ impl<'a> Parser<'a> {
 
     fn parse_static_member_property(&mut self, base: Expression) -> Expression {
         self.expect(TokenValue::Dot);
-        match self.scanner.next_token().value {
+        let token = self.scanner.next_token();
+        match token.value {
             TokenValue::Ident(name) => {
-                Expression::StaticMember(Box::new(base), name)
+                Expression::StaticMember(base.span().to(&token.span), Box::new(base), name)
             },
             _ => panic!("Unexpected thing in member property")
         }
@@ -91,7 +92,8 @@ impl<'a> Parser<'a> {
             match self.scanner.lookahead.value {
                 TokenValue::OpenParen => {
                     let args = self.parse_arguments();
-                    result = Expression::Call(Box::new(result), args);
+                    let span = result.span().to_pos(self.scanner.pos());
+                    result = Expression::Call(span, Box::new(result), args);
                 },
                 TokenValue::Dot => result = self.parse_static_member_property(result),
                 _ => break,

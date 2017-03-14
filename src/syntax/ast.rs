@@ -47,12 +47,12 @@ pub enum Expression {
     Literal(Span, Literal),
     Identifier(Span, String),
     Array(Span, Vec<Option<Expression>>),
-    Call(Box<Expression>, Vec<ArgumentListElement>),
+    Call(Span, Box<Expression>, Vec<ArgumentListElement>),
     New(Span, Box<Expression>, Vec<ArgumentListElement>),
     Binary(Span, BinOp, Box<Expression>, Box<Expression>),
     Logical(LogOp, Box<Expression>, Box<Expression>),
     Unary(UnOp, Box<Expression>),
-    StaticMember(Box<Expression>, String),
+    StaticMember(Span, Box<Expression>, String),
     Function(Function),
     Assignment(Span, AssignOp, Box<Expression>, Box<Expression>),
 }
@@ -63,6 +63,8 @@ impl Tracking for Expression {
             &Expression::Literal(ref s, _) => s,
             &Expression::Identifier(ref s, _) => s,
             &Expression::Array(ref s, _) => s,
+            &Expression::StaticMember(ref s, _, _) => s,
+            &Expression::Call(ref s, _, _) => s,
             e => panic!("Cannot get span for: {:?}", e)
         }
     }
