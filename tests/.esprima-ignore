@@ -8,8 +8,6 @@ es2018/**
 ES6/**
 invalid-syntax/**
 JSX/**
-tokenize/**
-tolerant-parse/**
 whitespace/**
 statement/**
 
