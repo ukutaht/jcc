@@ -77,12 +77,14 @@ impl<'a> Parser<'a> {
     fn parse_static_member_property(&mut self, base: Expression) -> Result<Expression> {
         self.expect(TokenValue::Dot);
         let token = self.scanner.next_token();
-        match token.value {
-            TokenValue::Ident(name) => {
-                Ok(Expression::StaticMember(base.span().merge(&token.span), Box::new(base), name))
-            },
-            _ => Err(CompileError::UnexpectedToken(token))
-        }
+        let identifier_name = match token.value {
+            TokenValue::Ident(name) => name,
+            TokenValue::If => "if".to_string(),
+            TokenValue::Else => "else".to_string(),
+            _ => return Err(CompileError::UnexpectedToken(token))
+        };
+
+        Ok(Expression::StaticMember(base.span().merge(&token.span), Box::new(base), identifier_name))
     }
 
     fn parse_new_expression(&mut self) -> Result<Expression> {
