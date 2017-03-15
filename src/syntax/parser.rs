@@ -74,65 +74,55 @@ impl<'a> Parser<'a> {
         arguments
     }
 
-    fn parse_static_member_property(&mut self, base: Expression) -> Expression {
+    fn parse_static_member_property(&mut self, base: Expression) -> Result<Expression> {
         self.expect(TokenValue::Dot);
         let token = self.scanner.next_token();
         match token.value {
             TokenValue::Ident(name) => {
-                Expression::StaticMember(base.span().merge(&token.span), Box::new(base), name)
+                Ok(Expression::StaticMember(base.span().merge(&token.span), Box::new(base), name))
             },
-            _ => panic!("Unexpected thing in member property")
+            _ => Err(CompileError::UnexpectedToken(token))
         }
     }
 
-    fn parse_call_expression(&mut self) -> Result<Expression> {
-        let mut result = self.parse_primary_expression()?;
+    fn parse_new_expression(&mut self) -> Result<Expression> {
+        let start = self.expect(TokenValue::New);
+        let base = self.parse_lhs_expression(false)?;
+        let args = if self.scanner.lookahead.value == TokenValue::OpenParen {
+            self.parse_arguments()
+        } else {
+            Vec::new()
+        };
+        let span = start.span.to(&self.scanner.lookahead.span);
+
+        Ok(Expression::New(span, Box::new(base), args))
+    }
+
+    // https://tc39.github.io/ecma262/#sec-left-hand-side-expressions
+    fn parse_lhs_expression(&mut self, allow_call: bool) -> Result<Expression> {
+        let mut result = if self.scanner.lookahead.value == TokenValue::New {
+            self.parse_new_expression()?
+        } else {
+            self.parse_primary_expression()?
+        };
 
         loop {
             match self.scanner.lookahead.value {
                 TokenValue::OpenParen => {
-                    let args = self.parse_arguments();
-                    let span = result.span().to(&self.scanner.lookahead.span);
-                    result = Expression::Call(span, Box::new(result), args);
+                    if allow_call {
+                        let args = self.parse_arguments();
+                        let span = result.span().to(&self.scanner.lookahead.span);
+                        result = Expression::Call(span, Box::new(result), args);
+                    } else {
+                        break;
+                    }
                 },
-                TokenValue::Dot => result = self.parse_static_member_property(result),
+                TokenValue::Dot => result = self.parse_static_member_property(result)?,
                 _ => break,
             }
         }
 
         Ok(result)
-    }
-
-    fn parse_new_expression(&mut self, news: Vec<Token>) -> Result<Expression> {
-        let mut result = self.parse_primary_expression()?;
-
-        for new in news.iter().rev() {
-            let args = if self.scanner.lookahead.value == TokenValue::OpenParen {
-                self.parse_arguments()
-            } else {
-                Vec::new()
-            };
-
-            let span = new.span.to(&self.scanner.lookahead.span);
-
-            result = Expression::New(span, Box::new(result), args);
-        }
-
-        Ok(result)
-    }
-
-    // https://tc39.github.io/ecma262/#sec-left-hand-side-expressions
-    fn parse_lhs_expression(&mut self) -> Result<Expression> {
-        let mut news = Vec::new();
-        while let TokenValue::New = self.scanner.lookahead.value {
-            news.push(self.scanner.next_token());
-        }
-
-        if news.len() > 0 {
-            self.parse_new_expression(news)
-        } else {
-            self.parse_call_expression()
-        }
     }
 
     // https://tc39.github.io/ecma262/#sec-unary-operators
@@ -143,7 +133,7 @@ impl<'a> Parser<'a> {
             prefixes.push(prefix);
         }
 
-        let mut expr = self.parse_lhs_expression()?;
+        let mut expr = self.parse_lhs_expression(true)?;
 
         for prefix in prefixes.into_iter().rev() {
             expr = Expression::Unary(prefix, Box::new(expr))

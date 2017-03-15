@@ -65,6 +65,7 @@ impl Tracking for Expression {
             &Expression::Array(ref s, _) => s,
             &Expression::StaticMember(ref s, _, _) => s,
             &Expression::Call(ref s, _, _) => s,
+            &Expression::New(ref s, _, _) => s,
             e => panic!("Cannot get span for: {:?}", e)
         }
     }
