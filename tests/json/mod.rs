@@ -100,15 +100,16 @@ fn new_expression(node: &Value) -> Result<Expression> {
 }
 
 fn member_expression(node: &Value) -> Result<Expression> {
-    if expect_bool(node, "computed") {
-        Err(())
-    } else {
-        let object = expression(expect_value(node, "object"))?;
-        let prop = expression(expect_value(node, "property"))?;
+    let object = expression(expect_value(node, "object"))?;
+    let prop = expression(expect_value(node, "property"))?;
+    let span = span(node)?;
 
+    if expect_bool(node, "computed") {
+        Ok(Expression::ComputedMember(span, Box::new(object), Box::new(prop)))
+    } else {
         match prop {
             Expression::Identifier(_, ref s) => {
-                Ok(Expression::StaticMember(span(node)?, Box::new(object), s.clone()))
+                Ok(Expression::StaticMember(span, Box::new(object), s.clone()))
             }
             _ => Err(())
         }

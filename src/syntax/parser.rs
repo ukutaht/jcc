@@ -117,6 +117,13 @@ impl<'a> Parser<'a> {
                         break;
                     }
                 },
+                TokenValue::OpenSquare => {
+                    self.expect(TokenValue::OpenSquare);
+                    let expr = self.parse_expression()?;
+                    let end = self.expect(TokenValue::CloseSquare);
+                    let span = result.span().merge(&end.span);
+                    result = Expression::ComputedMember(span, Box::new(result), Box::new(expr));
+                },
                 TokenValue::Dot => result = self.parse_static_member_property(result)?,
                 _ => break,
             }

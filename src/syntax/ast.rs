@@ -53,6 +53,7 @@ pub enum Expression {
     Logical(LogOp, Box<Expression>, Box<Expression>),
     Unary(UnOp, Box<Expression>),
     StaticMember(Span, Box<Expression>, String),
+    ComputedMember(Span, Box<Expression>, Box<Expression>),
     Function(Function),
     Assignment(Span, AssignOp, Box<Expression>, Box<Expression>),
 }
