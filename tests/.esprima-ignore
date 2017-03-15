@@ -27,9 +27,6 @@ expression/left-hand-side/let_object_computed
 expression/left-hand-side/migrated_0007
 expression/left-hand-side/migrated_0009
 expression/left-hand-side/migrated_0013
-expression/left-hand-side/migrated_0020
-expression/left-hand-side/migrated_0021
-expression/left-hand-side/migrated_0022
 
 expression/multiplicative/**
 expression/postfix/**
