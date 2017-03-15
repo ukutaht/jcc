@@ -31,8 +31,6 @@ expression/left-hand-side/migrated_0013
 expression/multiplicative/**
 expression/postfix/**
 
-expression/primary/array/migrated_0007
-
 expression/primary/keyword/**
 
 expression/primary/literal/numeric/invalid_hex

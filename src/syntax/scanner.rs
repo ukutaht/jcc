@@ -204,17 +204,18 @@ impl<'a> Scanner<'a> {
     }
 
     fn get_identifier(&mut self) -> String {
-        let start_index = self.bump();
+        let mut result = String::new();
 
         while let Some(ch) = self.current_char {
             if ch.is_es_identifier_continue() {
+                result.push(ch);
                 self.bump();
             } else {
                 break;
             }
         }
 
-        self.source[start_index..self.index].to_string()
+        result
     }
 
     fn bump(&mut self) -> usize {
