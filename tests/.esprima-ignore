@@ -15,7 +15,6 @@ expression/additive/**
 expression/assignment/**
 expression/binary-bitwise/**
 
-expression/binary-logical/migrated_0000
 expression/binary-logical/migrated_0002
 expression/binary-logical/migrated_0003
 expression/binary-logical/migrated_0004

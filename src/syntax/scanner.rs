@@ -143,6 +143,15 @@ impl<'a> Scanner<'a> {
                 },
                 _ => panic!("Something with &")
             }
+        } else if character == '|' {
+            self.bump();
+            match self.expect_current_char() {
+                '|' => {
+                    self.bump();
+                    TokenValue::LogicalOr
+                },
+                _ => panic!("Something with |")
+            }
         } else {
             panic!("Unknown character: {}", character);
         };

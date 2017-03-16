@@ -210,6 +210,10 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token();
                 Some(InfixOp::LogOp(LogOp::AndAnd))
             }
+            TokenValue::LogicalOr => {
+                self.scanner.next_token();
+                Some(InfixOp::LogOp(LogOp::OrOr))
+            }
             _ => None
         }
     }

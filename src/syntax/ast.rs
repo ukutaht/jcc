@@ -29,6 +29,7 @@ pub enum UnOp {
 #[derive(Debug, PartialEq)]
 pub enum LogOp {
     AndAnd,
+    OrOr
 }
 
 #[derive(Debug, PartialEq)]

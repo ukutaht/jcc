@@ -28,6 +28,7 @@ pub enum TokenValue {
     Minus,
     Bang,
     LogicalAnd,
+    LogicalOr,
 }
 
 #[derive(Debug, PartialEq, Clone)]

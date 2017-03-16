@@ -133,10 +133,13 @@ fn logical_expression(node: &Value) -> Result<Expression> {
     let right = expression(expect_value(node, "right"))?;
     let span = span(node)?;
 
-    match expect_string(node, "operator") {
-        "&&" => Ok(Expression::Logical(span, LogOp::AndAnd, Box::new(left), Box::new(right))),
-        _ => Err(())
-    }
+    let op = match expect_string(node, "operator") {
+        "&&" => LogOp::AndAnd,
+        "||" => LogOp::OrOr,
+        _ => return Err(())
+    };
+
+    Ok(Expression::Logical(span, op, Box::new(left), Box::new(right)))
 }
 
 fn call_expression(node: &Value) -> Result<Expression> {

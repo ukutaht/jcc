@@ -53,7 +53,8 @@ fn transpile_binop<W: Write>(out: &mut W, op: &BinOp, left: &Expression, right: 
 fn transpile_logop<W: Write>(out: &mut W, op: &LogOp, left: &Expression, right: &Expression) -> Result<()> {
     try!(transpile_expression(out, left));
     match *op {
-        LogOp::AndAnd => write!(out, " && ")?
+        LogOp::AndAnd => write!(out, " && ")?,
+        LogOp::OrOr => write!(out, " || ")?
     }
     transpile_expression(out, right)
 }
