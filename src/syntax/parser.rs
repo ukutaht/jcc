@@ -168,12 +168,16 @@ impl<'a> Parser<'a> {
     fn parse_more_infix_expressions(&mut self, left: Expression) -> Result<Expression> {
         if let Some(op) = self.match_infix() {
             let right = self.parse_unary_expression()?;
+            let span = left.span().merge(right.span());
+
             match op {
                 InfixOp::BinOp(bin_op) => {
-                    let span = left.span().merge(right.span());
                     Ok(Expression::Binary(span, bin_op, Box::new(left), Box::new(right)))
                 }
-                InfixOp::LogOp(log_op) => Ok(Expression::Logical(log_op, Box::new(left), Box::new(right))),
+                InfixOp::LogOp(log_op) => {
+                    Ok(Expression::Logical(span, log_op, Box::new(left), Box::new(right)))
+                }
+
             }
         } else {
             Ok(left)

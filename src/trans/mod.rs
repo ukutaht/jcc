@@ -17,7 +17,7 @@ pub fn transpile_expression<W: Write>(out: &mut W, expr: &Expression) -> Result<
         Expression::Call(_, ref callee, ref arguments) => transpile_call(out, &*callee, arguments),
         Expression::New(_, ref callee, ref arguments) => transpile_new(out, &*callee, arguments),
         Expression::Binary(_, ref op, ref left, ref right) => transpile_binop(out, op, &*left, &*right),
-        Expression::Logical(ref op, ref left, ref right) => transpile_logop(out, op, &*left, &*right),
+        Expression::Logical(_, ref op, ref left, ref right) => transpile_logop(out, op, &*left, &*right),
         Expression::StaticMember(_, ref object, ref property) => transpile_static_member(out, &*object, property),
         Expression::Unary(ref op, ref expr) => transpile_unary_operator(out, op, &*expr),
         Expression::Function(ref func) => transpile_function(out, func),

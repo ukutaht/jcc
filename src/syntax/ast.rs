@@ -50,7 +50,7 @@ pub enum Expression {
     Call(Span, Box<Expression>, Vec<ArgumentListElement>),
     New(Span, Box<Expression>, Vec<ArgumentListElement>),
     Binary(Span, BinOp, Box<Expression>, Box<Expression>),
-    Logical(LogOp, Box<Expression>, Box<Expression>),
+    Logical(Span, LogOp, Box<Expression>, Box<Expression>),
     Unary(UnOp, Box<Expression>),
     StaticMember(Span, Box<Expression>, String),
     ComputedMember(Span, Box<Expression>, Box<Expression>),

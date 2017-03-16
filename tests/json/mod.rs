@@ -50,13 +50,15 @@ fn binary_expression(node: &Value) -> Result<Expression> {
     let right = expression(expect_value(node, "right"))?;
     let span = span(node)?;
 
-    match expect_string(node, "operator") {
-        "==" => Ok(Expression::Binary(span, BinOp::EqEq, Box::new(left), Box::new(right))),
-        "===" => Ok(Expression::Binary(span, BinOp::EqEqEq, Box::new(left), Box::new(right))),
-        "!=" => Ok(Expression::Binary(span, BinOp::NotEq, Box::new(left), Box::new(right))),
-        "!==" => Ok(Expression::Binary(span, BinOp::NotEqEq, Box::new(left), Box::new(right))),
-        _ => Err(())
-    }
+   let op =  match expect_string(node, "operator") {
+        "==" => BinOp::EqEq,
+        "===" => BinOp::EqEqEq,
+        "!=" => BinOp::NotEq,
+        "!==" => BinOp::NotEqEq,
+        _ => return Err(())
+    };
+
+    Ok(Expression::Binary(span, op, Box::new(left), Box::new(right)))
 }
 
 fn assignment_expression(node: &Value) -> Result<Expression> {
@@ -126,6 +128,17 @@ fn literal(node: &Value) -> Result<Literal> {
     }
 }
 
+fn logical_expression(node: &Value) -> Result<Expression> {
+    let left = expression(expect_value(node, "left"))?;
+    let right = expression(expect_value(node, "right"))?;
+    let span = span(node)?;
+
+    match expect_string(node, "operator") {
+        "&&" => Ok(Expression::Logical(span, LogOp::AndAnd, Box::new(left), Box::new(right))),
+        _ => Err(())
+    }
+}
+
 fn call_expression(node: &Value) -> Result<Expression> {
     let span = span(node)?;
     let callee = expression(expect_value(node, "callee"))?;
@@ -159,6 +172,9 @@ fn expression(node: &Value) -> Result<Expression> {
         }
         "Literal" => {
             Ok(Expression::Literal(span, literal(node)?))
+        }
+        "LogicalExpression" => {
+            logical_expression(node)
         }
         "MemberExpression" => {
             member_expression(node)
