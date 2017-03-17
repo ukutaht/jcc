@@ -11,10 +11,8 @@ static KEYWORD_ELSE: &'static str = "else";
 static KEYWORD_NEW: &'static str = "new";
 
 pub struct Scanner<'a> {
-    source: &'a str,
     chars: Chars<'a>,
     current_char: Option<char>,
-    index: usize,
     line: u32,
     column: u32,
     pub lookahead: Token,
@@ -23,10 +21,8 @@ pub struct Scanner<'a> {
 impl<'a> Scanner<'a> {
     pub fn new(source: &'a str) -> Scanner {
         Scanner {
-            source: source,
             chars: source.chars(),
             current_char: None,
-            index: 0,
             column: 0,
             line: 1,
             lookahead: Token {value: TokenValue::Eof, span: Span::initial() }
@@ -229,19 +225,10 @@ impl<'a> Scanner<'a> {
         result
     }
 
-    fn bump(&mut self) {
-        match self.chars.next() {
-            Some(c) => {
-                self.current_char = Some(c);
-                self.index += 1;
-                self.column += 1;
-            }
-            None => {
-                self.current_char = None;
-                self.index = self.source.len();
-                self.column += 1;
-            }
-        }
+    fn bump(&mut self) -> Option<char> {
+        self.current_char = self.chars.next();
+        self.column += 1;
+        self.current_char
     }
 
     fn expect_current_char(&self) -> char {
