@@ -164,26 +164,28 @@ impl<'a> Scanner<'a> {
     }
 
     fn scan_number(&mut self) -> TokenValue {
-        let start = self.bump();
+        let mut num = String::new();
 
         while let Some(ch) = self.current_char {
             if ch.is_digit(10) || ch == '.' {
+                num.push(ch);
                 self.bump();
             } else {
                 break;
             }
         }
 
-        let number_string = &self.source[start..self.index];
-        let value: f64 = number_string.parse().unwrap();
+        let value: f64 = num.parse().unwrap();
         TokenValue::Number(value)
     }
 
     fn scan_string(&mut self) -> TokenValue {
         let quote = self.expect_current_char();
-        let start = self.bump();
+        self.bump();
+        let mut string = quote.to_string();
 
         while let Some(ch) = self.current_char {
+            string.push(ch);
             self.bump();
 
             if ch == quote {
@@ -191,7 +193,7 @@ impl<'a> Scanner<'a> {
             }
         }
 
-        TokenValue::String(self.source[start..self.index].to_string())
+        TokenValue::String(string)
     }
 
     fn scan_identifier(&mut self) -> TokenValue {
@@ -227,9 +229,7 @@ impl<'a> Scanner<'a> {
         result
     }
 
-    fn bump(&mut self) -> usize {
-        let current = self.index;
-
+    fn bump(&mut self) {
         match self.chars.next() {
             Some(c) => {
                 self.current_char = Some(c);
@@ -242,7 +242,6 @@ impl<'a> Scanner<'a> {
                 self.column += 1;
             }
         }
-        current
     }
 
     fn expect_current_char(&self) -> char {
