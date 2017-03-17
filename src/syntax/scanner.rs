@@ -113,9 +113,7 @@ impl<'a> Scanner<'a> {
             self.bump();
             match self.current_char {
                 Some(ch) if ch.is_digit(10) => {
-                    let fractional_part = self.scan_digits();
-                    let float = format!("0.{}", fractional_part);
-                    TokenValue::Number(float.parse().unwrap())
+                    self.scan_fractional_part("0".to_string())
                 }
                 _ => TokenValue::Dot
             }
@@ -171,12 +169,39 @@ impl<'a> Scanner<'a> {
 
         if let Some('.') = self.current_char {
             self.bump();
-            let fractional_part = self.scan_digits();
-            let float = format!("{}.{}", integer_part, fractional_part);
-            TokenValue::Number(float.parse().unwrap())
+            self.scan_fractional_part(integer_part)
         } else {
-            TokenValue::Number(integer_part.parse().unwrap())
+            self.scan_exponent(integer_part, "".to_string())
         }
+    }
+
+    fn scan_fractional_part(&mut self, integer_part: String) -> TokenValue {
+        let fractional_part = self.scan_digits();
+        self.scan_exponent(integer_part, fractional_part)
+    }
+
+    fn scan_exponent(&mut self, integer_part: String, fractional_part: String) -> TokenValue {
+        let float = match self.current_char {
+            Some('e') => {
+                let sign = match self.bump() {
+                    Some('+') => '+',
+                    Some('-') => '-',
+                    _ => '+'
+                };
+
+                match self.bump() {
+                    Some(ch) if ch.is_digit(10) => {
+                        let exponent = self.scan_digits();
+                        format!("{}.{}e{}{}", integer_part, fractional_part, sign, exponent)
+                    }
+                    _ => panic!("Invalid exponent")
+                }
+            }
+            _ => {
+                format!("{}.{}", integer_part, fractional_part)
+            }
+        };
+        TokenValue::Number(float.parse().unwrap())
     }
 
     fn scan_digits(&mut self) -> String {
