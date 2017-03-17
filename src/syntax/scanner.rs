@@ -43,7 +43,7 @@ impl<'a> Scanner<'a> {
         let character;
 
         loop {
-            match self.current_char() {
+            match self.current_char {
                 Some('\n') => {
                     self.line += 1;
                     self.column = 0;
@@ -233,9 +233,5 @@ impl<'a> Scanner<'a> {
 
     fn expect_current_char(&self) -> char {
         self.current_char.expect("Unexpected end of input")
-    }
-
-    fn current_char(&self) -> Option<char> {
-        self.current_char
     }
 }
