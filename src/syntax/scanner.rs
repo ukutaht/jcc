@@ -111,7 +111,14 @@ impl<'a> Scanner<'a> {
             TokenValue::Comma
         } else if character == '.' {
             self.bump();
-            TokenValue::Dot
+            match self.current_char {
+                Some(ch) if ch.is_digit(10) => {
+                    let fractional_part = self.scan_digits();
+                    let float = format!("0.{}", fractional_part);
+                    TokenValue::Number(float.parse().unwrap())
+                }
+                _ => TokenValue::Dot
+            }
         } else if character == '!' {
             self.bump();
             match self.expect_current_char() {
@@ -160,19 +167,31 @@ impl<'a> Scanner<'a> {
     }
 
     fn scan_number(&mut self) -> TokenValue {
-        let mut num = String::new();
+        let integer_part = self.scan_digits();
+
+        if let Some('.') = self.current_char {
+            self.bump();
+            let fractional_part = self.scan_digits();
+            let float = format!("{}.{}", integer_part, fractional_part);
+            TokenValue::Number(float.parse().unwrap())
+        } else {
+            TokenValue::Number(integer_part.parse().unwrap())
+        }
+    }
+
+    fn scan_digits(&mut self) -> String {
+        let mut digits = String::new();
 
         while let Some(ch) = self.current_char {
-            if ch.is_digit(10) || ch == '.' {
-                num.push(ch);
+            if ch.is_digit(10) {
+                digits.push(ch);
                 self.bump();
             } else {
                 break;
             }
         }
 
-        let value: f64 = num.parse().unwrap();
-        TokenValue::Number(value)
+        digits
     }
 
     fn scan_string(&mut self) -> TokenValue {

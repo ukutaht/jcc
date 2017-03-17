@@ -39,7 +39,6 @@ expression/primary/keyword/**
 expression/primary/literal/numeric/invalid_hex
 # This one doesn't have loc for some reason
 expression/primary/literal/numeric/migrated_0002
-expression/primary/literal/numeric/migrated_0004
 expression/primary/literal/numeric/migrated_0006
 expression/primary/literal/numeric/migrated_0007
 expression/primary/literal/numeric/migrated_0008
