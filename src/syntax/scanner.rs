@@ -1,7 +1,7 @@
 use syntax::char::ESCharExt;
 use syntax::span::{Span, Position};
 use syntax::token::{Token, TokenValue};
-use std::str::Chars;
+use std::str;
 use std::mem;
 
 static KEYWORD_VAR: &'static str = "var";
@@ -11,8 +11,8 @@ static KEYWORD_ELSE: &'static str = "else";
 static KEYWORD_NEW: &'static str = "new";
 
 pub struct Scanner<'a> {
-    chars: Chars<'a>,
-    current_char: Option<char>,
+    bytes: &'a [u8],
+    index: usize,
     line: u32,
     column: u32,
     pub lookahead: Token,
@@ -21,8 +21,8 @@ pub struct Scanner<'a> {
 impl<'a> Scanner<'a> {
     pub fn new(source: &'a str) -> Scanner {
         Scanner {
-            chars: source.chars(),
-            current_char: None,
+            bytes: source.as_bytes(),
+            index: 0,
             column: 0,
             line: 1,
             lookahead: Token {value: TokenValue::Eof, span: Span::initial() }
@@ -30,8 +30,11 @@ impl<'a> Scanner<'a> {
     }
 
     pub fn position_at_start(&mut self) {
-        self.current_char = self.chars.next();
         self.lookahead = self.lex();
+    }
+
+    pub fn eof(&mut self) -> bool {
+        self.current_byte().is_none()
     }
 
     pub fn next_token(&mut self) -> Token {
@@ -39,18 +42,22 @@ impl<'a> Scanner<'a> {
         mem::replace(&mut self.lookahead, tok)
     }
 
+    fn pos(&self) -> Position {
+        Position { column: self.column, line: self.line }
+    }
+
     fn lex(&mut self) -> Token {
         let character;
 
         loop {
-            match self.current_char {
-                Some('\n') => {
+            match self.current_byte() {
+                Some(b'\n') => {
                     self.line += 1;
                     self.column = 0;
-                    self.bump();
+                    self.next_byte();
                 }
-                Some(c) if c.is_es_whitespace() => {
-                    self.bump();
+                Some(b' ') => {
+                    self.next_byte();
                 }
                 Some(c) => {
                     character = c;
@@ -63,96 +70,72 @@ impl<'a> Scanner<'a> {
         }
 
         let start = self.pos();
-        let value = if character.is_es_identifier_start() {
-            self.scan_identifier()
-        } else if character.is_es_quote() {
-            self.scan_string()
-        } else if character.is_digit(10) {
+        let value = if character == b'\'' ||character == b'"' {
+            self.scan_string(character)
+        } else if (character as char).is_digit(10) {
             self.scan_number()
-        } else if character == '=' {
-            self.bump();
-            match self.expect_current_char() {
-                '=' => {
-                    self.bump();
-                    match self.expect_current_char() {
-                        '=' => {
-                            self.bump();
-                            TokenValue::EqEqEq
-                        },
-                        _ => TokenValue::EqEq
-                    }
-                },
-                _ => TokenValue::Eq
-            }
-
-        } else if character == '(' {
-            self.bump();
-            TokenValue::OpenParen
-        } else if character == ')' {
-            self.bump();
-            TokenValue::CloseParen
-        } else if character == '{' {
-            self.bump();
-            TokenValue::OpenCurly
-        } else if character == '}' {
-            self.bump();
-            TokenValue::CloseCurly
-        } else if character == '[' {
-            self.bump();
-            TokenValue::OpenSquare
-        } else if character == ']' {
-            self.bump();
-            TokenValue::CloseSquare
-        } else if character == '+' {
-            self.bump();
-            TokenValue::Plus
-        } else if character == ',' {
-            self.bump();
-            TokenValue::Comma
-        } else if character == '.' {
-            self.bump();
-            match self.current_char {
-                Some(ch) if ch.is_digit(10) => {
-                    self.scan_fractional_part("0".to_string())
+        } else if self.eat_byte(b'=') {
+            if self.eat_byte(b'=') {
+                if self.eat_byte(b'=') {
+                    TokenValue::EqEqEq
+                } else {
+                    TokenValue::EqEq
                 }
-                _ => TokenValue::Dot
+            } else {
+                TokenValue::Eq
             }
-        } else if character == '!' {
-            self.bump();
-            match self.expect_current_char() {
-                '=' => {
-                    self.bump();
-                    match self.expect_current_char() {
-                        '=' => {
-                            self.bump();
-                            TokenValue::NotEqEq
-                        },
-                        _ => TokenValue::NotEq
-                    }
-                },
-                _ => TokenValue::Bang
+        } else if self.eat_byte(b'(') {
+            TokenValue::OpenParen
+        } else if self.eat_byte(b')') {
+            TokenValue::CloseParen
+        } else if self.eat_byte(b'{') {
+            TokenValue::OpenCurly
+        } else if self.eat_byte(b'}') {
+            TokenValue::CloseCurly
+        } else if self.eat_byte(b'[') {
+            TokenValue::OpenSquare
+        } else if self.eat_byte(b']') {
+            TokenValue::CloseSquare
+        } else if self.eat_byte(b'+') {
+            TokenValue::Plus
+        } else if self.eat_byte(b',') {
+            TokenValue::Comma
+        } else if character == b'.' {
+            match self.peek_byte() {
+                Some(ch) if (ch as char).is_digit(10) => {
+                    self.scan_number()
+                }
+                _ => {
+                    self.next_byte();
+                    TokenValue::Dot
+               }
             }
-        } else if character == '-' {
-            self.bump();
+        } else if self.eat_byte(b'!') {
+            if self.eat_byte(b'=') {
+                if self.eat_byte(b'=') {
+                    TokenValue::NotEqEq
+                } else {
+                    TokenValue::NotEq
+                }
+            } else {
+                TokenValue::Bang
+            }
+        } else if self.eat_byte(b'-') {
             TokenValue::Minus
-        } else if character == '&' {
-            self.bump();
-            match self.expect_current_char() {
-                '&' => {
-                    self.bump();
-                    TokenValue::LogicalAnd
-                },
-                _ => panic!("Something with &")
+        } else if self.eat_byte(b'&') {
+            if self.eat_byte(b'&') {
+                TokenValue::LogicalAnd
+            } else {
+                panic!("Something with &")
             }
-        } else if character == '|' {
-            self.bump();
-            match self.expect_current_char() {
-                '|' => {
-                    self.bump();
-                    TokenValue::LogicalOr
-                },
-                _ => panic!("Something with |")
+        } else if self.eat_byte(b'|') {
+            if self.eat_byte(b'|') {
+                TokenValue::LogicalOr
+            } else {
+                panic!("Something with |")
             }
+        } else if self.current_char().unwrap().is_es_identifier_start() {
+            self.scan_identifier()
         } else {
             panic!("Unknown character: {}", character);
         };
@@ -160,79 +143,41 @@ impl<'a> Scanner<'a> {
         Token { value: value, span: Span { start: start, end: self.pos() } }
     }
 
-    fn pos(&self) -> Position {
-        Position { column: self.column, line: self.line }
-    }
-
     fn scan_number(&mut self) -> TokenValue {
-        let integer_part = self.scan_digits();
+        let start = self.index;
 
-        if let Some('.') = self.current_char {
-            self.bump();
-            self.scan_fractional_part(integer_part)
-        } else {
-            self.scan_exponent(integer_part, "".to_string())
+        self.skip_digits();
+
+        if self.eat_byte(b'.') {
+            self.skip_digits()
         }
-    }
 
-    fn scan_fractional_part(&mut self, integer_part: String) -> TokenValue {
-        let fractional_part = self.scan_digits();
-        self.scan_exponent(integer_part, fractional_part)
-    }
+        if self.eat_byte(b'e') {
+            self.eat_byte(b'+') || self.eat_byte(b'-');
 
-    fn scan_exponent(&mut self, integer_part: String, fractional_part: String) -> TokenValue {
-        let float = match self.current_char {
-            Some('e') => {
-                let sign = match self.bump() {
-                    Some('+') => '+',
-                    Some('-') => '-',
-                    _ => '+'
-                };
-
-                match self.bump() {
-                    Some(ch) if ch.is_digit(10) => {
-                        let exponent = self.scan_digits();
-                        format!("{}.{}e{}{}", integer_part, fractional_part, sign, exponent)
-                    }
-                    _ => panic!("Invalid exponent")
+            match self.current_byte() {
+                Some(ch) if (ch as char).is_digit(10) => {
+                    self.skip_digits();
                 }
-            }
-            _ => {
-                format!("{}.{}", integer_part, fractional_part)
-            }
-        };
-        TokenValue::Number(float.parse().unwrap())
-    }
-
-    fn scan_digits(&mut self) -> String {
-        let mut digits = String::new();
-
-        while let Some(ch) = self.current_char {
-            if ch.is_digit(10) {
-                digits.push(ch);
-                self.bump();
-            } else {
-                break;
+                _ => panic!("Invalid exponent")
             }
         }
 
-        digits
+        let float = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]) }.parse().unwrap();
+        TokenValue::Number(float)
     }
 
-    fn scan_string(&mut self) -> TokenValue {
-        let quote = self.expect_current_char();
-        self.bump();
-        let mut string = quote.to_string();
+    fn skip_digits(&mut self) {
+        self.take_while(|c| (c as char).is_digit(10));
+    }
 
-        while let Some(ch) = self.current_char {
-            string.push(ch);
-            self.bump();
+    fn scan_string(&mut self, quote: u8) -> TokenValue {
+        let start = self.index;
+        self.eat_byte(quote);
+        self.take_while(|b| b != quote);
+        self.eat_byte(quote);
 
-            if ch == quote {
-                break;
-            }
-        }
-
+        let string = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]) }.to_string();
         TokenValue::String(string)
     }
 
@@ -255,27 +200,68 @@ impl<'a> Scanner<'a> {
     }
 
     fn get_identifier(&mut self) -> String {
-        let mut result = String::new();
+        let start = self.index;
+        self.take_chars_while(|c| (c as char).is_es_identifier_continue());
+        str::from_utf8(&self.bytes[start..self.index]).unwrap().to_string()
+    }
 
-        while let Some(ch) = self.current_char {
-            if ch.is_es_identifier_continue() {
-                result.push(ch);
-                self.bump();
+    fn take_while<F>(&mut self, predicate: F) where F: Fn(u8) -> bool {
+        while let Some(ch) = self.current_byte() {
+            if predicate(ch) {
+                self.next_byte();
             } else {
                 break;
             }
         }
-
-        result
     }
 
-    fn bump(&mut self) -> Option<char> {
-        self.current_char = self.chars.next();
-        self.column += 1;
-        self.current_char
+    fn take_chars_while<F>(&mut self, predicate: F) where F: Fn(char) -> bool {
+        while let Some(ch) = self.current_char() {
+            if predicate(ch) {
+                self.next_char();
+            } else {
+                break;
+            }
+        }
     }
 
-    fn expect_current_char(&self) -> char {
-        self.current_char.expect("Unexpected end of input")
+    fn current_byte(&self) -> Option<u8> {
+      self.bytes.get(self.index).map(|b| *b)
+    }
+
+    fn peek_byte(&mut self) -> Option<u8> {
+      self.bytes.get(self.index + 1).map(|b| *b)
+    }
+
+    fn current_char(&mut self) -> Option<char> {
+      unsafe { str::from_utf8_unchecked(&self.bytes[self.index..]) }.chars().next()
+    }
+
+    fn next_byte(&mut self) -> Option<u8> {
+        self.current_byte().map(|b| {
+            debug_assert!(b < 128);
+            self.index += 1;
+            self.column += 1;
+            b
+        })
+    }
+
+    fn eat_byte(&mut self, byte: u8) -> bool {
+        if let Some(b) = self.current_byte() {
+            if b == byte {
+                self.next_byte();
+                return true
+            }
+            return false;
+        }
+        return false;
+    }
+
+    fn next_char(&mut self) -> Option<char> {
+        unsafe { str::from_utf8_unchecked(&self.bytes[self.index..]) }.chars().next().map(|c| {
+            self.index += c.len_utf8();
+            self.column += 1;
+            c
+        })
     }
 }
