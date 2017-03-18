@@ -33,10 +33,6 @@ impl<'a> Scanner<'a> {
         self.lookahead = self.lex();
     }
 
-    pub fn eof(&mut self) -> bool {
-        self.current_byte().is_none()
-    }
-
     pub fn next_token(&mut self) -> Token {
         let tok = self.lex();
         mem::replace(&mut self.lookahead, tok)
