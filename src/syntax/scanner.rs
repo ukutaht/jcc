@@ -112,7 +112,11 @@ impl<'a> Scanner<'a> {
             }
         } else if self.eat_byte(b'>') {
             if self.eat_byte(b'>') {
-                TokenValue::RShift
+                if self.eat_byte(b'>') {
+                    TokenValue::URShift
+                } else {
+                    TokenValue::RShift
+                }
             } else {
                 panic!("wat!")
             }

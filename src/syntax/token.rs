@@ -34,6 +34,7 @@ pub enum TokenValue {
     BitOr,
     LShift,
     RShift,
+    URShift,
     Ident(String),
     String(String),
     Number(f64),

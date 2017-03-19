@@ -65,6 +65,7 @@ fn binary_expression(node: &Value) -> Result<Expression> {
         "|" => BinOp::BitOr,
         "<<" => BinOp::LShift,
         ">>" => BinOp::RShift,
+        ">>>" => BinOp::URShift,
         _ => return Err(())
     };
 

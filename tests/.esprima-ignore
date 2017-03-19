@@ -15,9 +15,8 @@ expression/additive/migrated_0002
 
 expression/assignment/**
 
-expression/bitwise-shift/migrated_0002
-
 expression/complex/**
+
 expression/conditional/**
 expression/grouping/**
 
