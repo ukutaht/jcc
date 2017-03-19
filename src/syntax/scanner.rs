@@ -130,7 +130,7 @@ impl<'a> Scanner<'a> {
             if self.eat_byte(b'&') {
                 TokenValue::LogicalAnd
             } else {
-                panic!("Something with &")
+                TokenValue::BitAnd
             }
         } else if self.eat_byte(b'|') {
             if self.eat_byte(b'|') {

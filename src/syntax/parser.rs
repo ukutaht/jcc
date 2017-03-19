@@ -175,6 +175,10 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::BitXor))
             }
+            TokenValue::BitAnd => {
+                self.scanner.next_token();
+                Some(InfixOp::BinOp(BinOp::BitAnd))
+            }
             TokenValue::Times => {
                 self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::Times))
