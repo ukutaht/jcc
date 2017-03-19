@@ -190,6 +190,10 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::Plus))
             }
+            TokenValue::Minus => {
+                self.scanner.next_token();
+                Some(InfixOp::BinOp(BinOp::Minus))
+            }
             TokenValue::EqEq => {
                 self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::EqEq))

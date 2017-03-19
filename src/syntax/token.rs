@@ -6,10 +6,7 @@ pub enum TokenValue {
     If,
     Else,
     New,
-    Ident(String),
-    String(String),
     Eof,
-    Number(f64),
     Eq,
     EqEq,
     EqEqEq,
@@ -29,6 +26,9 @@ pub enum TokenValue {
     Bang,
     LogicalAnd,
     LogicalOr,
+    Ident(String),
+    String(String),
+    Number(f64),
 }
 
 #[derive(Debug, PartialEq, Clone)]

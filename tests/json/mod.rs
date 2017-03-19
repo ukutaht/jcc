@@ -55,6 +55,8 @@ fn binary_expression(node: &Value) -> Result<Expression> {
         "===" => BinOp::EqEqEq,
         "!=" => BinOp::NotEq,
         "!==" => BinOp::NotEqEq,
+        "+" => BinOp::Plus,
+        "-" => BinOp::Minus,
         _ => return Err(())
     };
 

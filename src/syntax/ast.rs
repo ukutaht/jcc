@@ -14,6 +14,7 @@ pub enum ArgumentListElement {
 #[derive(Debug, PartialEq)]
 pub enum BinOp {
     Plus,
+    Minus,
     EqEq,
     EqEqEq,
     NotEq,
