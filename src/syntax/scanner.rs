@@ -110,6 +110,12 @@ impl<'a> Scanner<'a> {
             } else {
                 panic!("wat!")
             }
+        } else if self.eat_byte(b'>') {
+            if self.eat_byte(b'>') {
+                TokenValue::RShift
+            } else {
+                panic!("wat!")
+            }
         } else if character == b'.' {
             match self.peek_byte() {
                 Some(ch) if (ch as char).is_digit(10) => {
