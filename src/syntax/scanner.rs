@@ -104,6 +104,12 @@ impl<'a> Scanner<'a> {
             TokenValue::Mod
         } else if self.eat_byte(b',') {
             TokenValue::Comma
+        } else if self.eat_byte(b'<') {
+            if self.eat_byte(b'<') {
+                TokenValue::LShift
+            } else {
+                panic!("wat!")
+            }
         } else if character == b'.' {
             match self.peek_byte() {
                 Some(ch) if (ch as char).is_digit(10) => {
