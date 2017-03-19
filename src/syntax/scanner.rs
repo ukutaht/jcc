@@ -133,15 +133,34 @@ impl<'a> Scanner<'a> {
         } else if self.current_char().unwrap().is_es_identifier_start() {
             self.scan_identifier()
         } else {
-            panic!("Unknown character: {}", character);
+            panic!("Unknown character: {}", self.current_char().unwrap());
         };
 
         Token { value: value, span: Span { start: start, end: self.pos() } }
     }
 
     fn scan_number(&mut self) -> TokenValue {
-        let start = self.index;
+        match (self.current_byte(), self.peek_byte()) {
+            (Some(b'0'), Some(b'x')) | (Some(b'0'), Some(b'X')) => {
+                self.scan_hex()
+            }
+            _ => self.scan_float()
+        }
 
+    }
+
+    fn scan_hex(&mut self) -> TokenValue {
+        self.next_byte();self.next_byte();
+        let start = self.index;
+        self.take_while(|c| (c as char).is_es_hex_digit());
+        let hex = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]) };
+
+        let value = u32::from_str_radix(hex, 16).unwrap() as f64;
+        TokenValue::Number(value)
+    }
+
+    fn scan_float(&mut self) -> TokenValue {
+        let start = self.index;
         self.skip_digits();
 
         if self.eat_byte(b'.') {
@@ -222,11 +241,15 @@ impl<'a> Scanner<'a> {
     }
 
     fn current_byte(&self) -> Option<u8> {
-      self.bytes.get(self.index).map(|b| *b)
+        self.get_byte(self.index)
     }
 
-    fn peek_byte(&mut self) -> Option<u8> {
-      self.bytes.get(self.index + 1).map(|b| *b)
+    fn peek_byte(&self) -> Option<u8> {
+        self.get_byte(self.index + 1)
+    }
+
+    fn get_byte(&self, index: usize) -> Option<u8> {
+      self.bytes.get(index).map(|b| *b)
     }
 
     fn current_char(&mut self) -> Option<char> {

@@ -39,14 +39,8 @@ expression/primary/keyword/**
 expression/primary/literal/numeric/invalid_hex
 # This one doesn't have loc for some reason
 expression/primary/literal/numeric/migrated_0002
-expression/primary/literal/numeric/migrated_0008
+# Need to parse semicolons for this
 expression/primary/literal/numeric/migrated_0009
-expression/primary/literal/numeric/migrated_0012
-expression/primary/literal/numeric/migrated_0013
-expression/primary/literal/numeric/migrated_0014
-expression/primary/literal/numeric/migrated_0015
-expression/primary/literal/numeric/migrated_0016
-expression/primary/literal/numeric/migrated_0017
 expression/primary/literal/numeric/migrated_0019
 expression/primary/literal/numeric/migrated_0020
 
