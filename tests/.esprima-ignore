@@ -15,13 +15,7 @@ expression/additive/migrated_0002
 
 expression/assignment/**
 
-expression/binary-bitwise/migrated_0002
-
 expression/binary/migrated_0011
-expression/binary/migrated_0012
-expression/binary/migrated_0015
-expression/binary/migrated_0016
-expression/binary/migrated_0017
 
 expression/bitwise-shift/**
 expression/complex/**

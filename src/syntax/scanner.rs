@@ -136,7 +136,7 @@ impl<'a> Scanner<'a> {
             if self.eat_byte(b'|') {
                 TokenValue::LogicalOr
             } else {
-                panic!("Something with |")
+                TokenValue::BitOr
             }
         } else if self.current_char().unwrap().is_es_identifier_start() {
             self.scan_identifier()

@@ -47,6 +47,7 @@ fn transpile_binop<W: Write>(out: &mut W, op: &BinOp, left: &Expression, right: 
         BinOp::Div => write!(out, " / ")?,
         BinOp::BitXor => write!(out, " ^ ")?,
         BinOp::BitAnd => write!(out, " & ")?,
+        BinOp::BitOr => write!(out, " | ")?,
         BinOp::Mod => write!(out, " % ")?,
         BinOp::EqEq => write!(out, " == ")?,
         BinOp::EqEqEq => write!(out, " === ")?,

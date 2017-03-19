@@ -62,6 +62,7 @@ fn binary_expression(node: &Value) -> Result<Expression> {
         "%" => BinOp::Mod,
         "^" => BinOp::BitXor,
         "&" => BinOp::BitAnd,
+        "|" => BinOp::BitOr,
         _ => return Err(())
     };
 

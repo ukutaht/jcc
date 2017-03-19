@@ -20,6 +20,7 @@ pub enum BinOp {
     Mod,
     BitXor,
     BitAnd,
+    BitOr,
     EqEq,
     EqEqEq,
     NotEq,
@@ -52,6 +53,7 @@ impl InfixOp {
             InfixOp::BinOp(BinOp::EqEq) | InfixOp::BinOp(BinOp::EqEqEq) | InfixOp::BinOp(BinOp::NotEq) | InfixOp::BinOp(BinOp::NotEqEq) => 6,
             InfixOp::BinOp(BinOp::BitAnd) => 5,
             InfixOp::BinOp(BinOp::BitXor) => 4,
+            InfixOp::BinOp(BinOp::BitOr) => 3,
             InfixOp::LogOp(LogOp::AndAnd) => 2,
             InfixOp::LogOp(LogOp::OrOr) => 1,
         }
