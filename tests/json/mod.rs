@@ -60,6 +60,7 @@ fn binary_expression(node: &Value) -> Result<Expression> {
         "*" => BinOp::Times,
         "/" => BinOp::Div,
         "%" => BinOp::Mod,
+        "^" => BinOp::BitXor,
         _ => return Err(())
     };
 

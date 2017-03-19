@@ -18,6 +18,7 @@ pub enum BinOp {
     Times,
     Div,
     Mod,
+    BitXor,
     EqEq,
     EqEqEq,
     NotEq,
@@ -48,6 +49,7 @@ impl InfixOp {
             InfixOp::BinOp(BinOp::Times) | InfixOp::BinOp(BinOp::Div) | InfixOp::BinOp(BinOp::Mod) => 11,
             InfixOp::BinOp(BinOp::Plus) | InfixOp::BinOp(BinOp::Minus) => 9,
             InfixOp::BinOp(BinOp::EqEq) | InfixOp::BinOp(BinOp::EqEqEq) | InfixOp::BinOp(BinOp::NotEq) | InfixOp::BinOp(BinOp::NotEqEq) => 6,
+            InfixOp::BinOp(BinOp::BitXor) => 4,
             InfixOp::LogOp(LogOp::AndAnd) => 2,
             InfixOp::LogOp(LogOp::OrOr) => 1,
         }

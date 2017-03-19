@@ -94,6 +94,8 @@ impl<'a> Scanner<'a> {
             TokenValue::CloseSquare
         } else if self.eat_byte(b'+') {
             TokenValue::Plus
+        } else if self.eat_byte(b'^') {
+            TokenValue::BitXor
         } else if self.eat_byte(b'*') {
             TokenValue::Times
         } else if self.eat_byte(b'/') {

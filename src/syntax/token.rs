@@ -29,6 +29,7 @@ pub enum TokenValue {
     Bang,
     LogicalAnd,
     LogicalOr,
+    BitXor,
     Ident(String),
     String(String),
     Number(f64),
