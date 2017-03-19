@@ -171,6 +171,18 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::Plus))
             }
+            TokenValue::Times => {
+                self.scanner.next_token();
+                Some(InfixOp::BinOp(BinOp::Times))
+            }
+            TokenValue::Div => {
+                self.scanner.next_token();
+                Some(InfixOp::BinOp(BinOp::Div))
+            }
+            TokenValue::Mod => {
+                self.scanner.next_token();
+                Some(InfixOp::BinOp(BinOp::Mod))
+            }
             TokenValue::Minus => {
                 self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::Minus))

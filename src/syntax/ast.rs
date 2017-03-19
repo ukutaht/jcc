@@ -15,6 +15,9 @@ pub enum ArgumentListElement {
 pub enum BinOp {
     Plus,
     Minus,
+    Times,
+    Div,
+    Mod,
     EqEq,
     EqEqEq,
     NotEq,
@@ -42,6 +45,7 @@ pub enum InfixOp {
 impl InfixOp {
     pub fn precedence(&self) -> u8 {
         match *self {
+            InfixOp::BinOp(BinOp::Times) | InfixOp::BinOp(BinOp::Div) | InfixOp::BinOp(BinOp::Mod) => 11,
             InfixOp::BinOp(BinOp::Plus) | InfixOp::BinOp(BinOp::Minus) => 9,
             InfixOp::BinOp(BinOp::EqEq) | InfixOp::BinOp(BinOp::EqEqEq) | InfixOp::BinOp(BinOp::NotEq) | InfixOp::BinOp(BinOp::NotEqEq) => 6,
             InfixOp::LogOp(LogOp::AndAnd) => 2,
@@ -57,31 +61,32 @@ pub enum AssignOp {
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
-    Literal(Span, Literal),
-    Identifier(Span, String),
     Array(Span, Vec<Option<Expression>>),
-    Call(Span, Box<Expression>, Vec<ArgumentListElement>),
-    New(Span, Box<Expression>, Vec<ArgumentListElement>),
+    Assignment(Span, AssignOp, Box<Expression>, Box<Expression>),
     Binary(Span, BinOp, Box<Expression>, Box<Expression>),
-    Logical(Span, LogOp, Box<Expression>, Box<Expression>),
-    Unary(UnOp, Box<Expression>),
-    StaticMember(Span, Box<Expression>, String),
+    Call(Span, Box<Expression>, Vec<ArgumentListElement>),
     ComputedMember(Span, Box<Expression>, Box<Expression>),
     Function(Function),
-    Assignment(Span, AssignOp, Box<Expression>, Box<Expression>),
+    Identifier(Span, String),
+    Literal(Span, Literal),
+    Logical(Span, LogOp, Box<Expression>, Box<Expression>),
+    New(Span, Box<Expression>, Vec<ArgumentListElement>),
+    StaticMember(Span, Box<Expression>, String),
+    Unary(UnOp, Box<Expression>),
 }
 
 impl Tracking for Expression {
     fn span(&self) -> &Span {
         match self {
-            &Expression::Literal(ref s, _) => s,
-            &Expression::Identifier(ref s, _) => s,
             &Expression::Array(ref s, _) => s,
-            &Expression::StaticMember(ref s, _, _) => s,
-            &Expression::ComputedMember(ref s, _, _) => s,
+            &Expression::Binary(ref s, _, _, _) => s,
             &Expression::Call(ref s, _, _) => s,
-            &Expression::New(ref s, _, _) => s,
+            &Expression::ComputedMember(ref s, _, _) => s,
+            &Expression::Identifier(ref s, _) => s,
+            &Expression::Literal(ref s, _) => s,
             &Expression::Logical(ref s, _, _, _) => s,
+            &Expression::New(ref s, _, _) => s,
+            &Expression::StaticMember(ref s, _, _) => s,
             e => panic!("Cannot get span for: {:?}", e)
         }
     }
