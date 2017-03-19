@@ -16,9 +16,6 @@ expression/additive/migrated_0002
 expression/assignment/**
 expression/binary-bitwise/**
 
-expression/binary-logical/migrated_0002
-expression/binary-logical/migrated_0003
-expression/binary-logical/migrated_0004
 expression/binary-logical/migrated_0005
 
 expression/binary/**

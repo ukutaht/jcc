@@ -165,25 +165,6 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_more_infix_expressions(&mut self, left: Expression) -> Result<Expression> {
-        if let Some(op) = self.match_infix() {
-            let right = self.parse_unary_expression()?;
-            let span = left.span().merge(right.span());
-
-            match op {
-                InfixOp::BinOp(bin_op) => {
-                    Ok(Expression::Binary(span, bin_op, Box::new(left), Box::new(right)))
-                }
-                InfixOp::LogOp(log_op) => {
-                    Ok(Expression::Logical(span, log_op, Box::new(left), Box::new(right)))
-                }
-
-            }
-        } else {
-            Ok(left)
-        }
-    }
-
     fn match_infix(&mut self) -> Option<InfixOp> {
         match self.scanner.lookahead.value {
             TokenValue::Plus => {
@@ -222,10 +203,36 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn combine_binary(&self, frame: (Expression, InfixOp), right: Expression) -> Expression {
+        let span = frame.0.span().merge(right.span());
+
+        match frame.1 {
+            InfixOp::BinOp(op) => Expression::Binary(span, op, Box::new(frame.0), Box::new(right)),
+            InfixOp::LogOp(op) => Expression::Logical(span, op, Box::new(frame.0), Box::new(right)),
+        }
+    }
+
+    fn parse_binary_expression(&mut self) -> Result<Expression> {
+        let mut stack: Vec<(Expression, InfixOp)> = Vec::new();
+        let mut left = self.parse_unary_expression()?;
+
+        while let Some(op) = self.match_infix() {
+            while stack.len() > 0 && stack.last().unwrap().1.precedence() >= op.precedence() {
+                left = self.combine_binary(stack.pop().unwrap(), left);
+            }
+            stack.push((left, op));
+            left = self.parse_unary_expression()?;
+        }
+
+        while stack.len() > 0 {
+            left = self.combine_binary(stack.pop().unwrap(), left);
+        }
+        Ok(left)
+    }
+
     // https://tc39.github.io/ecma262/#sec-conditional-operator
     fn parse_conditional_expression(&mut self) -> Result<Expression> {
-        let left = self.parse_unary_expression()?;
-        self.parse_more_infix_expressions(left)
+        self.parse_binary_expression()
     }
 
     // https://tc39.github.io/ecma262/#sec-assignment-operators

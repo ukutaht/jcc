@@ -39,6 +39,17 @@ pub enum InfixOp {
     LogOp(LogOp)
 }
 
+impl InfixOp {
+    pub fn precedence(&self) -> u8 {
+        match *self {
+            InfixOp::BinOp(BinOp::Plus) | InfixOp::BinOp(BinOp::Minus) => 9,
+            InfixOp::BinOp(BinOp::EqEq) | InfixOp::BinOp(BinOp::EqEqEq) | InfixOp::BinOp(BinOp::NotEq) | InfixOp::BinOp(BinOp::NotEqEq) => 6,
+            InfixOp::LogOp(LogOp::AndAnd) => 2,
+            InfixOp::LogOp(LogOp::OrOr) => 1,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum AssignOp {
     Eq
@@ -70,6 +81,7 @@ impl Tracking for Expression {
             &Expression::ComputedMember(ref s, _, _) => s,
             &Expression::Call(ref s, _, _) => s,
             &Expression::New(ref s, _, _) => s,
+            &Expression::Logical(ref s, _, _, _) => s,
             e => panic!("Cannot get span for: {:?}", e)
         }
     }
