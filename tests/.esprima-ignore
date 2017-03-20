@@ -45,4 +45,15 @@ expression/primary/object/**
 expression/primary/other/**
 
 expression/relational/**
-expression/unary/**
+
+expression/unary/migrated_0000
+expression/unary/migrated_0001
+expression/unary/migrated_0002
+expression/unary/migrated_0003
+expression/unary/migrated_0004
+expression/unary/migrated_0005
+expression/unary/migrated_0006
+expression/unary/migrated_0008
+expression/unary/migrated_0010
+expression/unary/migrated_0011
+expression/unary/migrated_0012

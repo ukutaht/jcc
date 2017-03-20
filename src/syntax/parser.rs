@@ -1,6 +1,6 @@
 use errors::CompileError;
 use syntax::ast::*;
-use syntax::span::Tracking;
+use syntax::span::{Tracking, Span};
 use syntax::token::{Token, TokenValue};
 use syntax::scanner::Scanner;
 use std;
@@ -144,22 +144,22 @@ impl<'a> Parser<'a> {
 
         let mut expr = self.parse_lhs_expression(true)?;
 
-        for prefix in prefixes.into_iter().rev() {
-            expr = Expression::Unary(prefix, Box::new(expr))
+        for (prefix, span) in prefixes.into_iter().rev() {
+            expr = Expression::Unary(span.merge(expr.span()), prefix, Box::new(expr))
         }
 
         Ok(expr)
     }
 
-    fn match_unary_operator(&mut self) -> Option<UnOp> {
+    fn match_unary_operator(&mut self) -> Option<(UnOp, Span)> {
         match self.scanner.lookahead.value {
             TokenValue::Bang => {
-                self.scanner.next_token();
-                Some(UnOp::Not)
+                let tok = self.scanner.next_token();
+                Some((UnOp::Not, tok.span))
             },
             TokenValue::Minus => {
-                self.scanner.next_token();
-                Some(UnOp::Minus)
+                let tok = self.scanner.next_token();
+                Some((UnOp::Minus, tok.span))
             },
             _ => None
         }

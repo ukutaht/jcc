@@ -82,7 +82,7 @@ pub enum Expression {
     Logical(Span, LogOp, Box<Expression>, Box<Expression>),
     New(Span, Box<Expression>, Vec<ArgumentListElement>),
     StaticMember(Span, Box<Expression>, String),
-    Unary(UnOp, Box<Expression>),
+    Unary(Span, UnOp, Box<Expression>),
 }
 
 impl Tracking for Expression {
@@ -97,6 +97,7 @@ impl Tracking for Expression {
             &Expression::Logical(ref s, _, _, _) => s,
             &Expression::New(ref s, _, _) => s,
             &Expression::StaticMember(ref s, _, _) => s,
+            &Expression::Unary(ref s, _, _) => s,
             e => panic!("Cannot get span for: {:?}", e)
         }
     }
