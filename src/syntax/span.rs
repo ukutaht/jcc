@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Position {
     pub line: u32,
     pub column: u32
@@ -26,15 +26,15 @@ impl Span {
 
     pub fn merge(&self, other: &Span) -> Span {
         Span {
-            start: self.start,
-            end: other.end
+            start: self.start.clone(),
+            end: other.end.clone()
         }
     }
 
     pub fn to(&self, other: &Span) -> Span {
         Span {
-            start: self.start,
-            end: other.start
+            start: self.start.clone(),
+            end: other.start.clone()
         }
     }
 }

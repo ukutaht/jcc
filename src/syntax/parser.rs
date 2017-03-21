@@ -46,11 +46,21 @@ impl<'a> Parser<'a> {
             TokenValue::OpenSquare => {
                 self.parse_array_initializer()
             },
+            TokenValue::OpenParen => {
+                self.parse_group_expression()
+            },
             TokenValue::FunctionKeyword => {
                 self.parse_function().map(Expression::Function)
             },
             _ => Err(CompileError::UnexpectedToken(token.clone()))
         }
+    }
+
+    fn parse_group_expression(&mut self) -> Result<Expression> {
+        self.expect(TokenValue::OpenParen);
+        let result = self.parse_assignment_expression()?;
+        self.expect(TokenValue::CloseParen);
+        Ok(result)
     }
 
     fn parse_arguments(&mut self) -> Vec<ArgumentListElement> {
@@ -74,19 +84,6 @@ impl<'a> Parser<'a> {
         arguments
     }
 
-    fn parse_static_member_property(&mut self, base: Expression) -> Result<Expression> {
-        self.expect(TokenValue::Dot);
-        let token = self.scanner.next_token();
-        let identifier_name = match token.value {
-            TokenValue::Ident(name) => name,
-            TokenValue::If => "if".to_string(),
-            TokenValue::Else => "else".to_string(),
-            _ => return Err(CompileError::UnexpectedToken(token))
-        };
-
-        Ok(Expression::StaticMember(base.span().merge(&token.span), Box::new(base), identifier_name))
-    }
-
     fn parse_new_expression(&mut self) -> Result<Expression> {
         let start = self.expect(TokenValue::New);
         let base = self.parse_lhs_expression(false)?;
@@ -102,6 +99,8 @@ impl<'a> Parser<'a> {
 
     // https://tc39.github.io/ecma262/#sec-left-hand-side-expressions
     fn parse_lhs_expression(&mut self, allow_call: bool) -> Result<Expression> {
+        let start = self.scanner.lookahead.span.clone();
+
         let mut result = if self.scanner.lookahead.value == TokenValue::New {
             self.parse_new_expression()?
         } else {
@@ -113,7 +112,7 @@ impl<'a> Parser<'a> {
                 TokenValue::OpenParen => {
                     if allow_call {
                         let args = self.parse_arguments();
-                        let span = result.span().to(&self.scanner.lookahead.span);
+                        let span = start.to(&self.scanner.lookahead.span);
                         result = Expression::Call(span, Box::new(result), args);
                     } else {
                         break;
@@ -123,10 +122,22 @@ impl<'a> Parser<'a> {
                     self.expect(TokenValue::OpenSquare);
                     let expr = self.parse_expression()?;
                     let end = self.expect(TokenValue::CloseSquare);
-                    let span = result.span().merge(&end.span);
+                    let span = start.merge(&end.span);
                     result = Expression::ComputedMember(span, Box::new(result), Box::new(expr));
                 },
-                TokenValue::Dot => result = self.parse_static_member_property(result)?,
+                TokenValue::Dot => {
+                    self.scanner.next_token();
+                    let token = self.scanner.next_token();
+                    let identifier_name = match token.value {
+                        TokenValue::Ident(name) => name,
+                        TokenValue::If => "if".to_string(),
+                        TokenValue::Else => "else".to_string(),
+                        _ => return Err(CompileError::UnexpectedToken(token))
+                    };
+
+                    result = Expression::StaticMember(start.merge(&token.span), Box::new(result), identifier_name)
+
+                }
                 _ => break,
             }
         }
