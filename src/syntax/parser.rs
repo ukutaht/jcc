@@ -217,6 +217,7 @@ impl<'a> Parser<'a> {
             Token::NotEq => Some(InfixOp::BinOp(BinOp::NotEq)),
             Token::NotEqEq => Some(InfixOp::BinOp(BinOp::NotEqEq)),
             Token::EqEqEq => Some(InfixOp::BinOp(BinOp::EqEqEq)),
+            Token::Lt => Some(InfixOp::BinOp(BinOp::Lt)),
             Token::LogicalAnd => Some(InfixOp::LogOp(LogOp::AndAnd)),
             Token::LogicalOr => Some(InfixOp::LogOp(LogOp::OrOr)),
             _ => None

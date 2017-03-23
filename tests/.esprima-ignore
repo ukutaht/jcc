@@ -38,4 +38,9 @@ expression/primary/literal/string/**
 expression/primary/object/**
 expression/primary/other/**
 
-expression/relational/**
+expression/relational/migrated_0001
+expression/relational/migrated_0002
+expression/relational/migrated_0003
+expression/relational/migrated_0004
+expression/relational/migrated_0005
+expression/relational/migrated_0006

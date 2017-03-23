@@ -120,7 +120,7 @@ impl<'a> Scanner<'a> {
             if self.eat_byte(b'<') {
                 Token::LShift
             } else {
-                panic!("wat!")
+                Token::Lt
             }
         } else if self.eat_byte(b'>') {
             if self.eat_byte(b'>') {
