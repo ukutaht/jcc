@@ -43,7 +43,6 @@ expression/primary/other/**
 
 expression/relational/**
 
-expression/unary/migrated_0001
 expression/unary/migrated_0002
 expression/unary/migrated_0003
 expression/unary/migrated_0004

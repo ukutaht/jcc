@@ -190,6 +190,7 @@ fn update_expression(node: &Value) -> Result<Expression> {
 
     let op = match expect_string(node, "operator") {
         "++" => UpdateOp::PlusPlus,
+        "--" => UpdateOp::MinusMinus,
         _ => return Err(())
     };
 

@@ -55,7 +55,8 @@ pub enum InfixOp {
 
 #[derive(Debug, PartialEq)]
 pub enum UpdateOp {
-    PlusPlus
+    PlusPlus,
+    MinusMinus
 }
 
 impl InfixOp {

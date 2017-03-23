@@ -178,6 +178,7 @@ impl<'a> Parser<'a> {
     fn match_update_op(&mut self) -> Option<UpdateOp> {
         match self.scanner.lookahead {
             Token::PlusPlus => Some(UpdateOp::PlusPlus),
+            Token::MinusMinus => Some(UpdateOp::MinusMinus),
             _ => None
         }
     }

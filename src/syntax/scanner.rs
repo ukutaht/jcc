@@ -153,7 +153,11 @@ impl<'a> Scanner<'a> {
                 Token::Bang
             }
         } else if self.eat_byte(b'-') {
-            Token::Minus
+            if self.eat_byte(b'-') {
+                Token::MinusMinus
+            } else {
+                Token::Minus
+            }
         } else if self.eat_byte(b'~') {
             Token::Tilde
         } else if self.eat_byte(b'&') {
