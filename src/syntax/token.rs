@@ -22,6 +22,7 @@ pub enum Token {
     Plus,
     Minus,
     Times,
+    Tilde,
     Div,
     Mod,
     Bang,

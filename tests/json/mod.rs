@@ -173,6 +173,7 @@ fn unary_expression(node: &Value) -> Result<Expression> {
         "-" => UnOp::Minus,
         "+" => UnOp::Plus,
         "!" => UnOp::Not,
+        "~" => UnOp::Tilde,
         _ => return Err(())
     };
 

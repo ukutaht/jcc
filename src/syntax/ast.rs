@@ -35,6 +35,7 @@ pub enum UnOp {
     Not,
     Minus,
     Plus,
+    Tilde,
 }
 
 #[derive(Debug, PartialEq)]

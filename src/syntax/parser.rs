@@ -176,6 +176,7 @@ impl<'a> Parser<'a> {
             Token::Bang => Some(UnOp::Not),
             Token::Minus => Some(UnOp::Minus),
             Token::Plus => Some(UnOp::Plus),
+            Token::Tilde => Some(UnOp::Tilde),
             _ => None
         }
     }
