@@ -53,6 +53,11 @@ pub enum InfixOp {
     LogOp(LogOp)
 }
 
+#[derive(Debug, PartialEq)]
+pub enum UpdateOp {
+    PlusPlus
+}
+
 impl InfixOp {
     pub fn precedence(&self) -> u8 {
         match *self {
@@ -88,6 +93,7 @@ pub enum Expression {
     New(Span, Box<Expression>, Vec<ArgumentListElement>),
     StaticMember(Span, Box<Expression>, String),
     Unary(Span, UnOp, Box<Expression>),
+    Update(Span, UpdateOp, Box<Expression>, bool),
 }
 
 impl Tracking for Expression {

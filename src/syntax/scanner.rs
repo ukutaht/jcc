@@ -101,7 +101,11 @@ impl<'a> Scanner<'a> {
         } else if self.eat_byte(b']') {
             Token::CloseSquare
         } else if self.eat_byte(b'+') {
-            Token::Plus
+            if self.eat_byte(b'+') {
+                Token::PlusPlus
+            } else {
+                Token::Plus
+            }
         } else if self.eat_byte(b'^') {
             Token::BitXor
         } else if self.eat_byte(b'*') {

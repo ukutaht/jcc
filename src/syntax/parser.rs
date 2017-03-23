@@ -154,21 +154,32 @@ impl<'a> Parser<'a> {
 
     // https://tc39.github.io/ecma262/#sec-unary-operators
     fn parse_unary_expression(&mut self) -> Result<Expression> {
-        let mut prefixes = Vec::new();
-
-        while let Some(prefix) = self.match_unary_operator() {
+        if let Some(prefix) = self.match_unary_operator() {
             let start = self.scanner.lookahead_start;
             self.scanner.next_token();
-            prefixes.push((prefix, self.finalize(start)));
+            let expr = self.parse_unary_expression()?;
+            Ok(Expression::Unary(self.finalize(start), prefix, Box::new(expr)))
+        } else {
+            self.parse_update_expression()
         }
+    }
 
-        let mut expr = self.parse_lhs_expression(true)?;
-
-        for (prefix, span) in prefixes.into_iter().rev() {
-            expr = Expression::Unary(span.merge(expr.span()), prefix, Box::new(expr))
+    fn parse_update_expression(&mut self) -> Result<Expression> {
+        if let Some(op) = self.match_update_op() {
+            let start = self.scanner.lookahead_start;
+            self.scanner.next_token();
+            let expr = self.parse_unary_expression()?;
+            Ok(Expression::Update(self.finalize(start), op, Box::new(expr), true))
+        } else {
+            self.parse_lhs_expression(true)
         }
+    }
 
-        Ok(expr)
+    fn match_update_op(&mut self) -> Option<UpdateOp> {
+        match self.scanner.lookahead {
+            Token::PlusPlus => Some(UpdateOp::PlusPlus),
+            _ => None
+        }
     }
 
     fn match_unary_operator(&mut self) -> Option<UnOp> {

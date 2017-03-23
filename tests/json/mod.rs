@@ -183,6 +183,19 @@ fn unary_expression(node: &Value) -> Result<Expression> {
     Ok(Expression::Unary(span, op, Box::new(argument)))
 }
 
+fn update_expression(node: &Value) -> Result<Expression> {
+    let span = span(node)?;
+    let argument = expression(expect_value(node, "argument"))?;
+    let prefix = expect_bool(node, "prefix");
+
+    let op = match expect_string(node, "operator") {
+        "++" => UpdateOp::PlusPlus,
+        _ => return Err(())
+    };
+
+    Ok(Expression::Update(span, op, Box::new(argument), prefix))
+}
+
 fn expression(node: &Value) -> Result<Expression> {
     let span = span(node)?;
 
@@ -198,6 +211,9 @@ fn expression(node: &Value) -> Result<Expression> {
         },
         "UnaryExpression" => {
             unary_expression(node)
+        },
+        "UpdateExpression" => {
+            update_expression(node)
         },
         "CallExpression" => {
             call_expression(node)

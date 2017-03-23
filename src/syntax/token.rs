@@ -20,6 +20,7 @@ pub enum Token {
     Comma,
     Dot,
     Plus,
+    PlusPlus,
     Minus,
     Times,
     Tilde,
