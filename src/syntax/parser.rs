@@ -220,6 +220,7 @@ impl<'a> Parser<'a> {
             Token::Lt => Some(InfixOp::BinOp(BinOp::Lt)),
             Token::Lte => Some(InfixOp::BinOp(BinOp::Lte)),
             Token::Gt => Some(InfixOp::BinOp(BinOp::Gt)),
+            Token::Gte => Some(InfixOp::BinOp(BinOp::Gte)),
             Token::LogicalAnd => Some(InfixOp::LogOp(LogOp::AndAnd)),
             Token::LogicalOr => Some(InfixOp::LogOp(LogOp::OrOr)),
             _ => None

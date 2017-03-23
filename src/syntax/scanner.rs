@@ -131,6 +131,8 @@ impl<'a> Scanner<'a> {
                 } else {
                     Token::RShift
                 }
+            } else if self.eat_byte(b'=') {
+                Token::Gte
             } else {
                 Token::Gt
             }
