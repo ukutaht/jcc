@@ -119,6 +119,8 @@ impl<'a> Scanner<'a> {
         } else if self.eat_byte(b'<') {
             if self.eat_byte(b'<') {
                 Token::LShift
+            } else if self.eat_byte(b'=') {
+                Token::Lte
             } else {
                 Token::Lt
             }
