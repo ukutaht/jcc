@@ -38,6 +38,7 @@ pub enum UnOp {
     Tilde,
     Void,
     Delete,
+    Typeof,
 }
 
 #[derive(Debug, PartialEq)]

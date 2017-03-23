@@ -25,6 +25,7 @@ pub enum Token {
     Tilde,
     Void,
     Delete,
+    Typeof,
     Div,
     Mod,
     Bang,

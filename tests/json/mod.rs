@@ -176,6 +176,7 @@ fn unary_expression(node: &Value) -> Result<Expression> {
         "~" => UnOp::Tilde,
         "void" => UnOp::Void,
         "delete" => UnOp::Delete,
+        "typeof" => UnOp::Typeof,
         _ => return Err(())
     };
 

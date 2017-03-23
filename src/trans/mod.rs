@@ -33,6 +33,7 @@ fn transpile_unary_operator<W: Write>(out: &mut W, operator: &UnOp, expr: &Expre
         UnOp::Tilde => write!(out, "~")?,
         UnOp::Void => write!(out, "void")?,
         UnOp::Delete => write!(out, "delete")?,
+        UnOp::Typeof => write!(out, "typeof")?,
     }
     transpile_expression(out, expr)
 }
