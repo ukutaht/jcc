@@ -174,6 +174,7 @@ fn unary_expression(node: &Value) -> Result<Expression> {
         "+" => UnOp::Plus,
         "!" => UnOp::Not,
         "~" => UnOp::Tilde,
+        "void" => UnOp::Void,
         _ => return Err(())
     };
 
