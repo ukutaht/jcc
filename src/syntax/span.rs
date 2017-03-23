@@ -30,13 +30,6 @@ impl Span {
             end: other.end
         }
     }
-
-    pub fn to(&self, other: &Span) -> Span {
-        Span {
-            start: self.start,
-            end: other.start
-        }
-    }
 }
 
 pub trait Tracking {
