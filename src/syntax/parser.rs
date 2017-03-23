@@ -104,7 +104,6 @@ impl<'a> Parser<'a> {
         Ok(Expression::New(self.finalize(start), Box::new(base), args))
     }
 
-    // https://tc39.github.io/ecma262/#sec-left-hand-side-expressions
     fn parse_lhs_expression(&mut self, allow_call: bool) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
 
@@ -152,7 +151,6 @@ impl<'a> Parser<'a> {
         Ok(result)
     }
 
-    // https://tc39.github.io/ecma262/#sec-unary-operators
     fn parse_unary_expression(&mut self) -> Result<Expression> {
         if let Some(prefix) = self.match_unary_operator() {
             let start = self.scanner.lookahead_start;
@@ -277,12 +275,10 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
-    // https://tc39.github.io/ecma262/#sec-conditional-operator
     fn parse_conditional_expression(&mut self) -> Result<Expression> {
         self.parse_binary_expression()
     }
 
-    // https://tc39.github.io/ecma262/#sec-assignment-operators
     fn parse_assignment_expression(&mut self) -> Result<Expression> {
         let left = self.parse_conditional_expression()?;
         match self.scanner.lookahead {
@@ -301,7 +297,6 @@ impl<'a> Parser<'a> {
         }
     }
 
-    // https://tc39.github.io/ecma262/#sec-array-initializer
     fn parse_array_initializer(&mut self) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::OpenSquare);
@@ -328,7 +323,6 @@ impl<'a> Parser<'a> {
         Ok(Expression::Array(self.finalize(start), elements))
     }
 
-    // https://tc39.github.io/ecma262/#sec-block
     fn parse_variable_statement(&mut self) -> Result<Statement> {
         self.expect(Token::Var);
         if let Token::Ident(name) = self.scanner.next_token() {
@@ -374,7 +368,6 @@ impl<'a> Parser<'a> {
         parameters
     }
 
-    // https://tc39.github.io/ecma262/#sec-function-definitions
     fn parse_function(&mut self) -> Result<Function> {
         self.expect(Token::FunctionKeyword);
 
@@ -432,12 +425,10 @@ impl<'a> Parser<'a> {
         }
     }
 
-    // https://tc39.github.io/ecma262/#sec-block
     fn parse_statement_list_item(&mut self) -> Result<StatementListItem> {
         self.parse_statement().map(StatementListItem::Statement)
     }
 
-    // https://tc39.github.io/ecma262/#sec-block
     fn parse_block(&mut self) -> Result<Block> {
         self.expect(Token::OpenCurly);
         let mut statements = Vec::new();
