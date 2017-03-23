@@ -157,7 +157,9 @@ impl<'a> Parser<'a> {
         let mut prefixes = Vec::new();
 
         while let Some(prefix) = self.match_unary_operator() {
-            prefixes.push(prefix);
+            let start = self.scanner.lookahead_start;
+            self.scanner.next_token();
+            prefixes.push((prefix, self.finalize(start)));
         }
 
         let mut expr = self.parse_lhs_expression(true)?;
@@ -169,18 +171,11 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
-    fn match_unary_operator(&mut self) -> Option<(UnOp, Span)> {
-        let start = self.scanner.lookahead_start;
-
+    fn match_unary_operator(&mut self) -> Option<UnOp> {
         match self.scanner.lookahead {
-            Token::Bang => {
-                self.scanner.next_token();
-                Some((UnOp::Not, self.finalize(start)))
-            },
-            Token::Minus => {
-                self.scanner.next_token();
-                Some((UnOp::Minus, self.finalize(start)))
-            },
+            Token::Bang => Some(UnOp::Not),
+            Token::Minus => Some(UnOp::Minus),
+            Token::Plus => Some(UnOp::Plus),
             _ => None
         }
     }

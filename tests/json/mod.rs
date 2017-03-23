@@ -171,6 +171,7 @@ fn unary_expression(node: &Value) -> Result<Expression> {
 
     let op = match expect_string(node, "operator") {
         "-" => UnOp::Minus,
+        "+" => UnOp::Plus,
         "!" => UnOp::Not,
         _ => return Err(())
     };

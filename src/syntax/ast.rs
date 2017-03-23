@@ -34,6 +34,7 @@ pub enum BinOp {
 pub enum UnOp {
     Not,
     Minus,
+    Plus,
 }
 
 #[derive(Debug, PartialEq)]

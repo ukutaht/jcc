@@ -28,7 +28,8 @@ pub fn transpile_expression<W: Write>(out: &mut W, expr: &Expression) -> Result<
 fn transpile_unary_operator<W: Write>(out: &mut W, operator: &UnOp, expr: &Expression) -> Result<()> {
     match *operator {
         UnOp::Not => write!(out, "!")?,
-        UnOp::Minus => write!(out, "-")?
+        UnOp::Minus => write!(out, "-")?,
+        UnOp::Plus => write!(out, "+")?
     }
     transpile_expression(out, expr)
 }
