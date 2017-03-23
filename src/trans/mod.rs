@@ -65,6 +65,7 @@ fn transpile_binop<W: Write>(out: &mut W, op: &BinOp, left: &Expression, right: 
         BinOp::Lte => write!(out, " <= ")?,
         BinOp::Gt => write!(out, " > ")?,
         BinOp::Gte => write!(out, " >= ")?,
+        BinOp::In => write!(out, " in ")?,
     }
     transpile_expression(out, right)
 }

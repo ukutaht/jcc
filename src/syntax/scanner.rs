@@ -12,6 +12,7 @@ static KEYWORD_NEW: &'static str = "new";
 static KEYWORD_VOID: &'static str = "void";
 static KEYWORD_DELETE: &'static str = "delete";
 static KEYWORD_TYPEOF: &'static str = "typeof";
+static KEYWORD_IN: &'static str = "in";
 
 pub struct Scanner<'a> {
     bytes: &'a [u8],
@@ -259,6 +260,8 @@ impl<'a> Scanner<'a> {
             Token::Delete
         } else if value == *KEYWORD_TYPEOF {
             Token::Typeof
+        } else if value == *KEYWORD_IN {
+            Token::In
         } else {
             Token::Ident(value)
         }

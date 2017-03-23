@@ -70,6 +70,7 @@ fn binary_expression(node: &Value) -> Result<Expression> {
         "<=" => BinOp::Lte,
         ">" => BinOp::Gt,
         ">=" => BinOp::Gte,
+        "in" => BinOp::In,
         _ => return Err(())
     };
 

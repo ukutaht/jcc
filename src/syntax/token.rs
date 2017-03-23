@@ -43,6 +43,7 @@ pub enum Token {
     Lte,
     Gt,
     Gte,
+    In,
     Ident(String),
     String(String),
     Number(f64),
