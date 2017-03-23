@@ -31,7 +31,7 @@ impl<'a> Parser<'a> {
     fn finalize(&self, start: Position) -> Span {
         Span {
             start: start,
-            end: self.scanner.last_pos.clone()
+            end: self.scanner.last_pos
         }
     }
 
@@ -206,7 +206,7 @@ impl<'a> Parser<'a> {
     fn combine_binary(&self, operator: InfixOp, left: Expression, right: Expression, start: Position) -> Expression {
         let span = Span {
             start: start,
-            end: self.scanner.last_pos.clone()
+            end: self.scanner.last_pos
         };
 
         match operator {
@@ -233,8 +233,8 @@ impl<'a> Parser<'a> {
                     let operator = operators.pop().unwrap();
                     expr = expressions.pop().unwrap();
                     markers.pop();
-                    let marker = markers.last().unwrap().clone();
-                    expressions.push(self.combine_binary(operator, expr, right, marker))
+                    let marker = markers.last().unwrap();
+                    expressions.push(self.combine_binary(operator, expr, right, *marker))
                 }
                 self.scanner.next_token();
                 operators.push(op);
@@ -245,7 +245,7 @@ impl<'a> Parser<'a> {
             expr = expressions.pop().unwrap();
             markers.pop();
 
-            while expressions.len() > 0 {
+            while !expressions.is_empty() {
                 let operator = operators.pop().unwrap();
                 let left = expressions.pop().unwrap();
                 expr = self.combine_binary(operator, left , expr, markers.pop().unwrap());

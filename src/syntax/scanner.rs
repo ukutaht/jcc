@@ -276,7 +276,7 @@ impl<'a> Scanner<'a> {
     }
 
     fn get_byte(&self, index: usize) -> Option<u8> {
-      self.bytes.get(index).map(|b| *b)
+      self.bytes.get(index).cloned()
     }
 
     fn current_char(&mut self) -> Option<char> {
@@ -300,7 +300,7 @@ impl<'a> Scanner<'a> {
             }
             return false;
         }
-        return false;
+        false
     }
 
     fn next_char(&mut self) -> Option<char> {

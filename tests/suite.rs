@@ -28,7 +28,7 @@ fn add_test<F: FnOnce() + Send + 'static>(tests: &mut Vec<TestDescAndFn>, name: 
 
 fn ignores_from(ignore_file: &str) -> Vec<glob::Pattern> {
     ignore_file.lines()
-        .filter(|s| !s.is_empty() && !s.starts_with("#"))
+        .filter(|s| !s.is_empty() && !s.starts_with('#'))
         .map(|s| glob::Pattern::new(s).unwrap())
         .collect()
 }

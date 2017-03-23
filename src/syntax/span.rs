@@ -26,15 +26,15 @@ impl Span {
 
     pub fn merge(&self, other: &Span) -> Span {
         Span {
-            start: self.start.clone(),
-            end: other.end.clone()
+            start: self.start,
+            end: other.end
         }
     }
 
     pub fn to(&self, other: &Span) -> Span {
         Span {
-            start: self.start.clone(),
-            end: other.start.clone()
+            start: self.start,
+            end: other.start
         }
     }
 }
