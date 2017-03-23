@@ -22,12 +22,6 @@ expression/conditional/**
 expression/left-hand-side/let_object_computed
 expression/left-hand-side/migrated_0013
 
-
-expression/postfix/migrated_0002
-expression/postfix/migrated_0003
-expression/postfix/migrated_0004
-expression/postfix/migrated_0005
-
 expression/primary/keyword/**
 
 expression/primary/literal/numeric/invalid_hex
@@ -45,8 +39,3 @@ expression/primary/object/**
 expression/primary/other/**
 
 expression/relational/**
-
-expression/unary/migrated_0002
-expression/unary/migrated_0003
-expression/unary/migrated_0004
-expression/unary/migrated_0005
