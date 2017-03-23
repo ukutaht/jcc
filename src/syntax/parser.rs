@@ -182,57 +182,23 @@ impl<'a> Parser<'a> {
 
     fn match_infix(&mut self) -> Option<InfixOp> {
         match self.scanner.lookahead {
-            Token::Plus => {
-                Some(InfixOp::BinOp(BinOp::Plus))
-            }
-            Token::BitXor => {
-                Some(InfixOp::BinOp(BinOp::BitXor))
-            }
-            Token::BitAnd => {
-                Some(InfixOp::BinOp(BinOp::BitAnd))
-            }
-            Token::BitOr => {
-                Some(InfixOp::BinOp(BinOp::BitOr))
-            }
-            Token::LShift => {
-                Some(InfixOp::BinOp(BinOp::LShift))
-            }
-            Token::RShift => {
-                Some(InfixOp::BinOp(BinOp::RShift))
-            }
-            Token::URShift => {
-                Some(InfixOp::BinOp(BinOp::URShift))
-            }
-            Token::Times => {
-                Some(InfixOp::BinOp(BinOp::Times))
-            }
-            Token::Div => {
-                Some(InfixOp::BinOp(BinOp::Div))
-            }
-            Token::Mod => {
-                Some(InfixOp::BinOp(BinOp::Mod))
-            }
-            Token::Minus => {
-                Some(InfixOp::BinOp(BinOp::Minus))
-            }
-            Token::EqEq => {
-                Some(InfixOp::BinOp(BinOp::EqEq))
-            }
-            Token::NotEq => {
-                Some(InfixOp::BinOp(BinOp::NotEq))
-            }
-            Token::NotEqEq => {
-                Some(InfixOp::BinOp(BinOp::NotEqEq))
-            }
-            Token::EqEqEq => {
-                Some(InfixOp::BinOp(BinOp::EqEqEq))
-            }
-            Token::LogicalAnd => {
-                Some(InfixOp::LogOp(LogOp::AndAnd))
-            }
-            Token::LogicalOr => {
-                Some(InfixOp::LogOp(LogOp::OrOr))
-            }
+            Token::Plus => Some(InfixOp::BinOp(BinOp::Plus)),
+            Token::BitXor => Some(InfixOp::BinOp(BinOp::BitXor)),
+            Token::BitAnd => Some(InfixOp::BinOp(BinOp::BitAnd)),
+            Token::BitOr => Some(InfixOp::BinOp(BinOp::BitOr)),
+            Token::LShift => Some(InfixOp::BinOp(BinOp::LShift)),
+            Token::RShift => Some(InfixOp::BinOp(BinOp::RShift)),
+            Token::URShift => Some(InfixOp::BinOp(BinOp::URShift)),
+            Token::Times => Some(InfixOp::BinOp(BinOp::Times)),
+            Token::Div => Some(InfixOp::BinOp(BinOp::Div)),
+            Token::Mod => Some(InfixOp::BinOp(BinOp::Mod)),
+            Token::Minus => Some(InfixOp::BinOp(BinOp::Minus)),
+            Token::EqEq => Some(InfixOp::BinOp(BinOp::EqEq)),
+            Token::NotEq => Some(InfixOp::BinOp(BinOp::NotEq)),
+            Token::NotEqEq => Some(InfixOp::BinOp(BinOp::NotEqEq)),
+            Token::EqEqEq => Some(InfixOp::BinOp(BinOp::EqEqEq)),
+            Token::LogicalAnd => Some(InfixOp::LogOp(LogOp::AndAnd)),
+            Token::LogicalOr => Some(InfixOp::LogOp(LogOp::OrOr)),
             _ => None
         }
     }
