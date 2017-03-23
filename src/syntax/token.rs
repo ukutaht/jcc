@@ -40,6 +40,7 @@ pub enum Token {
     RShift,
     URShift,
     Lt,
+    Gt,
     Ident(String),
     String(String),
     Number(f64),

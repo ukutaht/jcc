@@ -130,7 +130,7 @@ impl<'a> Scanner<'a> {
                     Token::RShift
                 }
             } else {
-                panic!("wat!")
+                Token::Gt
             }
         } else if character == b'.' {
             match self.peek_byte() {
