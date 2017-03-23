@@ -15,8 +15,6 @@ expression/additive/migrated_0002
 
 expression/assignment/**
 
-expression/complex/**
-
 expression/conditional/**
 
 expression/left-hand-side/let_object_computed
@@ -37,5 +35,3 @@ expression/primary/literal/string/**
 
 expression/primary/object/**
 expression/primary/other/**
-
-expression/relational/migrated_0006
