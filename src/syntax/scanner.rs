@@ -15,6 +15,7 @@ pub struct Scanner<'a> {
     index: usize,
     line: u32,
     column: u32,
+    pub last_pos: Position,
     pub lookahead: Token,
 }
 
@@ -25,6 +26,7 @@ impl<'a> Scanner<'a> {
             index: 0,
             column: 0,
             line: 1,
+            last_pos: Position::origin(),
             lookahead: Token {value: TokenValue::Eof, span: Span::initial() }
         }
     }
@@ -34,6 +36,7 @@ impl<'a> Scanner<'a> {
     }
 
     pub fn next_token(&mut self) -> Token {
+        self.last_pos = self.pos();
         let tok = self.lex();
         mem::replace(&mut self.lookahead, tok)
     }

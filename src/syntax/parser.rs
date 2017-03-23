@@ -1,6 +1,6 @@
 use errors::CompileError;
 use syntax::ast::*;
-use syntax::span::{Tracking, Span};
+use syntax::span::{Tracking, Span, Position};
 use syntax::token::{Token, TokenValue};
 use syntax::scanner::Scanner;
 use std;
@@ -179,102 +179,110 @@ impl<'a> Parser<'a> {
     fn match_infix(&mut self) -> Option<InfixOp> {
         match self.scanner.lookahead.value {
             TokenValue::Plus => {
-                self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::Plus))
             }
             TokenValue::BitXor => {
-                self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::BitXor))
             }
             TokenValue::BitAnd => {
-                self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::BitAnd))
             }
             TokenValue::BitOr => {
-                self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::BitOr))
             }
             TokenValue::LShift => {
-                self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::LShift))
             }
             TokenValue::RShift => {
-                self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::RShift))
             }
             TokenValue::URShift => {
-                self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::URShift))
             }
             TokenValue::Times => {
-                self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::Times))
             }
             TokenValue::Div => {
-                self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::Div))
             }
             TokenValue::Mod => {
-                self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::Mod))
             }
             TokenValue::Minus => {
-                self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::Minus))
             }
             TokenValue::EqEq => {
-                self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::EqEq))
             }
             TokenValue::NotEq => {
-                self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::NotEq))
             }
             TokenValue::NotEqEq => {
-                self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::NotEqEq))
             }
             TokenValue::EqEqEq => {
-                self.scanner.next_token();
                 Some(InfixOp::BinOp(BinOp::EqEqEq))
             }
             TokenValue::LogicalAnd => {
-                self.scanner.next_token();
                 Some(InfixOp::LogOp(LogOp::AndAnd))
             }
             TokenValue::LogicalOr => {
-                self.scanner.next_token();
                 Some(InfixOp::LogOp(LogOp::OrOr))
             }
             _ => None
         }
     }
 
-    fn combine_binary(&self, frame: (Expression, InfixOp), right: Expression) -> Expression {
-        let span = frame.0.span().merge(right.span());
+    fn combine_binary(&self, operator: InfixOp, left: Expression, right: Expression, start: Position) -> Expression {
+        let span = Span {
+            start: start,
+            end: self.scanner.last_pos.clone()
+        };
 
-        match frame.1 {
-            InfixOp::BinOp(op) => Expression::Binary(span, op, Box::new(frame.0), Box::new(right)),
-            InfixOp::LogOp(op) => Expression::Logical(span, op, Box::new(frame.0), Box::new(right)),
+        match operator {
+            InfixOp::BinOp(op) => Expression::Binary(span, op, Box::new(left), Box::new(right)),
+            InfixOp::LogOp(op) => Expression::Logical(span, op, Box::new(left), Box::new(right)),
         }
     }
 
     fn parse_binary_expression(&mut self) -> Result<Expression> {
-        let mut stack: Vec<(Expression, InfixOp)> = Vec::new();
-        let mut left = self.parse_unary_expression()?;
+        let start = self.scanner.lookahead.span.start.clone();
 
-        while let Some(op) = self.match_infix() {
-            while stack.len() > 0 && stack.last().unwrap().1.precedence() >= op.precedence() {
-                left = self.combine_binary(stack.pop().unwrap(), left);
+        let mut expr = self.parse_unary_expression()?;
+
+        if let Some(first_op) = self.match_infix() {
+            self.scanner.next_token();
+            let mut markers = vec![start, self.scanner.lookahead.span.start.clone()];
+            let mut right = self.parse_unary_expression()?;
+            let mut expressions = vec![expr, right];
+            let mut operators = vec![first_op];
+
+            while let Some(op) = self.match_infix() {
+                while expressions.len() > 1 && operators.last().unwrap().precedence() >= op.precedence() {
+                    right = expressions.pop().unwrap();
+                    let operator = operators.pop().unwrap();
+                    expr = expressions.pop().unwrap();
+                    markers.pop();
+                    let marker = markers.last().unwrap().clone();
+                    expressions.push(self.combine_binary(operator, expr, right, marker))
+                }
+                self.scanner.next_token();
+                operators.push(op);
+                markers.push(self.scanner.lookahead.span.start.clone());
+                expressions.push(self.parse_unary_expression()?)
             }
-            stack.push((left, op));
-            left = self.parse_unary_expression()?;
+
+            expr = expressions.pop().unwrap();
+            markers.pop();
+
+            while expressions.len() > 0 {
+                let operator = operators.pop().unwrap();
+                let left = expressions.pop().unwrap();
+                expr = self.combine_binary(operator, left , expr, markers.pop().unwrap());
+            }
         }
 
-        while stack.len() > 0 {
-            left = self.combine_binary(stack.pop().unwrap(), left);
-        }
-        Ok(left)
+        Ok(expr)
     }
 
     // https://tc39.github.io/ecma262/#sec-conditional-operator

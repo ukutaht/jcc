@@ -18,7 +18,6 @@ expression/assignment/**
 expression/complex/**
 
 expression/conditional/**
-expression/grouping/**
 
 expression/left-hand-side/let_object_computed
 expression/left-hand-side/migrated_0013
