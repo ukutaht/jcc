@@ -66,6 +66,7 @@ fn transpile_binop<W: Write>(out: &mut W, op: &BinOp, left: &Expression, right: 
         BinOp::Gt => write!(out, " > ")?,
         BinOp::Gte => write!(out, " >= ")?,
         BinOp::In => write!(out, " in ")?,
+        BinOp::Instanceof => write!(out, " instanceof ")?,
     }
     transpile_expression(out, right)
 }

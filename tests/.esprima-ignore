@@ -38,5 +38,4 @@ expression/primary/literal/string/**
 expression/primary/object/**
 expression/primary/other/**
 
-expression/relational/migrated_0005
 expression/relational/migrated_0006

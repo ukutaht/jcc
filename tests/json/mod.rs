@@ -71,6 +71,7 @@ fn binary_expression(node: &Value) -> Result<Expression> {
         ">" => BinOp::Gt,
         ">=" => BinOp::Gte,
         "in" => BinOp::In,
+        "instanceof" => BinOp::Instanceof,
         _ => return Err(())
     };
 

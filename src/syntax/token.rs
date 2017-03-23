@@ -44,6 +44,7 @@ pub enum Token {
     Gt,
     Gte,
     In,
+    Instanceof,
     Ident(String),
     String(String),
     Number(f64),
