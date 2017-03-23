@@ -10,6 +10,7 @@ static KEYWORD_IF: &'static str = "if";
 static KEYWORD_ELSE: &'static str = "else";
 static KEYWORD_NEW: &'static str = "new";
 static KEYWORD_VOID: &'static str = "void";
+static KEYWORD_DELETE: &'static str = "delete";
 
 pub struct Scanner<'a> {
     bytes: &'a [u8],
@@ -241,6 +242,8 @@ impl<'a> Scanner<'a> {
             Token::New
         } else if value == *KEYWORD_VOID {
             Token::Void
+        } else if value == *KEYWORD_DELETE {
+            Token::Delete
         } else {
             Token::Ident(value)
         }

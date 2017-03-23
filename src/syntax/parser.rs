@@ -178,6 +178,7 @@ impl<'a> Parser<'a> {
             Token::Plus => Some(UnOp::Plus),
             Token::Tilde => Some(UnOp::Tilde),
             Token::Void => Some(UnOp::Void),
+            Token::Delete => Some(UnOp::Delete),
             _ => None
         }
     }
