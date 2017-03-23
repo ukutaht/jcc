@@ -276,7 +276,11 @@ impl<'a> Scanner<'a> {
     }
 
     fn get_byte(&self, index: usize) -> Option<u8> {
-      self.bytes.get(index).cloned()
+        if index < self.bytes.len() {
+            Some(self.bytes[index])
+        } else {
+            None
+        }
     }
 
     fn current_char(&mut self) -> Option<char> {
