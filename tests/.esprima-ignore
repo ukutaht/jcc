@@ -23,7 +23,10 @@ expression/left-hand-side/let_object_computed
 expression/left-hand-side/migrated_0013
 
 
-expression/postfix/**
+expression/postfix/migrated_0002
+expression/postfix/migrated_0003
+expression/postfix/migrated_0004
+expression/postfix/migrated_0005
 
 expression/primary/keyword/**
 

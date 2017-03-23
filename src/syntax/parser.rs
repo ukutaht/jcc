@@ -165,13 +165,19 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_update_expression(&mut self) -> Result<Expression> {
+        let start = self.scanner.lookahead_start;
         if let Some(op) = self.match_update_op() {
-            let start = self.scanner.lookahead_start;
             self.scanner.next_token();
             let expr = self.parse_unary_expression()?;
             Ok(Expression::Update(self.finalize(start), op, Box::new(expr), true))
         } else {
-            self.parse_lhs_expression(true)
+            let expr = self.parse_lhs_expression(true)?;
+            if let Some(op) = self.match_update_op() {
+                self.scanner.next_token();
+                Ok(Expression::Update(self.finalize(start), op, Box::new(expr), false))
+            } else {
+                Ok(expr)
+            }
         }
     }
 
