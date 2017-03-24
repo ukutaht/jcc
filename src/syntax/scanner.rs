@@ -207,9 +207,9 @@ impl<'a> Scanner<'a> {
 
     fn scan_float(&mut self) -> Token {
         let start = self.index;
-        let mut is_octal = true;
 
         if self.eat_byte(b'0') {
+            let mut is_octal = true;
             self.take_while(|c| {
                 is_octal = is_octal && (c as char).is_digit(8);
                 (c as char).is_digit(10)
