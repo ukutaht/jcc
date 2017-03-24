@@ -27,8 +27,6 @@ expression/primary/literal/numeric/invalid_hex
 expression/primary/literal/numeric/migrated_0002
 # Need to parse semicolons for this
 expression/primary/literal/numeric/migrated_0009
-expression/primary/literal/numeric/migrated_0019
-expression/primary/literal/numeric/migrated_0020
 
 expression/primary/literal/regular-expression/**
 expression/primary/literal/string/**

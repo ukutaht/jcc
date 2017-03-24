@@ -207,10 +207,24 @@ impl<'a> Scanner<'a> {
 
     fn scan_float(&mut self) -> Token {
         let start = self.index;
-        self.skip_digits();
+        let mut is_octal = true;
+
+        if self.eat_byte(b'0') {
+            self.take_while(|c| {
+                is_octal = is_octal && (c as char).is_digit(8);
+                (c as char).is_digit(10)
+            });
+
+            if is_octal {
+                let number = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]) };
+                return Token::Number(i32::from_str_radix(number, 8).unwrap() as f64);
+            }
+        } else {
+            self.take_while(|c| (c as char).is_digit(10));
+        }
 
         if self.eat_byte(b'.') {
-            self.skip_digits()
+            self.take_while(|c| (c as char).is_digit(10));
         }
 
         if self.eat_byte(b'e') {
@@ -218,7 +232,7 @@ impl<'a> Scanner<'a> {
 
             match self.current_byte() {
                 Some(ch) if (ch as char).is_digit(10) => {
-                    self.skip_digits();
+                    self.take_while(|c| (c as char).is_digit(10));
                 }
                 _ => panic!("Invalid exponent")
             }
@@ -226,10 +240,6 @@ impl<'a> Scanner<'a> {
 
         let float = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]) }.parse().unwrap();
         Token::Number(float)
-    }
-
-    fn skip_digits(&mut self) {
-        self.take_while(|c| (c as char).is_digit(10));
     }
 
     fn scan_string(&mut self, quote: u8) -> Token {
@@ -276,7 +286,7 @@ impl<'a> Scanner<'a> {
         str::from_utf8(&self.bytes[start..self.index]).unwrap().to_string()
     }
 
-    fn take_while<F>(&mut self, predicate: F) where F: Fn(u8) -> bool {
+    fn take_while<F>(&mut self, mut predicate: F) where F: FnMut(u8) -> bool {
         while let Some(ch) = self.current_byte() {
             if predicate(ch) {
                 self.next_byte();
