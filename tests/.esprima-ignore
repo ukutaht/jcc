@@ -32,5 +32,4 @@ expression/primary/literal/regular-expression/**
 expression/primary/literal/string/**
 
 expression/primary/object/**
-expression/primary/other/migrated_0001
 expression/primary/other/migrated_0002

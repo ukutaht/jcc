@@ -64,6 +64,10 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token();
                 Ok(Expression::This(self.finalize(start)))
             },
+            Token::Null => {
+                self.scanner.next_token();
+                Ok(Expression::Literal(self.finalize(start), Literal::Null))
+            },
             _ => Err(CompileError::UnexpectedToken(token.clone()))
         }
     }
@@ -142,6 +146,7 @@ impl<'a> Parser<'a> {
                         Token::Ident(name) => name,
                         Token::If => "if".to_string(),
                         Token::Else => "else".to_string(),
+                        Token::Null => "null".to_string(),
                         _ => return Err(CompileError::UnexpectedToken(token))
                     };
 

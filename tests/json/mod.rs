@@ -140,6 +140,8 @@ fn literal(node: &Value) -> Result<Literal> {
 
     if val.is_number() {
         Ok(Literal::Number(val.as_f64().unwrap()))
+    } else if val.is_null() {
+        Ok(Literal::Null)
     } else {
         Err(())
     }
