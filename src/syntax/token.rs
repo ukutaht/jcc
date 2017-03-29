@@ -11,6 +11,7 @@ pub enum Token {
     NotEq,
     NotEqEq,
     FunctionKeyword,
+    ThisKeyword,
     OpenParen,
     CloseParen,
     OpenCurly,

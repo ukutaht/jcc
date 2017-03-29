@@ -60,6 +60,10 @@ impl<'a> Parser<'a> {
             Token::FunctionKeyword => {
                 self.parse_function().map(Expression::Function)
             },
+            Token::ThisKeyword => {
+                self.scanner.next_token();
+                Ok(Expression::This(self.finalize(start)))
+            },
             _ => Err(CompileError::UnexpectedToken(token.clone()))
         }
     }

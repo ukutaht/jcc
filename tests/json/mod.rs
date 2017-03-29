@@ -240,6 +240,9 @@ fn expression(node: &Value) -> Result<Expression> {
         "NewExpression" => {
             new_expression(node)
         },
+        "ThisExpression" => {
+            Ok(Expression::This(span))
+        },
         _ => Err(())
     }
 }

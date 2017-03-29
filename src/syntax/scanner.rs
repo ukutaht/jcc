@@ -6,6 +6,7 @@ use std::mem;
 
 static KEYWORD_VAR: &'static str = "var";
 static KEYWORD_FUNCTION: &'static str = "function";
+static KEYWORD_THIS: &'static str = "this";
 static KEYWORD_IF: &'static str = "if";
 static KEYWORD_ELSE: &'static str = "else";
 static KEYWORD_NEW: &'static str = "new";
@@ -259,6 +260,8 @@ impl<'a> Scanner<'a> {
             Token::Var
         } else if value == *KEYWORD_FUNCTION {
             Token::FunctionKeyword
+        } else if value == *KEYWORD_THIS {
+            Token::ThisKeyword
         } else if value == *KEYWORD_IF {
             Token::If
         } else if value == *KEYWORD_ELSE {
