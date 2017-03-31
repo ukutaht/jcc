@@ -60,9 +60,9 @@ impl<'a> Scanner<'a> {
         loop {
             match self.current_byte() {
                 Some(b'\n') => {
+                    self.next_byte();
                     self.line += 1;
                     self.column = 0;
-                    self.next_byte();
                 }
                 Some(b' ') => {
                     self.next_byte();
