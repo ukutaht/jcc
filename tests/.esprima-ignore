@@ -13,7 +13,19 @@ statement/**
 
 expression/additive/migrated_0002
 
-expression/assignment/**
+expression/assignment/migrated_0001
+expression/assignment/migrated_0002
+expression/assignment/migrated_0003
+expression/assignment/migrated_0004
+expression/assignment/migrated_0005
+expression/assignment/migrated_0006
+expression/assignment/migrated_0007
+expression/assignment/migrated_0008
+expression/assignment/migrated_0009
+expression/assignment/migrated_0010
+expression/assignment/migrated_0011
+expression/assignment/migrated_0012
+expression/assignment/migrated_0013
 
 expression/conditional/**
 
