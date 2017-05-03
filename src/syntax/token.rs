@@ -30,6 +30,7 @@ pub enum Token {
     Lt,
     Lte,
     Minus,
+    MinusEq,
     MinusMinus,
     Mod,
     ModEq,

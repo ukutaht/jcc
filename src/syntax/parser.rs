@@ -301,6 +301,7 @@ impl<'a> Parser<'a> {
             Token::DivEq => Some(AssignOp::DivEq),
             Token::ModEq => Some(AssignOp::ModEq),
             Token::PlusEq => Some(AssignOp::PlusEq),
+            Token::MinusEq => Some(AssignOp::MinusEq),
             _ => None
         }
     }
