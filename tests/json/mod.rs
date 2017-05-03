@@ -94,6 +94,7 @@ fn assignment_expression(node: &Value) -> Result<Expression> {
         ">>=" => AssignOp::RShiftEq,
         ">>>=" => AssignOp::URShiftEq,
         "&=" => AssignOp::BitAndEq,
+        "^=" => AssignOp::BitXorEq,
         _ => return Err(())
     };
 
