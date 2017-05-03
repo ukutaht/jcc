@@ -83,12 +83,13 @@ fn assignment_expression(node: &Value) -> Result<Expression> {
     let right = expression(expect_value(node, "right"))?;
     let span = span(node)?;
 
-    match expect_string(node, "operator") {
-        "=" => {
-            Ok(Expression::Assignment(span, AssignOp::Eq, Box::new(left), Box::new(right)))
-        }
-        _ => Err(())
-    }
+    let op = match expect_string(node, "operator") {
+        "=" => AssignOp::Eq,
+        "*=" => AssignOp::TimesEq,
+        _ => return Err(())
+    };
+
+    Ok(Expression::Assignment(span, op, Box::new(left), Box::new(right)))
 }
 
 fn array_expression(node: &Value) -> Result<Expression> {

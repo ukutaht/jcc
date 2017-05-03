@@ -294,21 +294,29 @@ impl<'a> Parser<'a> {
         self.parse_binary_expression()
     }
 
+    fn match_assignment(&mut self) -> Option<AssignOp> {
+        match self.scanner.lookahead {
+            Token::Eq => Some(AssignOp::Eq),
+            Token::TimesEq => Some(AssignOp::TimesEq),
+            _ => None
+        }
+    }
+
     fn parse_assignment_expression(&mut self) -> Result<Expression> {
         let left = self.parse_conditional_expression()?;
-        match self.scanner.lookahead {
-            Token::Eq => {
+        match self.match_assignment() {
+            Some(op) => {
                 self.scanner.next_token();
                 match left {
                     Expression::Identifier(_, _) => {
                         let right = self.parse_assignment_expression()?;
                         let span = left.span().merge(right.span());
-                        Ok(Expression::Assignment(span, AssignOp::Eq, Box::new(left), Box::new(right)))
+                        Ok(Expression::Assignment(span, op, Box::new(left), Box::new(right)))
                     }
                     _ => panic!("Invalid assignment target")
                 }
             }
-            _ => Ok(left)
+            None => Ok(left)
         }
     }
 

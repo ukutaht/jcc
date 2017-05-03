@@ -113,7 +113,11 @@ impl<'a> Scanner<'a> {
         } else if self.eat_byte(b'^') {
             Token::BitXor
         } else if self.eat_byte(b'*') {
-            Token::Times
+            if self.eat_byte(b'=') {
+                Token::TimesEq
+            } else {
+                Token::Times
+            }
         } else if self.eat_byte(b'/') {
             Token::Div
         } else if self.eat_byte(b'%') {

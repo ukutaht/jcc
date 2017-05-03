@@ -26,6 +26,7 @@ pub enum Token {
     Minus,
     MinusMinus,
     Times,
+    TimesEq,
     Tilde,
     Void,
     Delete,
