@@ -303,6 +303,7 @@ impl<'a> Parser<'a> {
             Token::PlusEq => Some(AssignOp::PlusEq),
             Token::MinusEq => Some(AssignOp::MinusEq),
             Token::LShiftEq => Some(AssignOp::LShiftEq),
+            Token::RShiftEq => Some(AssignOp::RShiftEq),
             _ => None
         }
     }
