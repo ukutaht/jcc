@@ -25,6 +25,7 @@ pub enum Token {
     In,
     Instanceof,
     LShift,
+    LShiftEq,
     LogicalAnd,
     LogicalOr,
     Lt,

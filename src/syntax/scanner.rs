@@ -136,7 +136,11 @@ impl<'a> Scanner<'a> {
             Token::Comma
         } else if self.eat_byte(b'<') {
             if self.eat_byte(b'<') {
-                Token::LShift
+                if self.eat_byte(b'=') {
+                    Token::LShiftEq
+                } else {
+                    Token::LShift
+                }
             } else if self.eat_byte(b'=') {
                 Token::Lte
             } else {

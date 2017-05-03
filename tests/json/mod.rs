@@ -90,6 +90,7 @@ fn assignment_expression(node: &Value) -> Result<Expression> {
         "%=" => AssignOp::ModEq,
         "+=" => AssignOp::PlusEq,
         "-=" => AssignOp::MinusEq,
+        "<<=" => AssignOp::LShiftEq,
         _ => return Err(())
     };
 
