@@ -300,6 +300,7 @@ impl<'a> Parser<'a> {
             Token::TimesEq => Some(AssignOp::TimesEq),
             Token::DivEq => Some(AssignOp::DivEq),
             Token::ModEq => Some(AssignOp::ModEq),
+            Token::PlusEq => Some(AssignOp::PlusEq),
             _ => None
         }
     }

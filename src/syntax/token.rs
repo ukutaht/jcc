@@ -42,6 +42,7 @@ pub enum Token {
     OpenParen,
     OpenSquare,
     Plus,
+    PlusEq,
     PlusPlus,
     RShift,
     String(String),

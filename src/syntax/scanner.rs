@@ -107,6 +107,8 @@ impl<'a> Scanner<'a> {
         } else if self.eat_byte(b'+') {
             if self.eat_byte(b'+') {
                 Token::PlusPlus
+            } else if self.eat_byte(b'=') {
+                Token::PlusEq
             } else {
                 Token::Plus
             }
