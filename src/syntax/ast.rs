@@ -93,6 +93,7 @@ pub enum AssignOp {
     MinusEq,
     LShiftEq,
     RShiftEq,
+    URShiftEq,
 }
 
 #[derive(Debug, PartialEq)]

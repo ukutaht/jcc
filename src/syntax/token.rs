@@ -55,6 +55,7 @@ pub enum Token {
     TimesEq,
     Typeof,
     URShift,
+    URShiftEq,
     Var,
     Void,
 }
