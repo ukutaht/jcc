@@ -125,7 +125,11 @@ impl<'a> Scanner<'a> {
                 Token::Div
             }
         } else if self.eat_byte(b'%') {
-            Token::Mod
+            if self.eat_byte(b'=') {
+                Token::ModEq
+            } else {
+                Token::Mod
+            }
         } else if self.eat_byte(b',') {
             Token::Comma
         } else if self.eat_byte(b'<') {

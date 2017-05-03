@@ -87,6 +87,7 @@ fn assignment_expression(node: &Value) -> Result<Expression> {
         "=" => AssignOp::Eq,
         "*=" => AssignOp::TimesEq,
         "/=" => AssignOp::DivEq,
+        "%=" => AssignOp::ModEq,
         _ => return Err(())
     };
 

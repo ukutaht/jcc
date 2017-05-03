@@ -88,6 +88,7 @@ pub enum AssignOp {
     Eq,
     TimesEq,
     DivEq,
+    ModEq,
 }
 
 #[derive(Debug, PartialEq)]

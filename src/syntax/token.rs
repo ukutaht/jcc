@@ -32,6 +32,7 @@ pub enum Token {
     Minus,
     MinusMinus,
     Mod,
+    ModEq,
     New,
     NotEq,
     NotEqEq,
