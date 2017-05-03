@@ -146,13 +146,13 @@ fn member_expression(node: &Value) -> Result<Expression> {
     }
 }
 
-fn literal(node: &Value) -> Result<Literal> {
+fn literal(node: &Value) -> Result<Expression> {
     let val = expect_value(node, "value");
 
     if val.is_number() {
-        Ok(Literal::Number(val.as_f64().unwrap()))
+        Ok(Expression::Literal(span(node)?, Literal::Number(val.as_f64().unwrap())))
     } else if val.is_null() {
-        Ok(Literal::Null)
+        Ok(Expression::Literal(span(node)?, Literal::Null))
     } else {
         Err(())
     }
@@ -216,46 +216,27 @@ fn update_expression(node: &Value) -> Result<Expression> {
     Ok(Expression::Update(span, op, Box::new(argument), prefix))
 }
 
+fn object_expression(node: &Value) -> Result<Expression> {
+    Ok(Expression::Object(span(node)?, Vec::new()))
+}
+
 fn expression(node: &Value) -> Result<Expression> {
     let span = span(node)?;
 
     match expect_string(node, "type") {
-        "AssignmentExpression" => {
-            assignment_expression(node)
-        },
-        "ArrayExpression" => {
-            array_expression(node)
-        },
-        "BinaryExpression" => {
-            binary_expression(node)
-        },
-        "UnaryExpression" => {
-            unary_expression(node)
-        },
-        "UpdateExpression" => {
-            update_expression(node)
-        },
-        "CallExpression" => {
-            call_expression(node)
-        },
-        "Identifier" => {
-            Ok(Expression::Identifier(span, expect_string(node, "name").to_owned()))
-        }
-        "Literal" => {
-            Ok(Expression::Literal(span, literal(node)?))
-        }
-        "LogicalExpression" => {
-            logical_expression(node)
-        }
-        "MemberExpression" => {
-            member_expression(node)
-        },
-        "NewExpression" => {
-            new_expression(node)
-        },
-        "ThisExpression" => {
-            Ok(Expression::This(span))
-        },
+        "AssignmentExpression" => assignment_expression(node),
+        "ArrayExpression" => array_expression(node),
+        "BinaryExpression" => binary_expression(node),
+        "UnaryExpression" => unary_expression(node),
+        "UpdateExpression" => update_expression(node),
+        "CallExpression" => call_expression(node),
+        "Identifier" => Ok(Expression::Identifier(span, expect_string(node, "name").to_owned())),
+        "Literal" => literal(node),
+        "LogicalExpression" => logical_expression(node),
+        "MemberExpression" => member_expression(node),
+        "NewExpression" => new_expression(node),
+        "ThisExpression" => Ok(Expression::This(span)),
+        "ObjectExpression" => object_expression(node),
         _ => Err(())
     }
 }

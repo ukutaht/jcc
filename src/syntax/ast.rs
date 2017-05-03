@@ -100,8 +100,12 @@ pub enum AssignOp {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct ObjectProperty(i32);
+
+#[derive(Debug, PartialEq)]
 pub enum Expression {
     Array(Span, Vec<Option<Expression>>),
+    Object(Span, Vec<ObjectProperty>),
     Assignment(Span, AssignOp, Box<Expression>, Box<Expression>),
     Binary(Span, BinOp, Box<Expression>, Box<Expression>),
     Call(Span, Box<Expression>, Vec<ArgumentListElement>),
@@ -130,6 +134,7 @@ impl Tracking for Expression {
             &Expression::New(ref s, _, _) => s,
             &Expression::StaticMember(ref s, _, _) => s,
             &Expression::Unary(ref s, _, _) => s,
+            &Expression::Object(ref s, _) => s,
             e => panic!("Cannot get span for: {:?}", e)
         }
     }

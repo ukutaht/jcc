@@ -51,12 +51,9 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token();
                 Ok(Expression::Identifier(self.finalize(start), n))
             }
-            Token::OpenSquare => {
-                self.parse_array_initializer()
-            },
-            Token::OpenParen => {
-                self.parse_group_expression()
-            },
+            Token::OpenSquare => self.parse_array_initializer(),
+            Token::OpenCurly => self.parse_object_initializer(),
+            Token::OpenParen => self.parse_group_expression(),
             Token::FunctionKeyword => {
                 self.parse_function().map(Expression::Function)
             },
@@ -354,6 +351,28 @@ impl<'a> Parser<'a> {
 
         self.expect(Token::CloseSquare);
         Ok(Expression::Array(self.finalize(start), elements))
+    }
+
+    fn parse_object_property(&mut self) -> Result<ObjectProperty> {
+        panic!("wat");
+    }
+
+    fn parse_object_initializer(&mut self) -> Result<Expression> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::OpenCurly);
+
+        let mut properties = Vec::new();
+
+        while self.scanner.lookahead != Token::CloseCurly {
+            properties.push(self.parse_object_property()?);
+
+            if self.scanner.lookahead != Token::CloseCurly {
+                self.expect(Token::Comma);
+            }
+        };
+
+        self.expect(Token::CloseCurly);
+        Ok(Expression::Object(self.finalize(start), properties))
     }
 
     fn parse_variable_statement(&mut self) -> Result<Statement> {
