@@ -119,7 +119,11 @@ impl<'a> Scanner<'a> {
                 Token::Times
             }
         } else if self.eat_byte(b'/') {
-            Token::Div
+            if self.eat_byte(b'=') {
+                Token::DivEq
+            } else {
+                Token::Div
+            }
         } else if self.eat_byte(b'%') {
             Token::Mod
         } else if self.eat_byte(b',') {

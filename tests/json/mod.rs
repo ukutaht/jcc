@@ -86,6 +86,7 @@ fn assignment_expression(node: &Value) -> Result<Expression> {
     let op = match expect_string(node, "operator") {
         "=" => AssignOp::Eq,
         "*=" => AssignOp::TimesEq,
+        "/=" => AssignOp::DivEq,
         _ => return Err(())
     };
 

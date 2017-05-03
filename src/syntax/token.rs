@@ -32,6 +32,7 @@ pub enum Token {
     Delete,
     Typeof,
     Div,
+    DivEq,
     Mod,
     Bang,
     LogicalAnd,

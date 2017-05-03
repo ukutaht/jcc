@@ -298,6 +298,7 @@ impl<'a> Parser<'a> {
         match self.scanner.lookahead {
             Token::Eq => Some(AssignOp::Eq),
             Token::TimesEq => Some(AssignOp::TimesEq),
+            Token::DivEq => Some(AssignOp::DivEq),
             _ => None
         }
     }

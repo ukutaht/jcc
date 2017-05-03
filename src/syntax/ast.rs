@@ -86,7 +86,8 @@ impl InfixOp {
 #[derive(Debug, PartialEq)]
 pub enum AssignOp {
     Eq,
-    TimesEq
+    TimesEq,
+    DivEq,
 }
 
 #[derive(Debug, PartialEq)]
