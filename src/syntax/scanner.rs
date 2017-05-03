@@ -197,6 +197,8 @@ impl<'a> Scanner<'a> {
         } else if self.eat_byte(b'&') {
             if self.eat_byte(b'&') {
                 Token::LogicalAnd
+            } else if self.eat_byte(b'=') {
+                Token::BitAndEq
             } else {
                 Token::BitAnd
             }

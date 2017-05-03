@@ -2,6 +2,7 @@
 pub enum Token {
     Bang,
     BitAnd,
+    BitAndEq,
     BitOr,
     BitXor,
     CloseCurly,
