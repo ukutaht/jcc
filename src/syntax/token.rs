@@ -4,6 +4,7 @@ pub enum Token {
     BitAnd,
     BitAndEq,
     BitOr,
+    BitOrEq,
     BitXor,
     BitXorEq,
     CloseCurly,

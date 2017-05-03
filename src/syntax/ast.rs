@@ -96,6 +96,7 @@ pub enum AssignOp {
     URShiftEq,
     BitAndEq,
     BitXorEq,
+    BitOrEq,
 }
 
 #[derive(Debug, PartialEq)]

@@ -307,6 +307,7 @@ impl<'a> Parser<'a> {
             Token::URShiftEq => Some(AssignOp::URShiftEq),
             Token::BitAndEq => Some(AssignOp::BitAndEq),
             Token::BitXorEq => Some(AssignOp::BitXorEq),
+            Token::BitOrEq => Some(AssignOp::BitOrEq),
             _ => None
         }
     }

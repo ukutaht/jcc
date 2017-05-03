@@ -209,6 +209,8 @@ impl<'a> Scanner<'a> {
         } else if self.eat_byte(b'|') {
             if self.eat_byte(b'|') {
                 Token::LogicalOr
+            } else if self.eat_byte(b'=') {
+                Token::BitOrEq
             } else {
                 Token::BitOr
             }
