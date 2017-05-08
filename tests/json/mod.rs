@@ -216,8 +216,31 @@ fn update_expression(node: &Value) -> Result<Expression> {
     Ok(Expression::Update(span, op, Box::new(argument), prefix))
 }
 
+fn prop_key(node: &Value) -> Result<PropKey> {
+    match expect_string(node, "type") {
+        "Identifier" => Ok(PropKey::Identifier(span(node)?, expect_string(node, "name").to_owned())),
+        _ => Err(())
+    }
+}
+
+fn prop(node: &Value) -> Result<Prop> {
+    match expect_string(node, "kind") {
+        "init" => {
+            let key = prop_key(expect_value(node, "key"))?;
+            let value = expression(expect_value(node, "value"))?;
+            Ok(Prop::Init(span(node)?, key, value))
+        },
+        _ => Err(())
+    }
+}
+
 fn object_expression(node: &Value) -> Result<Expression> {
-    Ok(Expression::Object(span(node)?, Vec::new()))
+    let mut props = Vec::new();
+    for thing in expect_array(node, "properties") {
+        props.push(prop(thing)?)
+    }
+
+    Ok(Expression::Object(span(node)?, props))
 }
 
 fn expression(node: &Value) -> Result<Expression> {

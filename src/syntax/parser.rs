@@ -353,8 +353,22 @@ impl<'a> Parser<'a> {
         Ok(Expression::Array(self.finalize(start), elements))
     }
 
-    fn parse_object_property(&mut self) -> Result<ObjectProperty> {
-        panic!("wat");
+    fn parse_object_property(&mut self) -> Result<Prop> {
+        let start = self.scanner.lookahead_start;
+
+        let key = match self.scanner.lookahead.clone() {
+            Token::Ident(ref i) => {
+                self.scanner.next_token();
+                PropKey::Identifier(self.finalize(start), i.clone())
+            },
+            _ => panic!("Unexpected object property")
+        };
+
+        self.expect(Token::Colon);
+
+        let value = self.parse_assignment_expression()?;
+
+        Ok(Prop::Init(self.finalize(start), key, value))
     }
 
     fn parse_object_initializer(&mut self) -> Result<Expression> {

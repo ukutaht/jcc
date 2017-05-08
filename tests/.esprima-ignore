@@ -35,8 +35,6 @@ expression/primary/literal/string/**
 expression/primary/object/invalid-getter
 expression/primary/object/invalid-setter1
 expression/primary/object/invalid-setter2
-expression/primary/object/migrated_0001
-expression/primary/object/migrated_0002
 expression/primary/object/migrated_0003
 expression/primary/object/migrated_0004
 expression/primary/object/migrated_0005

@@ -10,6 +10,7 @@ pub enum Token {
     CloseCurly,
     CloseParen,
     CloseSquare,
+    Colon,
     Comma,
     Delete,
     Div,

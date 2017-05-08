@@ -100,12 +100,23 @@ pub enum AssignOp {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct ObjectProperty(i32);
+pub enum PropKey {
+    Identifier(Span, String),
+    String(String),
+    Number(f64)
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Prop {
+    Init(Span, PropKey, Expression),
+    Get(PropKey, Function),
+    Set(PropKey, Function)
+}
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
     Array(Span, Vec<Option<Expression>>),
-    Object(Span, Vec<ObjectProperty>),
+    Object(Span, Vec<Prop>),
     Assignment(Span, AssignOp, Box<Expression>, Box<Expression>),
     Binary(Span, BinOp, Box<Expression>, Box<Expression>),
     Call(Span, Box<Expression>, Vec<ArgumentListElement>),
