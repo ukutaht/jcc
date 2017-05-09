@@ -109,6 +109,16 @@ impl<'a> Parser<'a> {
         Ok(Expression::New(self.finalize(start), Box::new(base), args))
     }
 
+    fn expect_identifier_name(&mut self) -> Result<String> {
+        match self.scanner.next_token() {
+            Token::Ident(name) => Ok(name),
+            Token::If => Ok("if".to_string()),
+            Token::Else => Ok("else".to_string()),
+            Token::Null => Ok("null".to_string()),
+            t => Err(CompileError::UnexpectedToken(t.clone()))
+        }
+    }
+
     fn parse_lhs_expression(&mut self, allow_call: bool) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
 
@@ -138,15 +148,7 @@ impl<'a> Parser<'a> {
                 },
                 Token::Dot => {
                     self.scanner.next_token();
-                    let token = self.scanner.next_token();
-                    let identifier_name = match token {
-                        Token::Ident(name) => name,
-                        Token::If => "if".to_string(),
-                        Token::Else => "else".to_string(),
-                        Token::Null => "null".to_string(),
-                        _ => return Err(CompileError::UnexpectedToken(token))
-                    };
-
+                    let identifier_name = self.expect_identifier_name()?;
                     result = Expression::StaticMember(self.finalize(start), Box::new(result), identifier_name)
 
                 }
@@ -356,13 +358,8 @@ impl<'a> Parser<'a> {
     fn parse_object_property(&mut self) -> Result<Prop> {
         let start = self.scanner.lookahead_start;
 
-        let key = match self.scanner.lookahead.clone() {
-            Token::Ident(ref i) => {
-                self.scanner.next_token();
-                PropKey::Identifier(self.finalize(start), i.clone())
-            },
-            _ => panic!("Unexpected object property")
-        };
+        let identifier_name = self.expect_identifier_name()?;
+        let key = PropKey::Identifier(self.finalize(start), identifier_name);
 
         self.expect(Token::Colon);
 
