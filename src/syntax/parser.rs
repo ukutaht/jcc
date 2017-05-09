@@ -365,27 +365,60 @@ impl<'a> Parser<'a> {
         Ok(Expression::Array(self.finalize(start), elements))
     }
 
+    fn match_object_property_key(&mut self) -> Option<PropKey> {
+        let start = self.scanner.lookahead_start;
+
+        let token = self.scanner.lookahead.clone();
+        match token {
+            Token::Ident(ref name) => {
+                self.scanner.next_token();
+                Some(PropKey::Identifier(self.finalize(start), name.to_string()))
+            }
+            Token::String(ref s) => {
+                self.scanner.next_token();
+                Some(PropKey::String(self.finalize(start), s.to_string()))
+            }
+            Token::Null => {
+                self.scanner.next_token();
+                Some(PropKey::Identifier(self.finalize(start), "null".to_string()))
+            }
+            Token::If => {
+                self.scanner.next_token();
+                Some(PropKey::Identifier(self.finalize(start), "if".to_string()))
+            }
+            Token::Else => {
+                self.scanner.next_token();
+                Some(PropKey::Identifier(self.finalize(start), "else".to_string()))
+            }
+            _ => None
+        }
+    }
+
     fn parse_object_property(&mut self) -> Result<Prop> {
         let start = self.scanner.lookahead_start;
 
-        let key = match self.match_identifier_name() {
-            Some(ident) => {
+        if self.eat_ident("get") {
+            let key = self.match_object_property_key().unwrap();
+            let parameters = self.parse_function_parameters();
+            let block = self.parse_block()?;
+            let value = Function { id: None, body: block, parameters: parameters };
+            Ok(Prop::Get(self.finalize(start), key, value))
+        } else {
+            let key = self.match_object_property_key().unwrap();
+            self.expect(Token::Colon);
+            let value = self.parse_assignment_expression()?;
+            Ok(Prop::Init(self.finalize(start), key, value))
+        }
+    }
+
+    fn eat_ident(&mut self, ident: &str) -> bool {
+        match self.scanner.lookahead.clone() {
+            Token::Ident(ref i) if i == ident => {
                 self.scanner.next_token();
-                PropKey::Identifier(self.finalize(start), ident)
+                true
             }
-            None => {
-                match self.scanner.next_token() {
-                    Token::String(s) => PropKey::String(self.finalize(start), s),
-                    t => return Err(CompileError::UnexpectedToken(t.clone()))
-                }
-            }
-        };
-
-        self.expect(Token::Colon);
-
-        let value = self.parse_assignment_expression()?;
-
-        Ok(Prop::Init(self.finalize(start), key, value))
+            _ => false
+        }
     }
 
     fn parse_object_initializer(&mut self) -> Result<Expression> {
@@ -496,6 +529,13 @@ impl<'a> Parser<'a> {
         Ok(Statement::If(test, Box::new(then), alternate))
     }
 
+    fn parse_return_statement(&mut self) -> Result<Statement> {
+        self.expect(Token::Return);
+
+        let argument = self.parse_expression()?;
+        Ok(Statement::Return(Some(argument)))
+    }
+
     fn parse_statement(&mut self) -> Result<Statement> {
         match self.scanner.lookahead {
             Token::Var => self.parse_variable_statement(),
@@ -504,6 +544,7 @@ impl<'a> Parser<'a> {
             },
             Token::If => self.parse_if_statement(),
             Token::OpenCurly => self.parse_block().map(Statement::Block),
+            Token::Return => self.parse_return_statement(),
             _ => self.parse_expression_statement(),
         }
     }

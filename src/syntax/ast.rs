@@ -109,7 +109,7 @@ pub enum PropKey {
 #[derive(Debug, PartialEq)]
 pub enum Prop {
     Init(Span, PropKey, Expression),
-    Get(PropKey, Function),
+    Get(Span, PropKey, Function),
     Set(PropKey, Function)
 }
 
@@ -169,7 +169,8 @@ pub enum Statement {
     VariableDeclaration(VariableDeclaration),
     FunctionDeclaration(Function),
     If(Expression, Box<Statement>, Option<Box<Statement>>),
-    Block(Block)
+    Block(Block),
+    Return(Option<Expression>)
 }
 
 #[derive(Debug, PartialEq)]

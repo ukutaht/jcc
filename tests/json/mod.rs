@@ -239,6 +239,11 @@ fn prop(node: &Value) -> Result<Prop> {
             let value = expression(expect_value(node, "value"))?;
             Ok(Prop::Init(span(node)?, key, value))
         },
+        "get" => {
+            let key = prop_key(expect_value(node, "key"))?;
+            let value = function(expect_value(node, "value"))?;
+            Ok(Prop::Get(span(node)?, key, value))
+        },
         _ => Err(())
     }
 }
@@ -250,6 +255,20 @@ fn object_expression(node: &Value) -> Result<Expression> {
     }
 
     Ok(Expression::Object(span(node)?, props))
+}
+
+fn block(node: &Value) -> Result<Block> {
+    let mut items = Vec::new();
+    for value in expect_array(node, "body") {
+        items.push(statement_list_item(value)?)
+    }
+
+    Ok(Block(items))
+}
+
+fn function(node: &Value) -> Result<Function> {
+    let body = block(expect_value(node, "body"))?;
+    Ok(Function { id: None, parameters: Vec::new(), body: body })
 }
 
 fn expression(node: &Value) -> Result<Expression> {
@@ -278,6 +297,10 @@ fn statement(node: &Value) -> Result<Statement> {
     match obj.get("type").unwrap().as_str().unwrap() {
         "ExpressionStatement" => {
             expression(obj.get("expression").unwrap()).map(Statement::Expression)
+        }
+        "ReturnStatement" => {
+            let argument = expression(expect_value(node, "argument"))?;
+            Ok(Statement::Return(Some(argument)))
         }
         _ => Err(())
     }

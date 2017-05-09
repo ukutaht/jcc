@@ -174,7 +174,8 @@ fn transpile_statement<W: Write>(out: &mut W, statement: &Statement) -> Result<(
         Statement::VariableDeclaration(ref dec) => transpile_variable_declaration(out, dec),
         Statement::FunctionDeclaration(ref dec) => transpile_function(out, dec),
         Statement::Block(ref b) => transpile_block(out, b),
-        Statement::If(ref e, ref then, ref alternate) => transpile_if(out, e, then, alternate)
+        Statement::If(ref e, ref then, ref alternate) => transpile_if(out, e, then, alternate),
+        _ => panic!("Unknown statement")
     }
 }
 
