@@ -102,7 +102,7 @@ pub enum AssignOp {
 #[derive(Debug, PartialEq)]
 pub enum PropKey {
     Identifier(Span, String),
-    String(String),
+    String(Span, String),
     Number(f64)
 }
 

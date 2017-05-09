@@ -110,12 +110,22 @@ impl<'a> Parser<'a> {
     }
 
     fn expect_identifier_name(&mut self) -> Result<String> {
-        match self.scanner.next_token() {
-            Token::Ident(name) => Ok(name),
-            Token::If => Ok("if".to_string()),
-            Token::Else => Ok("else".to_string()),
-            Token::Null => Ok("null".to_string()),
-            t => Err(CompileError::UnexpectedToken(t.clone()))
+        match self.match_identifier_name() {
+            Some(ident) => {
+                self.scanner.next_token();
+                Ok(ident)
+            }
+            None => Err(CompileError::UnexpectedToken(self.scanner.lookahead.clone()))
+        }
+    }
+
+    fn match_identifier_name(&mut self) -> Option<String> {
+        match self.scanner.lookahead.clone() {
+            Token::Ident(name) => Some(name),
+            Token::If => Some("if".to_string()),
+            Token::Else => Some("else".to_string()),
+            Token::Null => Some("null".to_string()),
+            _ => None
         }
     }
 
@@ -358,8 +368,18 @@ impl<'a> Parser<'a> {
     fn parse_object_property(&mut self) -> Result<Prop> {
         let start = self.scanner.lookahead_start;
 
-        let identifier_name = self.expect_identifier_name()?;
-        let key = PropKey::Identifier(self.finalize(start), identifier_name);
+        let key = match self.match_identifier_name() {
+            Some(ident) => {
+                self.scanner.next_token();
+                PropKey::Identifier(self.finalize(start), ident)
+            }
+            None => {
+                match self.scanner.next_token() {
+                    Token::String(s) => PropKey::String(self.finalize(start), s),
+                    t => return Err(CompileError::UnexpectedToken(t.clone()))
+                }
+            }
+        };
 
         self.expect(Token::Colon);
 

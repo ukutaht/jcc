@@ -219,6 +219,15 @@ fn update_expression(node: &Value) -> Result<Expression> {
 fn prop_key(node: &Value) -> Result<PropKey> {
     match expect_string(node, "type") {
         "Identifier" => Ok(PropKey::Identifier(span(node)?, expect_string(node, "name").to_owned())),
+        "Literal" => {
+            let val = expect_value(node, "value");
+
+            if val.is_string() {
+                Ok(PropKey::String(span(node)?, expect_string(node, "value").to_owned()))
+            } else {
+                Err(())
+            }
+        }
         _ => Err(())
     }
 }

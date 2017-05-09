@@ -281,12 +281,13 @@ impl<'a> Scanner<'a> {
     }
 
     fn scan_string(&mut self, quote: u8) -> Token {
-        let start = self.index;
         self.eat_byte(quote);
+        let start = self.index;
         self.take_while(|b| b != quote);
+        let end = self.index;
         self.eat_byte(quote);
 
-        let string = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]) }.to_string();
+        let string = unsafe { str::from_utf8_unchecked(&self.bytes[start..end]) }.to_string();
         Token::String(string)
     }
 
