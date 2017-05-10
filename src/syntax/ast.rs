@@ -170,7 +170,7 @@ pub enum Statement {
     FunctionDeclaration(Function),
     If(Expression, Box<Statement>, Option<Box<Statement>>),
     Block(Block),
-    Return(Option<Expression>)
+    Return(Span, Option<Expression>)
 }
 
 #[derive(Debug, PartialEq)]

@@ -529,11 +529,20 @@ impl<'a> Parser<'a> {
         Ok(Statement::If(test, Box::new(then), alternate))
     }
 
+    fn consume_semicolon(&mut self, start: Position) -> Result<Span> {
+        Ok(Span {
+            start: start,
+            end: self.scanner.lookahead_start
+        })
+    }
+
     fn parse_return_statement(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
         self.expect(Token::Return);
 
         let argument = self.parse_expression()?;
-        Ok(Statement::Return(Some(argument)))
+        let span = self.consume_semicolon(start)?;
+        Ok(Statement::Return(span, Some(argument)))
     }
 
     fn parse_statement(&mut self) -> Result<Statement> {

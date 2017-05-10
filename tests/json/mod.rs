@@ -300,7 +300,7 @@ fn statement(node: &Value) -> Result<Statement> {
         }
         "ReturnStatement" => {
             let argument = expression(expect_value(node, "argument"))?;
-            Ok(Statement::Return(Some(argument)))
+            Ok(Statement::Return(span(node)?, Some(argument)))
         }
         _ => Err(())
     }
