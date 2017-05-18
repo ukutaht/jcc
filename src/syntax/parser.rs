@@ -378,6 +378,10 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token();
                 Some(PropKey::String(self.finalize(start), s.to_string()))
             }
+            Token::Number(n) => {
+                self.scanner.next_token();
+                Some(PropKey::Number(self.finalize(start), n))
+            }
             Token::Null => {
                 self.scanner.next_token();
                 Some(PropKey::Identifier(self.finalize(start), "null".to_string()))

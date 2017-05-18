@@ -223,7 +223,9 @@ fn prop_key(node: &Value) -> Result<PropKey> {
             let val = expect_value(node, "value");
 
             if val.is_string() {
-                Ok(PropKey::String(span(node)?, expect_string(node, "value").to_owned()))
+                Ok(PropKey::String(span(node)?, val.as_str().unwrap().to_owned()))
+            } else if val.is_number() {
+                Ok(PropKey::Number(span(node)?, val.as_f64().unwrap()))
             } else {
                 Err(())
             }
