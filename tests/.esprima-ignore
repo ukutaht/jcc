@@ -35,13 +35,7 @@ expression/primary/literal/string/**
 expression/primary/object/invalid-getter
 expression/primary/object/invalid-setter1
 expression/primary/object/invalid-setter2
-expression/primary/object/migrated_0004
-expression/primary/object/migrated_0005
 expression/primary/object/migrated_0010
-expression/primary/object/migrated_0011
-expression/primary/object/migrated_0012
-expression/primary/object/migrated_0013
-expression/primary/object/migrated_0014
 expression/primary/object/migrated_0015
 expression/primary/object/migrated_0016
 expression/primary/object/migrated_0017
