@@ -407,6 +407,12 @@ impl<'a> Parser<'a> {
             let block = self.parse_block()?;
             let value = Function { id: None, body: block, parameters: parameters };
             Ok(Prop::Get(self.finalize(start), key, value))
+        } else if self.eat_ident("set") {
+            let key = self.match_object_property_key().unwrap();
+            let parameters = self.parse_function_parameters();
+            let block = self.parse_block()?;
+            let value = Function { id: None, body: block, parameters: parameters };
+            Ok(Prop::Set(self.finalize(start), key, value))
         } else {
             let key = self.match_object_property_key().unwrap();
             self.expect(Token::Colon);

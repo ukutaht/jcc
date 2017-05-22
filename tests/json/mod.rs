@@ -246,6 +246,11 @@ fn prop(node: &Value) -> Result<Prop> {
             let value = function(expect_value(node, "value"))?;
             Ok(Prop::Get(span(node)?, key, value))
         },
+        "set" => {
+            let key = prop_key(expect_value(node, "key"))?;
+            let value = function(expect_value(node, "value"))?;
+            Ok(Prop::Set(span(node)?, key, value))
+        },
         _ => Err(())
     }
 }
@@ -270,7 +275,18 @@ fn block(node: &Value) -> Result<Block> {
 
 fn function(node: &Value) -> Result<Function> {
     let body = block(expect_value(node, "body"))?;
-    Ok(Function { id: None, parameters: Vec::new(), body: body })
+    let mut parameters = Vec::new();
+    for param in expect_array(node, "params") {
+        parameters.push(pattern(param)?)
+    }
+    Ok(Function { id: None, parameters: parameters, body: body })
+}
+
+fn pattern(node: &Value) -> Result<Pattern> {
+    match expect_string(node, "type") {
+        "Identifier" => Ok(Pattern::Identifier(expect_string(node, "name").to_owned())),
+        _ => Err(())
+    }
 }
 
 fn expression(node: &Value) -> Result<Expression> {

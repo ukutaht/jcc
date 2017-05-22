@@ -110,7 +110,7 @@ pub enum PropKey {
 pub enum Prop {
     Init(Span, PropKey, Expression),
     Get(Span, PropKey, Function),
-    Set(PropKey, Function)
+    Set(Span, PropKey, Function)
 }
 
 #[derive(Debug, PartialEq)]
