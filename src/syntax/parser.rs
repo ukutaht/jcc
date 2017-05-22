@@ -398,36 +398,41 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_object_property(&mut self) -> Result<Prop> {
-        let start = self.scanner.lookahead_start;
-
-        if self.eat_ident("get") {
-            let key = self.match_object_property_key().unwrap();
-            let parameters = self.parse_function_parameters();
-            let block = self.parse_block()?;
-            let value = Function { id: None, body: block, parameters: parameters };
-            Ok(Prop::Get(self.finalize(start), key, value))
-        } else if self.eat_ident("set") {
-            let key = self.match_object_property_key().unwrap();
-            let parameters = self.parse_function_parameters();
-            let block = self.parse_block()?;
-            let value = Function { id: None, body: block, parameters: parameters };
-            Ok(Prop::Set(self.finalize(start), key, value))
-        } else {
-            let key = self.match_object_property_key().unwrap();
-            self.expect(Token::Colon);
-            let value = self.parse_assignment_expression()?;
-            Ok(Prop::Init(self.finalize(start), key, value))
-        }
+    fn parse_prop_init(&mut self, start: Position, key: PropKey) -> Result<Prop> {
+        self.expect(Token::Colon);
+        let value = self.parse_assignment_expression()?;
+        Ok(Prop::Init(self.finalize(start), key, value))
     }
 
-    fn eat_ident(&mut self, ident: &str) -> bool {
-        match self.scanner.lookahead.clone() {
-            Token::Ident(ref i) if i == ident => {
-                self.scanner.next_token();
-                true
+    fn parse_object_property(&mut self) -> Result<Prop> {
+        let start = self.scanner.lookahead_start;
+        let token = self.scanner.lookahead.clone();
+
+        if token == Token::Ident("get".to_string()) {
+            self.scanner.next_token();
+            if let Some(key) = self.match_object_property_key() {
+                let parameters = self.parse_function_parameters();
+                let block = self.parse_block()?;
+                let value = Function { id: None, body: block, parameters: parameters };
+                Ok(Prop::Get(self.finalize(start), key, value))
+            } else {
+                let span = self.finalize(start);
+                self.parse_prop_init(start, PropKey::Identifier(span, "get".to_string()))
             }
-            _ => false
+        } else if token == Token::Ident("set".to_string()) {
+            self.scanner.next_token();
+            if let Some(key) = self.match_object_property_key() {
+                let parameters = self.parse_function_parameters();
+                let block = self.parse_block()?;
+                let value = Function { id: None, body: block, parameters: parameters };
+                Ok(Prop::Set(self.finalize(start), key, value))
+            } else {
+                let span = self.finalize(start);
+                self.parse_prop_init(start, PropKey::Identifier(span, "set".to_string()))
+            }
+        } else {
+            let key = self.match_object_property_key().unwrap();
+            self.parse_prop_init(start, key)
         }
     }
 
