@@ -12,7 +12,7 @@ name = "suite"
 harness = false
 
 [dependencies]
-serde_json = "0.9"
+serde_json = "1.0"
 
 [dev-dependencies]
 rustc-test = "0.1"
