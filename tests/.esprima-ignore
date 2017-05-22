@@ -38,8 +38,9 @@ expression/primary/object/invalid-setter2
 expression/primary/object/migrated_0010
 expression/primary/object/migrated_0015
 expression/primary/object/migrated_0022
+# Need to parse semicolons for this
 expression/primary/object/migrated_0028
-expression/primary/object/migrated_0029
+
 expression/primary/object/migrated_0030
 expression/primary/object/migrated_0031
 expression/primary/object/migrated_0032
