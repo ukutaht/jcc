@@ -11,7 +11,6 @@ JSX/**
 whitespace/**
 statement/**
 
-expression/conditional/migrated_0001
 expression/conditional/migrated_0002
 
 expression/left-hand-side/let_object_computed
