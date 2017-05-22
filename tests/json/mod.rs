@@ -153,6 +153,8 @@ fn literal(node: &Value) -> Result<Expression> {
         Ok(Expression::Literal(span(node)?, Literal::Number(val.as_f64().unwrap())))
     } else if val.is_null() {
         Ok(Expression::Literal(span(node)?, Literal::Null))
+    } else if val.is_string() {
+        Ok(Expression::Literal(span(node)?, Literal::String(val.as_str().unwrap().to_owned())))
     } else {
         Err(())
     }
