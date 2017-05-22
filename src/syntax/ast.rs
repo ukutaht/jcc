@@ -130,6 +130,7 @@ pub enum Expression {
     StaticMember(Span, Box<Expression>, String),
     Unary(Span, UnOp, Box<Expression>),
     Update(Span, UpdateOp, Box<Expression>, bool),
+    Sequence(Span, Vec<Expression>),
     This(Span),
 }
 

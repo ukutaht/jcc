@@ -532,7 +532,23 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_expression(&mut self) -> Result<Expression> {
-        self.parse_assignment_expression()
+        let start = self.scanner.lookahead_start;
+        let expr = self.parse_assignment_expression()?;
+
+        if self.scanner.lookahead == Token::Comma {
+            let mut expressions = vec![expr];
+            while self.scanner.lookahead != Token::Eof {
+                if self.scanner.lookahead == Token::Comma {
+                    self.scanner.next_token();
+                    expressions.push(self.parse_assignment_expression()?);
+                } else {
+                    break;
+                }
+            }
+            Ok(Expression::Sequence(self.finalize(start), expressions))
+        } else {
+            Ok(expr)
+        }
     }
 
     fn parse_expression_statement(&mut self) -> Result<Statement> {

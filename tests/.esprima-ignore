@@ -12,7 +12,6 @@ whitespace/**
 statement/**
 
 expression/left-hand-side/let_object_computed
-expression/left-hand-side/migrated_0013
 
 expression/primary/keyword/**
 
