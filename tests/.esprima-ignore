@@ -9,7 +9,24 @@ ES6/**
 invalid-syntax/**
 JSX/**
 whitespace/**
-statement/**
+
+statement/block/migrated_0001
+statement/block/migrated_0002
+
+statement/break/**
+statement/continue/**
+statement/debugger/**
+statement/empty/**
+statement/expression/**
+statement/if/**
+statement/iteration/**
+statement/labelled/**
+statement/return/**
+statement/switch/**
+statement/throw/**
+statement/try/**
+statement/variable/**
+statement/with/**
 
 expression/left-hand-side/let_object_computed
 

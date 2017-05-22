@@ -329,11 +329,22 @@ fn expression(node: &Value) -> Result<Expression> {
     }
 }
 
+fn block_statement(node: &Value) -> Result<Statement> {
+    let mut statement_list_items = Vec::new();
+    for item in expect_array(node, "body") {
+        statement_list_items.push(statement_list_item(item)?);
+    }
+
+    Ok(Statement::Block(Block(statement_list_items)))
+}
+
 fn statement(node: &Value) -> Result<Statement> {
-    let obj = node.as_object().unwrap();
-    match obj.get("type").unwrap().as_str().unwrap() {
+    match expect_string(node, "type") {
         "ExpressionStatement" => {
-            expression(obj.get("expression").unwrap()).map(Statement::Expression)
+            expression(expect_value(node, "expression")).map(Statement::Expression)
+        }
+        "BlockStatement" => {
+            block_statement(node)
         }
         "ReturnStatement" => {
             let argument = expression(expect_value(node, "argument"))?;

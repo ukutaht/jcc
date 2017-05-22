@@ -551,6 +551,13 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn consume_semicolon(&mut self, start: Position) -> Result<Span> {
+        Ok(Span {
+            start: start,
+            end: self.scanner.lookahead_start
+        })
+    }
+
     fn parse_expression_statement(&mut self) -> Result<Statement> {
         Ok(Statement::Expression(self.parse_expression()?))
     }
@@ -570,13 +577,6 @@ impl<'a> Parser<'a> {
         };
 
         Ok(Statement::If(test, Box::new(then), alternate))
-    }
-
-    fn consume_semicolon(&mut self, start: Position) -> Result<Span> {
-        Ok(Span {
-            start: start,
-            end: self.scanner.lookahead_start
-        })
     }
 
     fn parse_return_statement(&mut self) -> Result<Statement> {
