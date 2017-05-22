@@ -266,6 +266,13 @@ fn object_expression(node: &Value) -> Result<Expression> {
     Ok(Expression::Object(span(node)?, props))
 }
 
+fn conditional_expression(node: &Value) -> Result<Expression> {
+    let test = expression(expect_value(node, "test"))?;
+    let consequent = expression(expect_value(node, "consequent"))?;
+    let alternate = expression(expect_value(node, "alternate"))?;
+    Ok(Expression::Conditional(span(node)?, Box::new(test), Box::new(consequent), Box::new(alternate)))
+}
+
 fn block(node: &Value) -> Result<Block> {
     let mut items = Vec::new();
     for value in expect_array(node, "body") {
@@ -308,6 +315,7 @@ fn expression(node: &Value) -> Result<Expression> {
         "NewExpression" => new_expression(node),
         "ThisExpression" => Ok(Expression::This(span)),
         "ObjectExpression" => object_expression(node),
+        "ConditionalExpression" => conditional_expression(node),
         _ => Err(())
     }
 }

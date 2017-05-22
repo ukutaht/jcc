@@ -116,6 +116,7 @@ pub enum Prop {
 #[derive(Debug, PartialEq)]
 pub enum Expression {
     Array(Span, Vec<Option<Expression>>),
+    Conditional(Span, Box<Expression>, Box<Expression>, Box<Expression>),
     Object(Span, Vec<Prop>),
     Assignment(Span, AssignOp, Box<Expression>, Box<Expression>),
     Binary(Span, BinOp, Box<Expression>, Box<Expression>),

@@ -300,7 +300,19 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_conditional_expression(&mut self) -> Result<Expression> {
-        self.parse_binary_expression()
+        let start = self.scanner.lookahead_start;
+        let expr = self.parse_binary_expression()?;
+
+        if self.scanner.lookahead == Token::QuestionMark {
+            self.scanner.next_token();
+            let consequent = self.parse_assignment_expression()?;
+            self.expect(Token::Colon);
+            let alternate = self.parse_assignment_expression()?;
+            let span = self.finalize(start);
+            Ok(Expression::Conditional(span, Box::new(expr), Box::new(consequent), Box::new(alternate)))
+        } else {
+            Ok(expr)
+        }
     }
 
     fn match_assignment(&mut self) -> Option<AssignOp> {
