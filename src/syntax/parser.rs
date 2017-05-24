@@ -552,14 +552,23 @@ impl<'a> Parser<'a> {
     }
 
     fn consume_semicolon(&mut self, start: Position) -> Result<Span> {
-        Ok(Span {
-            start: start,
-            end: self.scanner.lookahead_start
-        })
+        if self.scanner.lookahead == Token::Colon {
+            self.scanner.next_token();
+            Ok(self.finalize(start))
+        } else if self.scanner.at_newline() {
+            Ok(self.finalize(start))
+        } else {
+            Ok(Span {
+                start: start,
+                end: self.scanner.lookahead_start
+            })
+        }
     }
 
     fn parse_expression_statement(&mut self) -> Result<Statement> {
-        Ok(Statement::Expression(self.parse_expression()?))
+        let start = self.scanner.lookahead_start;
+        let expr = self.parse_expression()?;
+        Ok(Statement::Expression(self.consume_semicolon(start)?, expr))
     }
 
     fn parse_if_statement(&mut self) -> Result<Statement> {
@@ -589,13 +598,18 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_statement(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
+
         match self.scanner.lookahead {
             Token::Var => self.parse_variable_statement(),
             Token::FunctionKeyword => {
                 self.parse_function().map(Statement::FunctionDeclaration)
             },
             Token::If => self.parse_if_statement(),
-            Token::OpenCurly => self.parse_block().map(Statement::Block),
+            Token::OpenCurly => {
+                let block = self.parse_block()?;
+                Ok(Statement::Block(self.finalize(start), block))
+            }
             Token::Return => self.parse_return_statement(),
             _ => self.parse_expression_statement(),
         }

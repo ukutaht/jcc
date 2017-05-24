@@ -168,11 +168,11 @@ pub struct Function {
 
 #[derive(Debug, PartialEq)]
 pub enum Statement {
-    Expression(Expression),
+    Expression(Span, Expression),
     VariableDeclaration(VariableDeclaration),
     FunctionDeclaration(Function),
     If(Expression, Box<Statement>, Option<Box<Statement>>),
-    Block(Block),
+    Block(Span, Block),
     Return(Span, Option<Expression>)
 }
 

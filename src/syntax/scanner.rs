@@ -41,6 +41,10 @@ impl<'a> Scanner<'a> {
         }
     }
 
+    pub fn at_newline(&self) -> bool {
+        self.last_pos.line != self.lookahead_start.line
+    }
+
     pub fn position_at_start(&mut self) {
         self.lookahead = self.lex();
     }
@@ -73,6 +77,7 @@ impl<'a> Scanner<'a> {
                     break;
                 }
                 None => {
+                    self.lookahead_start = self.pos();
                     return Token::Eof
                 }
             };

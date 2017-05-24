@@ -335,13 +335,14 @@ fn block_statement(node: &Value) -> Result<Statement> {
         statement_list_items.push(statement_list_item(item)?);
     }
 
-    Ok(Statement::Block(Block(statement_list_items)))
+    Ok(Statement::Block(span(node)?, Block(statement_list_items)))
 }
 
 fn statement(node: &Value) -> Result<Statement> {
     match expect_string(node, "type") {
         "ExpressionStatement" => {
-            expression(expect_value(node, "expression")).map(Statement::Expression)
+            let expr = expression(expect_value(node, "expression"))?;
+            Ok(Statement::Expression(span(node)?, expr))
         }
         "BlockStatement" => {
             block_statement(node)
