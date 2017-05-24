@@ -17,6 +17,7 @@ static KEYWORD_TYPEOF: &'static str = "typeof";
 static KEYWORD_IN: &'static str = "in";
 static KEYWORD_INSTANCEOF: &'static str = "instanceof";
 static KEYWORD_RETURN: &'static str = "return";
+static KEYWORD_DEBUGGER: &'static str = "debugger";
 
 pub struct Scanner<'a> {
     bytes: &'a [u8],
@@ -330,6 +331,8 @@ impl<'a> Scanner<'a> {
             Token::Instanceof
         } else if value == *KEYWORD_RETURN {
             Token::Return
+        } else if value == *KEYWORD_DEBUGGER {
+            Token::DebuggerKeyword
         } else {
             Token::Ident(value)
         }

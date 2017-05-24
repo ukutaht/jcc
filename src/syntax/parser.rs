@@ -609,6 +609,10 @@ impl<'a> Parser<'a> {
             Token::OpenCurly => {
                 let block = self.parse_block()?;
                 Ok(Statement::Block(self.finalize(start), block))
+            },
+            Token::DebuggerKeyword => {
+                self.scanner.next_token();
+                Ok(Statement::Debugger(self.consume_semicolon(start)?))
             }
             Token::Return => self.parse_return_statement(),
             _ => self.parse_expression_statement(),

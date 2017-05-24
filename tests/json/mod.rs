@@ -347,6 +347,9 @@ fn statement(node: &Value) -> Result<Statement> {
         "BlockStatement" => {
             block_statement(node)
         }
+        "DebuggerStatement" => {
+            Ok(Statement::Debugger(span(node)?))
+        }
         "ReturnStatement" => {
             let argument = expression(expect_value(node, "argument"))?;
             Ok(Statement::Return(span(node)?, Some(argument)))
