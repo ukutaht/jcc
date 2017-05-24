@@ -115,7 +115,7 @@ impl<'a> Scanner<'a> {
         } else if self.eat_byte(b':') {
             Token::Colon
         } else if self.eat_byte(b';') {
-            Token::Colon
+            Token::Semi
         } else if self.eat_byte(b'+') {
             if self.eat_byte(b'+') {
                 Token::PlusPlus

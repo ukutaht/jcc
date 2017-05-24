@@ -552,7 +552,7 @@ impl<'a> Parser<'a> {
     }
 
     fn consume_semicolon(&mut self, start: Position) -> Result<Span> {
-        if self.scanner.lookahead == Token::Colon {
+        if self.scanner.lookahead == Token::Semi {
             self.scanner.next_token();
             Ok(self.finalize(start))
         } else if self.scanner.at_newline() {
