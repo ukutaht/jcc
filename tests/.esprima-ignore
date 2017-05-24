@@ -10,9 +10,6 @@ invalid-syntax/**
 JSX/**
 whitespace/**
 
-statement/block/migrated_0001
-statement/block/migrated_0002
-
 statement/break/**
 statement/continue/**
 statement/debugger/**

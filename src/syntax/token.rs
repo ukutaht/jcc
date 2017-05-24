@@ -53,6 +53,7 @@ pub enum Token {
     RShift,
     RShiftEq,
     Return,
+    Semi,
     String(String),
     ThisKeyword,
     Tilde,

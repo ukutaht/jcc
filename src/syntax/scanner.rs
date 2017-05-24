@@ -114,6 +114,8 @@ impl<'a> Scanner<'a> {
             Token::QuestionMark
         } else if self.eat_byte(b':') {
             Token::Colon
+        } else if self.eat_byte(b';') {
+            Token::Colon
         } else if self.eat_byte(b'+') {
             if self.eat_byte(b'+') {
                 Token::PlusPlus
