@@ -36,9 +36,6 @@ expression/primary/literal/numeric/migrated_0002
 expression/primary/literal/regular-expression/**
 expression/primary/literal/string/**
 
-# Need to parse semicolons for this
-expression/primary/object/migrated_0028
-
 expression/primary/object/migrated_0030
 expression/primary/object/migrated_0031
 expression/primary/object/migrated_0032
