@@ -12,7 +12,6 @@ whitespace/**
 
 statement/break/**
 statement/continue/**
-statement/empty/**
 statement/expression/**
 statement/if/**
 statement/iteration/**

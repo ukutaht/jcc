@@ -174,7 +174,8 @@ pub enum Statement {
     If(Expression, Box<Statement>, Option<Box<Statement>>),
     Block(Span, Block),
     Return(Span, Option<Expression>),
-    Debugger(Span)
+    Debugger(Span),
+    Empty(Span)
 }
 
 #[derive(Debug, PartialEq)]

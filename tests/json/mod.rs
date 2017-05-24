@@ -350,6 +350,9 @@ fn statement(node: &Value) -> Result<Statement> {
         "DebuggerStatement" => {
             Ok(Statement::Debugger(span(node)?))
         }
+        "EmptyStatement" => {
+            Ok(Statement::Empty(span(node)?))
+        }
         "ReturnStatement" => {
             let argument = expression(expect_value(node, "argument"))?;
             Ok(Statement::Return(span(node)?, Some(argument)))

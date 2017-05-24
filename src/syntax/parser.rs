@@ -610,6 +610,10 @@ impl<'a> Parser<'a> {
                 let block = self.parse_block()?;
                 Ok(Statement::Block(self.finalize(start), block))
             },
+            Token::Semi => {
+                self.scanner.next_token();
+                Ok(Statement::Empty(self.finalize(start)))
+            }
             Token::DebuggerKeyword => {
                 self.scanner.next_token();
                 Ok(Statement::Debugger(self.consume_semicolon(start)?))
