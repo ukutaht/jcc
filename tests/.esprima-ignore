@@ -17,7 +17,6 @@ statement/if/**
 statement/iteration/**
 statement/labelled/**
 
-statement/return/migrated_0002
 statement/return/migrated_0003
 
 statement/switch/**
