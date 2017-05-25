@@ -281,6 +281,10 @@ fn sequence_expression(node: &Value) -> Result<Expression> {
     Ok(Expression::Sequence(span(node)?, expressions))
 }
 
+fn function_expression(node: &Value) -> Result<Expression> {
+    Ok(Expression::Function(span(node)?, function(node)?))
+}
+
 fn block(node: &Value) -> Result<Block> {
     let mut items = Vec::new();
     for value in expect_array(node, "body") {
@@ -325,6 +329,7 @@ fn expression(node: &Value) -> Result<Expression> {
         "ObjectExpression" => object_expression(node),
         "ConditionalExpression" => conditional_expression(node),
         "SequenceExpression" => sequence_expression(node),
+        "FunctionExpression" => function_expression(node),
         _ => Err(())
     }
 }
@@ -354,8 +359,13 @@ fn statement(node: &Value) -> Result<Statement> {
             Ok(Statement::Empty(span(node)?))
         }
         "ReturnStatement" => {
-            let argument = expression(expect_value(node, "argument"))?;
-            Ok(Statement::Return(span(node)?, Some(argument)))
+            let raw_arg = expect_value(node, "argument");
+            if raw_arg.is_null() {
+                Ok(Statement::Return(span(node)?, None))
+            } else {
+                let argument = expression(raw_arg)?;
+                Ok(Statement::Return(span(node)?, Some(argument)))
+            }
         }
         _ => Err(())
     }

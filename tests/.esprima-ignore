@@ -16,7 +16,11 @@ statement/expression/**
 statement/if/**
 statement/iteration/**
 statement/labelled/**
-statement/return/**
+
+statement/return/migrated_0001
+statement/return/migrated_0002
+statement/return/migrated_0003
+
 statement/switch/**
 statement/throw/**
 statement/try/**

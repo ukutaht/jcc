@@ -122,7 +122,7 @@ pub enum Expression {
     Binary(Span, BinOp, Box<Expression>, Box<Expression>),
     Call(Span, Box<Expression>, Vec<ArgumentListElement>),
     ComputedMember(Span, Box<Expression>, Box<Expression>),
-    Function(Function),
+    Function(Span, Function),
     Identifier(Span, String),
     Literal(Span, Literal),
     Logical(Span, LogOp, Box<Expression>, Box<Expression>),

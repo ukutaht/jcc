@@ -55,7 +55,8 @@ impl<'a> Parser<'a> {
             Token::OpenCurly => self.parse_object_initializer(),
             Token::OpenParen => self.parse_group_expression(),
             Token::FunctionKeyword => {
-                self.parse_function().map(Expression::Function)
+                let fun = self.parse_function()?;
+                Ok(Expression::Function(self.finalize(start), fun))
             },
             Token::ThisKeyword => {
                 self.scanner.next_token();
@@ -592,9 +593,20 @@ impl<'a> Parser<'a> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::Return);
 
-        let argument = self.parse_expression()?;
+        let mut argument = None;
+
+        let has_argument = self.scanner.lookahead != Token::Semi
+            && self.scanner.lookahead != Token::CloseCurly
+            && self.scanner.lookahead != Token::Eof
+            && !self.scanner.at_newline();
+
+
+        if has_argument {
+            argument = Some(self.parse_expression()?);
+        }
+
         let span = self.consume_semicolon(start)?;
-        Ok(Statement::Return(span, Some(argument)))
+        Ok(Statement::Return(span, argument))
     }
 
     fn parse_statement(&mut self) -> Result<Statement> {
