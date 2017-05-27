@@ -343,6 +343,18 @@ fn block_statement(node: &Value) -> Result<Statement> {
     Ok(Statement::Block(span(node)?, Block(statement_list_items)))
 }
 
+fn if_statement(node: &Value) -> Result<Statement> {
+    let test = expression(expect_value(node, "test"))?;
+    let consequent = statement(expect_value(node, "consequent"))?;
+    let alternate = if expect_value(node, "alternate").is_null() {
+        None
+    } else {
+        Some(Box::new(statement(expect_value(node, "alternate"))?))
+    };
+
+    Ok(Statement::If(test, Box::new(consequent), alternate))
+}
+
 fn statement(node: &Value) -> Result<Statement> {
     match expect_string(node, "type") {
         "ExpressionStatement" => {
@@ -357,6 +369,9 @@ fn statement(node: &Value) -> Result<Statement> {
         }
         "EmptyStatement" => {
             Ok(Statement::Empty(span(node)?))
+        }
+        "IfStatement" => {
+            if_statement(node)
         }
         "ReturnStatement" => {
             let raw_arg = expect_value(node, "argument");
