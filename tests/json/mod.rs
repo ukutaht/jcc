@@ -296,11 +296,17 @@ fn block(node: &Value) -> Result<Block> {
 
 fn function(node: &Value) -> Result<Function> {
     let body = block(expect_value(node, "body"))?;
+    let id = if expect_value(node, "id").is_null() {
+        None
+    } else {
+        Some(expect_string(expect_value(node, "id"), "name").to_owned())
+
+    };
     let mut parameters = Vec::new();
     for param in expect_array(node, "params") {
         parameters.push(pattern(param)?)
     }
-    Ok(Function { id: None, parameters: parameters, body: body })
+    Ok(Function { id: id, parameters: parameters, body: body })
 }
 
 fn pattern(node: &Value) -> Result<Pattern> {
@@ -406,6 +412,9 @@ fn statement(node: &Value) -> Result<Statement> {
         }
         "VariableDeclaration" => {
             Ok(Statement::VariableDeclaration(span(node)?, variable_declaration(node)?))
+        }
+        "FunctionDeclaration" => {
+            Ok(Statement::FunctionDeclaration(function(node)?))
         }
         "ReturnStatement" => {
             let raw_arg = expect_value(node, "argument");
