@@ -7,8 +7,8 @@ pub enum Token {
     BitOrEq,
     BitXor,
     BitXorEq,
-    BoolTrue,
     BoolFalse,
+    BoolTrue,
     CloseCurly,
     CloseParen,
     CloseSquare,
@@ -53,6 +53,7 @@ pub enum Token {
     Plus,
     PlusEq,
     PlusPlus,
+    QuestionMark,
     RShift,
     RShiftEq,
     Return,
@@ -67,5 +68,4 @@ pub enum Token {
     URShiftEq,
     Var,
     Void,
-    QuestionMark
 }
