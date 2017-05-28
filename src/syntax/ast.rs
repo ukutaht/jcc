@@ -4,7 +4,9 @@ use syntax::span::{Tracking, Span};
 pub enum Literal {
     Number(f64),
     String(String),
-    Null
+    Null,
+    True,
+    False
 }
 
 #[derive(Debug, PartialEq)]

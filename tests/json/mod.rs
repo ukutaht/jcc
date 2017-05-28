@@ -155,6 +155,12 @@ fn literal(node: &Value) -> Result<Expression> {
         Ok(Expression::Literal(span(node)?, Literal::Null))
     } else if val.is_string() {
         Ok(Expression::Literal(span(node)?, Literal::String(val.as_str().unwrap().to_owned())))
+    } else if val.is_boolean() {
+        if val.as_bool().unwrap() {
+            Ok(Expression::Literal(span(node)?, Literal::True))
+        } else {
+            Ok(Expression::Literal(span(node)?, Literal::False))
+        }
     } else {
         Err(())
     }

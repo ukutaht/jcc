@@ -7,6 +7,8 @@ pub enum Token {
     BitOrEq,
     BitXor,
     BitXorEq,
+    BoolTrue,
+    BoolFalse,
     CloseCurly,
     CloseParen,
     CloseSquare,

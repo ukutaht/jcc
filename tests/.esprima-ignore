@@ -15,7 +15,6 @@ statement/continue/**
 statement/expression/**
 
 statement/if/migrated_0005
-statement/if/migrated_0006
 
 statement/iteration/**
 statement/labelled/**

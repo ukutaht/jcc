@@ -215,6 +215,8 @@ fn transpile_literal<W: Write>(out: &mut W, lit: &Literal) -> Result<()> {
         Literal::Number(num) => write!(out, "{}", num),
         Literal::String(ref s) => write!(out, "\"{}\"", s),
         Literal::Null => write!(out, "null"),
+        Literal::True => write!(out, "true"),
+        Literal::False => write!(out, "false"),
     }
 }
 

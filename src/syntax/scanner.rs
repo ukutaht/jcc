@@ -18,6 +18,8 @@ static KEYWORD_IN: &'static str = "in";
 static KEYWORD_INSTANCEOF: &'static str = "instanceof";
 static KEYWORD_RETURN: &'static str = "return";
 static KEYWORD_DEBUGGER: &'static str = "debugger";
+static BOOL_TRUE: &'static str = "true";
+static BOOL_FALSE: &'static str = "false";
 
 pub struct Scanner<'a> {
     bytes: &'a [u8],
@@ -333,6 +335,10 @@ impl<'a> Scanner<'a> {
             Token::Return
         } else if value == *KEYWORD_DEBUGGER {
             Token::DebuggerKeyword
+        } else if value == *BOOL_TRUE {
+            Token::BoolTrue
+        } else if value == *BOOL_FALSE {
+            Token::BoolFalse
         } else {
             Token::Ident(value)
         }

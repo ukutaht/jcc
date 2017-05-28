@@ -43,6 +43,14 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token();
                 Ok(Expression::Literal(self.finalize(start), Literal::Number(n)))
             }
+            Token::BoolTrue => {
+                self.scanner.next_token();
+                Ok(Expression::Literal(self.finalize(start), Literal::True))
+            }
+            Token::BoolFalse => {
+                self.scanner.next_token();
+                Ok(Expression::Literal(self.finalize(start), Literal::False))
+            }
             Token::String(ref s) => {
                 self.scanner.next_token();
                 Ok(Expression::Literal(self.finalize(start), Literal::String(s.clone())))
@@ -126,6 +134,8 @@ impl<'a> Parser<'a> {
             Token::If => Some("if".to_string()),
             Token::Else => Some("else".to_string()),
             Token::Null => Some("null".to_string()),
+            Token::BoolTrue => Some("true".to_string()),
+            Token::BoolFalse => Some("false".to_string()),
             _ => None
         }
     }
@@ -383,10 +393,6 @@ impl<'a> Parser<'a> {
 
         let token = self.scanner.lookahead.clone();
         match token {
-            Token::Ident(ref name) => {
-                self.scanner.next_token();
-                Some(PropKey::Identifier(self.finalize(start), name.to_string()))
-            }
             Token::String(ref s) => {
                 self.scanner.next_token();
                 Some(PropKey::String(self.finalize(start), s.to_string()))
@@ -394,20 +400,13 @@ impl<'a> Parser<'a> {
             Token::Number(n) => {
                 self.scanner.next_token();
                 Some(PropKey::Number(self.finalize(start), n))
+            },
+            _ => {
+                self.match_identifier_name().map(|name| {
+                    self.scanner.next_token();
+                    PropKey::Identifier(self.finalize(start), name)
+                })
             }
-            Token::Null => {
-                self.scanner.next_token();
-                Some(PropKey::Identifier(self.finalize(start), "null".to_string()))
-            }
-            Token::If => {
-                self.scanner.next_token();
-                Some(PropKey::Identifier(self.finalize(start), "if".to_string()))
-            }
-            Token::Else => {
-                self.scanner.next_token();
-                Some(PropKey::Identifier(self.finalize(start), "else".to_string()))
-            }
-            _ => None
         }
     }
 
