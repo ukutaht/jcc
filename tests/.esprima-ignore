@@ -13,9 +13,6 @@ whitespace/**
 statement/break/**
 statement/continue/**
 statement/expression/**
-
-statement/if/migrated_0005
-
 statement/iteration/**
 statement/labelled/**
 
