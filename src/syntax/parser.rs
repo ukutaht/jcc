@@ -3,6 +3,7 @@ use syntax::ast::*;
 use syntax::span::{Tracking, Span, Position};
 use syntax::token::Token;
 use syntax::scanner::Scanner;
+use syntax::ops::AsOperator;
 use std;
 
 pub type Result<T> = std::result::Result<T, CompileError>;
@@ -181,7 +182,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_unary_expression(&mut self) -> Result<Expression> {
-        if let Some(prefix) = self.match_unary_operator() {
+        if let Some(prefix) = self.scanner.lookahead.as_unary_op() {
             let start = self.scanner.lookahead_start;
             self.scanner.next_token();
             let expr = self.parse_unary_expression()?;
@@ -193,68 +194,18 @@ impl<'a> Parser<'a> {
 
     fn parse_update_expression(&mut self) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
-        if let Some(op) = self.match_update_op() {
+        if let Some(op) = self.scanner.lookahead.as_update_op() {
             self.scanner.next_token();
             let expr = self.parse_unary_expression()?;
             Ok(Expression::Update(self.finalize(start), op, Box::new(expr), true))
         } else {
             let expr = self.parse_lhs_expression(true)?;
-            if let Some(op) = self.match_update_op() {
+            if let Some(op) = self.scanner.lookahead.as_update_op() {
                 self.scanner.next_token();
                 Ok(Expression::Update(self.finalize(start), op, Box::new(expr), false))
             } else {
                 Ok(expr)
             }
-        }
-    }
-
-    fn match_update_op(&mut self) -> Option<UpdateOp> {
-        match self.scanner.lookahead {
-            Token::PlusPlus => Some(UpdateOp::PlusPlus),
-            Token::MinusMinus => Some(UpdateOp::MinusMinus),
-            _ => None
-        }
-    }
-
-    fn match_unary_operator(&mut self) -> Option<UnOp> {
-        match self.scanner.lookahead {
-            Token::Bang => Some(UnOp::Not),
-            Token::Minus => Some(UnOp::Minus),
-            Token::Plus => Some(UnOp::Plus),
-            Token::Tilde => Some(UnOp::Tilde),
-            Token::Void => Some(UnOp::Void),
-            Token::Delete => Some(UnOp::Delete),
-            Token::Typeof => Some(UnOp::Typeof),
-            _ => None
-        }
-    }
-
-    fn match_infix(&mut self) -> Option<InfixOp> {
-        match self.scanner.lookahead {
-            Token::Plus => Some(InfixOp::BinOp(BinOp::Plus)),
-            Token::BitXor => Some(InfixOp::BinOp(BinOp::BitXor)),
-            Token::BitAnd => Some(InfixOp::BinOp(BinOp::BitAnd)),
-            Token::BitOr => Some(InfixOp::BinOp(BinOp::BitOr)),
-            Token::LShift => Some(InfixOp::BinOp(BinOp::LShift)),
-            Token::RShift => Some(InfixOp::BinOp(BinOp::RShift)),
-            Token::URShift => Some(InfixOp::BinOp(BinOp::URShift)),
-            Token::Times => Some(InfixOp::BinOp(BinOp::Times)),
-            Token::Div => Some(InfixOp::BinOp(BinOp::Div)),
-            Token::Mod => Some(InfixOp::BinOp(BinOp::Mod)),
-            Token::Minus => Some(InfixOp::BinOp(BinOp::Minus)),
-            Token::EqEq => Some(InfixOp::BinOp(BinOp::EqEq)),
-            Token::NotEq => Some(InfixOp::BinOp(BinOp::NotEq)),
-            Token::NotEqEq => Some(InfixOp::BinOp(BinOp::NotEqEq)),
-            Token::EqEqEq => Some(InfixOp::BinOp(BinOp::EqEqEq)),
-            Token::Lt => Some(InfixOp::BinOp(BinOp::Lt)),
-            Token::Lte => Some(InfixOp::BinOp(BinOp::Lte)),
-            Token::Gt => Some(InfixOp::BinOp(BinOp::Gt)),
-            Token::Gte => Some(InfixOp::BinOp(BinOp::Gte)),
-            Token::In => Some(InfixOp::BinOp(BinOp::In)),
-            Token::Instanceof => Some(InfixOp::BinOp(BinOp::Instanceof)),
-            Token::LogicalAnd => Some(InfixOp::LogOp(LogOp::AndAnd)),
-            Token::LogicalOr => Some(InfixOp::LogOp(LogOp::OrOr)),
-            _ => None
         }
     }
 
@@ -275,14 +226,14 @@ impl<'a> Parser<'a> {
 
         let mut expr = self.parse_unary_expression()?;
 
-        if let Some(first_op) = self.match_infix() {
+        if let Some(first_op) = self.scanner.lookahead.as_infix_op() {
             self.scanner.next_token();
             let mut markers = vec![start, self.scanner.lookahead_start];
             let mut right = self.parse_unary_expression()?;
             let mut expressions = vec![expr, right];
             let mut operators = vec![first_op];
 
-            while let Some(op) = self.match_infix() {
+            while let Some(op) = self.scanner.lookahead.as_infix_op() {
                 while expressions.len() > 1 && operators.last().unwrap().precedence() >= op.precedence() {
                     right = expressions.pop().unwrap();
                     let operator = operators.pop().unwrap();
@@ -326,27 +277,9 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn match_assignment(&mut self) -> Option<AssignOp> {
-        match self.scanner.lookahead {
-            Token::Eq => Some(AssignOp::Eq),
-            Token::TimesEq => Some(AssignOp::TimesEq),
-            Token::DivEq => Some(AssignOp::DivEq),
-            Token::ModEq => Some(AssignOp::ModEq),
-            Token::PlusEq => Some(AssignOp::PlusEq),
-            Token::MinusEq => Some(AssignOp::MinusEq),
-            Token::LShiftEq => Some(AssignOp::LShiftEq),
-            Token::RShiftEq => Some(AssignOp::RShiftEq),
-            Token::URShiftEq => Some(AssignOp::URShiftEq),
-            Token::BitAndEq => Some(AssignOp::BitAndEq),
-            Token::BitXorEq => Some(AssignOp::BitXorEq),
-            Token::BitOrEq => Some(AssignOp::BitOrEq),
-            _ => None
-        }
-    }
-
     fn parse_assignment_expression(&mut self) -> Result<Expression> {
         let left = self.parse_conditional_expression()?;
-        match self.match_assignment() {
+        match self.scanner.lookahead.as_assign_op() {
             Some(op) => {
                 self.scanner.next_token();
                 match left {
