@@ -175,6 +175,12 @@ pub struct CatchClause {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct SwitchCase {
+    pub test: Option<Expression>,
+    pub consequent: Block
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Statement {
     Expression(Span, Expression),
     VariableDeclaration(Span, VariableDeclaration),
@@ -185,7 +191,8 @@ pub enum Statement {
     Debugger(Span),
     Empty(Span),
     Throw(Span, Expression),
-    Try(Span, Block, Option<CatchClause>, Option<Block>)
+    Try(Span, Block, Option<CatchClause>, Option<Block>),
+    Switch(Span, Expression, Vec<SwitchCase>)
 }
 
 #[derive(Debug, PartialEq)]

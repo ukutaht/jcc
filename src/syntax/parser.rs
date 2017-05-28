@@ -660,6 +660,51 @@ impl<'a> Parser<'a> {
         Ok(Statement::Try(self.consume_semicolon(start)?, block, handler, finalizer))
     }
 
+    fn parse_switch_case(&mut self) -> Result<SwitchCase> {
+        let test = if self.scanner.lookahead == Token::DefaultKeyword {
+            self.scanner.next_token();
+            None
+        } else {
+            self.expect(Token::CaseKeyword);
+            Some(self.parse_expression()?)
+        };
+        self.expect(Token::Colon);
+
+        let mut consequent = Vec::new();
+        loop {
+            if self.scanner.lookahead == Token::CloseCurly
+                || self.scanner.lookahead == Token::DefaultKeyword
+                    || self.scanner.lookahead == Token::CaseKeyword {
+                        break;
+                    };
+            consequent.push(self.parse_statement_list_item()?);
+        };
+
+        Ok(SwitchCase { test: test, consequent: Block(consequent) })
+    }
+
+    fn parse_switch_statement(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::SwitchKeyword);
+
+        self.expect(Token::OpenParen);
+        let discriminant = self.parse_expression()?;
+        self.expect(Token::CloseParen);
+
+        let mut cases = Vec::new();
+        self.expect(Token::OpenCurly);
+        loop {
+            if self.scanner.lookahead == Token::CloseCurly {
+                break;
+            };
+
+            cases.push(self.parse_switch_case()?);
+        };
+        self.expect(Token::CloseCurly);
+
+        Ok(Statement::Switch(self.consume_semicolon(start)?, discriminant, cases))
+    }
+
     fn parse_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
 
@@ -684,6 +729,7 @@ impl<'a> Parser<'a> {
             Token::ThrowKeyword => self.parse_throw_statement(),
             Token::TryKeyword => self.parse_try_statement(),
             Token::Return => self.parse_return_statement(),
+            Token::SwitchKeyword => self.parse_switch_statement(),
             _ => self.parse_expression_statement(),
         }
     }

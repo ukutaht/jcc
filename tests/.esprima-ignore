@@ -16,7 +16,8 @@ statement/expression/**
 statement/iteration/**
 statement/labelled/**
 
-statement/switch/**
+statement/switch/migrated_0001
+statement/switch/migrated_0002
 
 statement/try/strict_simple_catch
 

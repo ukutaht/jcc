@@ -425,6 +425,32 @@ fn try_statement(node: &Value) -> Result<Statement> {
     Ok(Statement::Try(span(node)?, body, handler, finalizer))
 }
 
+fn switch_case(node: &Value) -> Result<SwitchCase> {
+    let test = if expect_value(node, "test").is_null() {
+        None
+    } else {
+        Some(expression(expect_value(node, "test"))?)
+    };
+
+    let mut consequent = Vec::new();
+    for item in expect_array(node, "consequent") {
+        consequent.push(statement_list_item(item)?)
+    }
+
+    Ok(SwitchCase { test: test, consequent: Block(consequent) })
+}
+
+fn switch_statement(node: &Value) -> Result<Statement> {
+    let discriminant = expression(expect_value(node, "discriminant"))?;
+
+    let mut cases = Vec::new();
+    for case in expect_array(node, "cases") {
+        cases.push(switch_case(case)?)
+    }
+
+    Ok(Statement::Switch(span(node)?, discriminant, cases))
+}
+
 fn statement(node: &Value) -> Result<Statement> {
     match expect_string(node, "type") {
         "ExpressionStatement" => {
@@ -458,6 +484,7 @@ fn statement(node: &Value) -> Result<Statement> {
         },
         "ThrowStatement" => throw_statement(node),
         "TryStatement" => try_statement(node),
+        "SwitchStatement" => switch_statement(node),
         _ => Err(())
     }
 }

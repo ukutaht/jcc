@@ -22,6 +22,9 @@ static KEYWORD_THROW: &'static str = "throw";
 static KEYWORD_TRY: &'static str = "try";
 static KEYWORD_CATCH: &'static str = "catch";
 static KEYWORD_FINALLY: &'static str = "finally";
+static KEYWORD_SWITCH: &'static str = "switch";
+static KEYWORD_CASE: &'static str = "case";
+static KEYWORD_DEFAULT: &'static str = "default";
 static BOOL_TRUE: &'static str = "true";
 static BOOL_FALSE: &'static str = "false";
 
@@ -347,6 +350,12 @@ impl<'a> Scanner<'a> {
             Token::CatchKeyword
         } else if value == *KEYWORD_FINALLY {
             Token::FinallyKeyword
+        } else if value == *KEYWORD_SWITCH {
+            Token::SwitchKeyword
+        } else if value == *KEYWORD_CASE {
+            Token::CaseKeyword
+        } else if value == *KEYWORD_DEFAULT {
+            Token::DefaultKeyword
         } else if value == *BOOL_TRUE {
             Token::BoolTrue
         } else if value == *BOOL_FALSE {
