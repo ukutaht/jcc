@@ -355,6 +355,37 @@ fn if_statement(node: &Value) -> Result<Statement> {
     Ok(Statement::If(test, Box::new(consequent), alternate))
 }
 
+fn variable_declarator(node: &Value) -> Result<VariableDeclarator> {
+    let init = if expect_value(node, "init").is_null() {
+        None
+    } else {
+        Some(expression(expect_value(node, "init"))?)
+    };
+
+    Ok(VariableDeclarator {
+        id: expect_string(expect_value(node, "id"), "name").to_owned(),
+        init: init
+    })
+}
+
+fn variable_declaration(node: &Value) -> Result<VariableDeclaration> {
+    let kind = match expect_string(node, "kind") {
+        "var" => VariableDeclarationKind::Var,
+        "let" => VariableDeclarationKind::Let,
+        "const" => VariableDeclarationKind::Const,
+        _ => return Err(())
+    };
+    let mut declarators = Vec::new();
+    for declarator in expect_array(node, "declarations") {
+        declarators.push(variable_declarator(declarator)?)
+    };
+
+    Ok(VariableDeclaration {
+        kind: kind,
+        declarations: declarators
+    })
+}
+
 fn statement(node: &Value) -> Result<Statement> {
     match expect_string(node, "type") {
         "ExpressionStatement" => {
@@ -372,6 +403,9 @@ fn statement(node: &Value) -> Result<Statement> {
         }
         "IfStatement" => {
             if_statement(node)
+        }
+        "VariableDeclaration" => {
+            Ok(Statement::VariableDeclaration(span(node)?, variable_declaration(node)?))
         }
         "ReturnStatement" => {
             let raw_arg = expect_value(node, "argument");

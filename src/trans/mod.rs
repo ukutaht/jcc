@@ -171,7 +171,7 @@ fn transpile_function<W: Write>(out: &mut W, fun: &Function) -> Result<()> {
 fn transpile_statement<W: Write>(out: &mut W, statement: &Statement) -> Result<()> {
     match *statement {
         Statement::Expression(_, ref e) => transpile_expression(out, e),
-        Statement::VariableDeclaration(ref dec) => transpile_variable_declaration(out, dec),
+        Statement::VariableDeclaration(_, ref dec) => transpile_variable_declaration(out, dec),
         Statement::FunctionDeclaration(ref dec) => transpile_function(out, dec),
         Statement::Block(_, ref b) => transpile_block(out, b),
         Statement::If(ref e, ref then, ref alternate) => transpile_if(out, e, then, alternate),
