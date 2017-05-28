@@ -17,9 +17,6 @@ statement/iteration/**
 statement/labelled/**
 
 statement/switch/**
-
-statement/throw/migrated_0001
-statement/throw/migrated_0002
 statement/try/**
 
 statement/with/**
