@@ -20,9 +20,6 @@ statement/switch/**
 statement/throw/**
 statement/try/**
 
-statement/variable/migrated_0006
-statement/variable/var_let
-
 statement/with/**
 
 expression/left-hand-side/let_object_computed
