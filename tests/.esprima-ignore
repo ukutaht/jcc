@@ -20,7 +20,6 @@ statement/switch/**
 statement/throw/**
 statement/try/**
 
-statement/variable/migrated_0004
 statement/variable/migrated_0005
 statement/variable/migrated_0006
 statement/variable/var_let
