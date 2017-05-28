@@ -466,29 +466,35 @@ impl<'a> Parser<'a> {
         Ok(Expression::Object(self.finalize(start), properties))
     }
 
+    fn parse_variable_declarator(&mut self) -> Result<VariableDeclarator> {
+        match self.scanner.next_token() {
+            Token::Ident(name) => {
+                let init = match self.scanner.lookahead {
+                    Token::Eq => {
+                        self.scanner.next_token();
+                        Some(self.parse_primary_expression()?)
+                    }
+                    _ => None
+                };
+                Ok(VariableDeclarator { id: name, init: init })
+            }
+            t => Err(CompileError::UnexpectedToken(t))
+        }
+    }
+
     fn parse_variable_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
-
         self.expect(Token::Var);
-        if let Token::Ident(name) = self.scanner.next_token() {
-            let init = match self.scanner.lookahead {
-                Token::Eq => {
-                    self.scanner.next_token();
-                    Some(self.parse_primary_expression()?)
-                }
-                _ => None
-            };
-            let span = self.consume_semicolon(start)?;
-            Ok(Statement::VariableDeclaration(span, VariableDeclaration {
-                kind: VariableDeclarationKind::Var,
-                declarations: vec![VariableDeclarator {
-                                       id: name,
-                                       init: init
-                                   }],
-            }))
-        } else {
-            panic!("Wat");
+        let mut declarators = Vec::new();
+        declarators.push(self.parse_variable_declarator()?);
+        while self.scanner.lookahead == Token::Comma {
+            self.scanner.next_token();
+            declarators.push(self.parse_variable_declarator()?)
         }
+        Ok(Statement::VariableDeclaration(self.consume_semicolon(start)?, VariableDeclaration {
+            kind: VariableDeclarationKind::Var,
+            declarations: declarators
+        }))
     }
 
     fn parse_function_parameter(&mut self) -> Pattern {
