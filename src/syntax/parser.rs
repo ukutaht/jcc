@@ -622,6 +622,13 @@ impl<'a> Parser<'a> {
         Ok(Statement::Return(span, argument))
     }
 
+    fn parse_throw_statement(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::ThrowKeyword);
+        let argument = self.parse_expression()?;
+        Ok(Statement::Throw(self.consume_semicolon(start)?, argument))
+    }
+
     fn parse_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
 
@@ -643,6 +650,7 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token();
                 Ok(Statement::Debugger(self.consume_semicolon(start)?))
             }
+            Token::ThrowKeyword => self.parse_throw_statement(),
             Token::Return => self.parse_return_statement(),
             _ => self.parse_expression_statement(),
         }

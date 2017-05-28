@@ -60,6 +60,7 @@ pub enum Token {
     Semi,
     String(String),
     ThisKeyword,
+    ThrowKeyword,
     Tilde,
     Times,
     TimesEq,

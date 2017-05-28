@@ -177,7 +177,8 @@ pub enum Statement {
     Block(Span, Block),
     Return(Span, Option<Expression>),
     Debugger(Span),
-    Empty(Span)
+    Empty(Span),
+    Throw(Span, Expression)
 }
 
 #[derive(Debug, PartialEq)]

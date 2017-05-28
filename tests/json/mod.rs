@@ -398,6 +398,11 @@ fn variable_declaration(node: &Value) -> Result<VariableDeclaration> {
     })
 }
 
+fn throw_statement(node: &Value) -> Result<Statement> {
+    let argument = expression(expect_value(node, "argument"))?;
+    Ok(Statement::Throw(span(node)?, argument))
+}
+
 fn statement(node: &Value) -> Result<Statement> {
     match expect_string(node, "type") {
         "ExpressionStatement" => {
@@ -413,9 +418,7 @@ fn statement(node: &Value) -> Result<Statement> {
         "EmptyStatement" => {
             Ok(Statement::Empty(span(node)?))
         }
-        "IfStatement" => {
-            if_statement(node)
-        }
+        "IfStatement" => if_statement(node),
         "VariableDeclaration" => {
             Ok(Statement::VariableDeclaration(span(node)?, variable_declaration(node)?))
         }
@@ -430,7 +433,8 @@ fn statement(node: &Value) -> Result<Statement> {
                 let argument = expression(raw_arg)?;
                 Ok(Statement::Return(span(node)?, Some(argument)))
             }
-        }
+        },
+        "ThrowStatement" => throw_statement(node),
         _ => Err(())
     }
 }
