@@ -471,14 +471,19 @@ impl<'a> Parser<'a> {
 
         self.expect(Token::Var);
         if let Token::Ident(name) = self.scanner.next_token() {
-            self.expect(Token::Eq);
-            let init = self.parse_primary_expression()?;
+            let init = match self.scanner.lookahead {
+                Token::Eq => {
+                    self.scanner.next_token();
+                    Some(self.parse_primary_expression()?)
+                }
+                _ => None
+            };
             let span = self.consume_semicolon(start)?;
             Ok(Statement::VariableDeclaration(span, VariableDeclaration {
                 kind: VariableDeclarationKind::Var,
                 declarations: vec![VariableDeclarator {
                                        id: name,
-                                       init: Some(init),
+                                       init: init
                                    }],
             }))
         } else {

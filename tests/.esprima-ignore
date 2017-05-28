@@ -19,7 +19,15 @@ statement/labelled/**
 statement/switch/**
 statement/throw/**
 statement/try/**
-statement/variable/**
+
+statement/variable/migrated_0001
+statement/variable/migrated_0002
+statement/variable/migrated_0003
+statement/variable/migrated_0004
+statement/variable/migrated_0005
+statement/variable/migrated_0006
+statement/variable/var_let
+
 statement/with/**
 
 expression/left-hand-side/let_object_computed
