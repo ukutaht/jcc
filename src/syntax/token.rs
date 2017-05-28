@@ -9,6 +9,7 @@ pub enum Token {
     BitXorEq,
     BoolFalse,
     BoolTrue,
+    BreakKeyword,
     CaseKeyword,
     CatchKeyword,
     CloseCurly,

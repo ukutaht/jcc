@@ -485,6 +485,9 @@ fn statement(node: &Value) -> Result<Statement> {
         "ThrowStatement" => throw_statement(node),
         "TryStatement" => try_statement(node),
         "SwitchStatement" => switch_statement(node),
+        "BreakStatement" => {
+            Ok(Statement::Break(span(node)?))
+        }
         _ => Err(())
     }
 }

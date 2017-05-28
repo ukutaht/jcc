@@ -25,6 +25,7 @@ static KEYWORD_FINALLY: &'static str = "finally";
 static KEYWORD_SWITCH: &'static str = "switch";
 static KEYWORD_CASE: &'static str = "case";
 static KEYWORD_DEFAULT: &'static str = "default";
+static KEYWORD_BREAK: &'static str = "break";
 static BOOL_TRUE: &'static str = "true";
 static BOOL_FALSE: &'static str = "false";
 
@@ -356,6 +357,8 @@ impl<'a> Scanner<'a> {
             Token::CaseKeyword
         } else if value == *KEYWORD_DEFAULT {
             Token::DefaultKeyword
+        } else if value == *KEYWORD_BREAK {
+            Token::BreakKeyword
         } else if value == *BOOL_TRUE {
             Token::BoolTrue
         } else if value == *BOOL_FALSE {

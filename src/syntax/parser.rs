@@ -726,6 +726,10 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token();
                 Ok(Statement::Debugger(self.consume_semicolon(start)?))
             }
+            Token::BreakKeyword => {
+                self.scanner.next_token();
+                Ok(Statement::Break(self.consume_semicolon(start)?))
+            }
             Token::ThrowKeyword => self.parse_throw_statement(),
             Token::TryKeyword => self.parse_try_statement(),
             Token::Return => self.parse_return_statement(),
