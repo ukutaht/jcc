@@ -169,6 +169,12 @@ pub struct Function {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct CatchClause {
+    pub param: String,
+    pub body: Block,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Statement {
     Expression(Span, Expression),
     VariableDeclaration(Span, VariableDeclaration),
@@ -178,7 +184,8 @@ pub enum Statement {
     Return(Span, Option<Expression>),
     Debugger(Span),
     Empty(Span),
-    Throw(Span, Expression)
+    Throw(Span, Expression),
+    Try(Span, Block, Option<CatchClause>, Option<Block>)
 }
 
 #[derive(Debug, PartialEq)]

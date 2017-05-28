@@ -17,7 +17,14 @@ statement/iteration/**
 statement/labelled/**
 
 statement/switch/**
-statement/try/**
+
+statement/try/migrated_0001
+statement/try/migrated_0002
+statement/try/migrated_0003
+statement/try/migrated_0004
+statement/try/migrated_0005
+statement/try/migrated_0006
+statement/try/strict_simple_catch
 
 statement/with/**
 

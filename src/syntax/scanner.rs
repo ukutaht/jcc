@@ -19,6 +19,9 @@ static KEYWORD_INSTANCEOF: &'static str = "instanceof";
 static KEYWORD_RETURN: &'static str = "return";
 static KEYWORD_DEBUGGER: &'static str = "debugger";
 static KEYWORD_THROW: &'static str = "throw";
+static KEYWORD_TRY: &'static str = "try";
+static KEYWORD_CATCH: &'static str = "catch";
+static KEYWORD_FINALLY: &'static str = "finally";
 static BOOL_TRUE: &'static str = "true";
 static BOOL_FALSE: &'static str = "false";
 
@@ -338,6 +341,12 @@ impl<'a> Scanner<'a> {
             Token::DebuggerKeyword
         } else if value == *KEYWORD_THROW {
             Token::ThrowKeyword
+        } else if value == *KEYWORD_TRY {
+            Token::TryKeyword
+        } else if value == *KEYWORD_CATCH {
+            Token::CatchKeyword
+        } else if value == *KEYWORD_FINALLY {
+            Token::FinallyKeyword
         } else if value == *BOOL_TRUE {
             Token::BoolTrue
         } else if value == *BOOL_FALSE {

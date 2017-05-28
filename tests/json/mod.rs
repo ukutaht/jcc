@@ -403,6 +403,28 @@ fn throw_statement(node: &Value) -> Result<Statement> {
     Ok(Statement::Throw(span(node)?, argument))
 }
 
+fn catch_clause(node: &Value) -> Result<CatchClause> {
+    let param = expect_string(expect_value(node, "param"), "name").to_owned();
+    let body = block(expect_value(node, "body"))?;
+    Ok(CatchClause { param: param, body: body })
+}
+
+fn try_statement(node: &Value) -> Result<Statement> {
+    let body = block(expect_value(node, "block"))?;
+    let handler = if expect_value(node, "handler").is_null() {
+        None
+    } else {
+        Some(catch_clause(expect_value(node, "handler"))?)
+    };
+    let finalizer = if expect_value(node, "finalizer").is_null() {
+        None
+    } else {
+        Some(block(expect_value(node, "finalizer"))?)
+    };
+
+    Ok(Statement::Try(span(node)?, body, handler, finalizer))
+}
+
 fn statement(node: &Value) -> Result<Statement> {
     match expect_string(node, "type") {
         "ExpressionStatement" => {
@@ -435,6 +457,7 @@ fn statement(node: &Value) -> Result<Statement> {
             }
         },
         "ThrowStatement" => throw_statement(node),
+        "TryStatement" => try_statement(node),
         _ => Err(())
     }
 }

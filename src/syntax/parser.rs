@@ -629,6 +629,37 @@ impl<'a> Parser<'a> {
         Ok(Statement::Throw(self.consume_semicolon(start)?, argument))
     }
 
+    fn parse_catch_clause(&mut self) -> Result<CatchClause> {
+        self.expect(Token::CatchKeyword);
+        self.expect(Token::OpenParen);
+        let param = match self.scanner.next_token() {
+            Token::Ident(s) => s,
+            t => return Err(CompileError::UnexpectedToken(t))
+        };
+        self.expect(Token::CloseParen);
+        let body = self.parse_block()?;
+        Ok(CatchClause { param: param, body: body })
+    }
+
+    fn parse_try_statement(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::TryKeyword);
+        let block = self.parse_block()?;
+        let handler = if self.scanner.lookahead == Token::CatchKeyword {
+            Some(self.parse_catch_clause()?)
+        } else {
+            None
+        };
+        let finalizer = if self.scanner.lookahead == Token::FinallyKeyword {
+            self.scanner.next_token();
+            Some(self.parse_block()?)
+        } else {
+            None
+        };
+
+        Ok(Statement::Try(self.consume_semicolon(start)?, block, handler, finalizer))
+    }
+
     fn parse_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
 
@@ -651,6 +682,7 @@ impl<'a> Parser<'a> {
                 Ok(Statement::Debugger(self.consume_semicolon(start)?))
             }
             Token::ThrowKeyword => self.parse_throw_statement(),
+            Token::TryKeyword => self.parse_try_statement(),
             Token::Return => self.parse_return_statement(),
             _ => self.parse_expression_statement(),
         }
