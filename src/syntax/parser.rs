@@ -652,6 +652,16 @@ impl<'a> Parser<'a> {
         Ok(Statement::DoWhile(self.finalize(start), Box::new(body), test))
     }
 
+    fn parse_while_statement(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::WhileKeyword);
+        self.expect(Token::OpenParen);
+        let test = self.parse_expression()?;
+        self.expect(Token::CloseParen);
+        let body = self.parse_statement()?;
+        Ok(Statement::While(self.finalize(start), test, Box::new(body)))
+    }
+
     fn parse_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
 
@@ -682,6 +692,7 @@ impl<'a> Parser<'a> {
             Token::Return => self.parse_return_statement(),
             Token::SwitchKeyword => self.parse_switch_statement(),
             Token::DoKeyword => self.parse_do_while_statement(),
+            Token::WhileKeyword => self.parse_while_statement(),
             _ => self.parse_expression_statement(),
         }
     }

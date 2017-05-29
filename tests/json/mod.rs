@@ -458,6 +458,13 @@ fn do_while_statement(node: &Value) -> Result<Statement> {
     Ok(Statement::DoWhile(span(node)?, Box::new(body), test))
 }
 
+fn while_statement(node: &Value) -> Result<Statement> {
+    let test = expression(expect_value(node, "test"))?;
+    let body = statement(expect_value(node, "body"))?;
+
+    Ok(Statement::While(span(node)?, test, Box::new(body)))
+}
+
 fn statement(node: &Value) -> Result<Statement> {
     match expect_string(node, "type") {
         "ExpressionStatement" => {
@@ -493,6 +500,7 @@ fn statement(node: &Value) -> Result<Statement> {
         "TryStatement" => try_statement(node),
         "SwitchStatement" => switch_statement(node),
         "DoWhileStatement" => do_while_statement(node),
+        "WhileStatement" => while_statement(node),
         "BreakStatement" => {
             Ok(Statement::Break(span(node)?))
         }
