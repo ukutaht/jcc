@@ -451,6 +451,13 @@ fn switch_statement(node: &Value) -> Result<Statement> {
     Ok(Statement::Switch(span(node)?, discriminant, cases))
 }
 
+fn do_while_statement(node: &Value) -> Result<Statement> {
+    let body = statement(expect_value(node, "body"))?;
+    let test = expression(expect_value(node, "test"))?;
+
+    Ok(Statement::DoWhile(span(node)?, Box::new(body), test))
+}
+
 fn statement(node: &Value) -> Result<Statement> {
     match expect_string(node, "type") {
         "ExpressionStatement" => {
@@ -485,6 +492,7 @@ fn statement(node: &Value) -> Result<Statement> {
         "ThrowStatement" => throw_statement(node),
         "TryStatement" => try_statement(node),
         "SwitchStatement" => switch_statement(node),
+        "DoWhileStatement" => do_while_statement(node),
         "BreakStatement" => {
             Ok(Statement::Break(span(node)?))
         }

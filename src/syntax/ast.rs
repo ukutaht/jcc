@@ -193,7 +193,8 @@ pub enum Statement {
     Throw(Span, Expression),
     Try(Span, Block, Option<CatchClause>, Option<Block>),
     Switch(Span, Expression, Vec<SwitchCase>),
-    Break(Span)
+    Break(Span),
+    DoWhile(Span, Box<Statement>, Expression)
 }
 
 #[derive(Debug, PartialEq)]

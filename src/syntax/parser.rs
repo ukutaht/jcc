@@ -638,6 +638,17 @@ impl<'a> Parser<'a> {
         Ok(Statement::Switch(self.consume_semicolon(start)?, discriminant, cases))
     }
 
+    fn parse_do_while_statement(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::DoKeyword);
+        let body = self.parse_statement()?;
+        self.expect(Token::WhileKeyword);
+        self.expect(Token::OpenParen);
+        let test = self.parse_expression()?;
+        self.expect(Token::CloseParen);
+        Ok(Statement::DoWhile(self.consume_semicolon(start)?, Box::new(body), test))
+    }
+
     fn parse_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
 
@@ -667,6 +678,7 @@ impl<'a> Parser<'a> {
             Token::TryKeyword => self.parse_try_statement(),
             Token::Return => self.parse_return_statement(),
             Token::SwitchKeyword => self.parse_switch_statement(),
+            Token::DoKeyword => self.parse_do_while_statement(),
             _ => self.parse_expression_statement(),
         }
     }

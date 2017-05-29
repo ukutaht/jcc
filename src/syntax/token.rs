@@ -22,6 +22,7 @@ pub enum Token {
     Delete,
     Div,
     DivEq,
+    DoKeyword,
     Dot,
     Else,
     Eof,
@@ -76,4 +77,5 @@ pub enum Token {
     URShiftEq,
     Var,
     Void,
+    WhileKeyword,
 }
