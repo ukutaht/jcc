@@ -646,7 +646,10 @@ impl<'a> Parser<'a> {
         self.expect(Token::OpenParen);
         let test = self.parse_expression()?;
         self.expect(Token::CloseParen);
-        Ok(Statement::DoWhile(self.consume_semicolon(start)?, Box::new(body), test))
+        if self.scanner.lookahead == Token::Semi {
+            self.scanner.next_token();
+        }
+        Ok(Statement::DoWhile(self.finalize(start), Box::new(body), test))
     }
 
     fn parse_statement(&mut self) -> Result<Statement> {
