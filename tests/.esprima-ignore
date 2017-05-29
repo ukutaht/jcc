@@ -18,8 +18,6 @@ statement/iteration/const_forin
 statement/iteration/for-in-let
 statement/iteration/for-let-let
 statement/iteration/for-statement-with-seq
-statement/iteration/migrated_0004
-statement/iteration/migrated_0005
 statement/iteration/migrated_0006
 statement/iteration/migrated_0007
 statement/iteration/migrated_0008
