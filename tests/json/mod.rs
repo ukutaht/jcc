@@ -474,6 +474,14 @@ fn for_statement(node: &Value) -> Result<Statement> {
     Ok(Statement::For(span(node)?, init, test, update, Box::new(body)))
 }
 
+fn for_in_statement(node: &Value) -> Result<Statement> {
+    let left = expression(expect_value(node, "left"))?;
+    let right = expression(expect_value(node, "right"))?;
+    let body = statement(expect_value(node, "body"))?;
+
+    Ok(Statement::ForIn(span(node)?, left, right, Box::new(body)))
+}
+
 fn statement(node: &Value) -> Result<Statement> {
     match expect_string(node, "type") {
         "ExpressionStatement" => {
@@ -511,6 +519,7 @@ fn statement(node: &Value) -> Result<Statement> {
         "DoWhileStatement" => do_while_statement(node),
         "WhileStatement" => while_statement(node),
         "ForStatement" => for_statement(node),
+        "ForInStatement" => for_in_statement(node),
         "BreakStatement" => {
             Ok(Statement::Break(span(node)?))
         }

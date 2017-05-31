@@ -14,13 +14,14 @@ statement/break/**
 statement/continue/**
 statement/expression/**
 
+# ES6
 statement/iteration/const_forin
 statement/iteration/for-in-let
+# ES6
 statement/iteration/for-let-let
 # ES6
 statement/iteration/migrated_0012
 
-statement/iteration/migrated_0017
 statement/iteration/migrated_0018
 statement/iteration/migrated_0019
 statement/iteration/migrated_0020

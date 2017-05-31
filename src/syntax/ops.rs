@@ -4,7 +4,7 @@ use syntax::token::Token;
 pub trait AsOperator {
     fn as_unary_op(&self) -> Option<UnOp>;
     fn as_update_op(&self) -> Option<UpdateOp>;
-    fn as_infix_op(&self) -> Option<InfixOp>;
+    fn as_infix_op(&self, bool) -> Option<InfixOp>;
     fn as_assign_op(&self) -> Option<AssignOp>;
 }
 
@@ -30,8 +30,8 @@ impl AsOperator for Token {
         }
     }
 
-    fn as_infix_op(&self) -> Option<InfixOp> {
-        match *self {
+    fn as_infix_op(&self, allow_in: bool) -> Option<InfixOp> {
+        let op = match *self {
             Token::Plus => Some(InfixOp::BinOp(BinOp::Plus)),
             Token::BitXor => Some(InfixOp::BinOp(BinOp::BitXor)),
             Token::BitAnd => Some(InfixOp::BinOp(BinOp::BitAnd)),
@@ -56,6 +56,12 @@ impl AsOperator for Token {
             Token::LogicalAnd => Some(InfixOp::LogOp(LogOp::AndAnd)),
             Token::LogicalOr => Some(InfixOp::LogOp(LogOp::OrOr)),
             _ => None
+        };
+
+        if op == Some(InfixOp::BinOp(BinOp::In)) && !allow_in {
+            None
+        } else {
+            op
         }
     }
 
