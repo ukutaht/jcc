@@ -35,12 +35,24 @@ impl<'a> Parser<'a> {
     }
 
     fn allow_in<F, T>(&mut self, allow_in: bool, parse: F) -> Result<T>
-      where F: FnOnce(&mut Self) -> Result<T>
-    {
+      where F: FnOnce(&mut Self) -> Result<T> {
         let allow_in = std::mem::replace(&mut self.context.allow_in, allow_in);
         let result = parse(self);
         std::mem::replace(&mut self.context.allow_in, allow_in);
         result
+    }
+
+    fn matches(&self, tok: Token) -> bool {
+        self.scanner.lookahead == tok
+    }
+
+    fn eat(&mut self, tok: Token) -> bool {
+        if self.matches(tok) {
+            self.scanner.next_token();
+            true
+        } else {
+            false
+        }
     }
 
     fn finalize(&self, start: Position) -> Span {
@@ -50,7 +62,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse_primary_expression(&mut self) -> Result<Expression> {
+    fn parse_primary_expression(&mut self) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
         let token = self.scanner.lookahead.clone();
         match token {
@@ -125,7 +137,7 @@ impl<'a> Parser<'a> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::New);
         let base = self.parse_lhs_expression(false)?;
-        let args = if self.scanner.lookahead == Token::OpenParen {
+        let args = if self.matches(Token::OpenParen) {
             self.parse_arguments()
         } else {
             Vec::new()
@@ -158,7 +170,7 @@ impl<'a> Parser<'a> {
     fn parse_lhs_expression(&mut self, allow_call: bool) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
 
-        let mut result = if self.scanner.lookahead == Token::New {
+        let mut result = if self.matches(Token::New) {
             self.parse_new_expression()?
         } else {
             self.parse_primary_expression()?
@@ -279,8 +291,7 @@ impl<'a> Parser<'a> {
         let start = self.scanner.lookahead_start;
         let expr = self.parse_binary_expression()?;
 
-        if self.scanner.lookahead == Token::QuestionMark {
-            self.scanner.next_token();
+        if self.eat(Token::QuestionMark) {
             let consequent = self.parse_assignment_expression()?;
             self.expect(Token::Colon);
             let alternate = self.parse_assignment_expression()?;
@@ -432,8 +443,7 @@ impl<'a> Parser<'a> {
     fn parse_variable_declaration(&mut self) -> Result<VariableDeclaration> {
         let mut declarators = Vec::new();
         declarators.push(self.parse_variable_declarator()?);
-        while self.scanner.lookahead == Token::Comma {
-            self.scanner.next_token();
+        while self.eat(Token::Comma) {
             declarators.push(self.parse_variable_declarator()?)
         }
         Ok(VariableDeclaration {
@@ -501,11 +511,10 @@ impl<'a> Parser<'a> {
         let start = self.scanner.lookahead_start;
         let expr = self.parse_assignment_expression()?;
 
-        if self.scanner.lookahead == Token::Comma {
+        if self.matches(Token::Comma) {
             let mut expressions = vec![expr];
-            while self.scanner.lookahead != Token::Eof {
-                if self.scanner.lookahead == Token::Comma {
-                    self.scanner.next_token();
+            while !self.matches(Token::Eof) {
+                if self.eat(Token::Comma) {
                     expressions.push(self.parse_assignment_expression()?);
                 } else {
                     break;
@@ -518,8 +527,7 @@ impl<'a> Parser<'a> {
     }
 
     fn consume_semicolon(&mut self, start: Position) -> Result<Span> {
-        if self.scanner.lookahead == Token::Semi {
-            self.scanner.next_token();
+        if self.eat(Token::Semi) {
             Ok(self.finalize(start))
         } else if self.scanner.at_newline() {
             Ok(self.finalize(start))
@@ -597,13 +605,12 @@ impl<'a> Parser<'a> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::TryKeyword);
         let block = self.parse_block()?;
-        let handler = if self.scanner.lookahead == Token::CatchKeyword {
+        let handler = if self.matches(Token::CatchKeyword) {
             Some(self.parse_catch_clause()?)
         } else {
             None
         };
-        let finalizer = if self.scanner.lookahead == Token::FinallyKeyword {
-            self.scanner.next_token();
+        let finalizer = if self.eat(Token::FinallyKeyword) {
             Some(self.parse_block()?)
         } else {
             None
@@ -613,8 +620,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_switch_case(&mut self) -> Result<SwitchCase> {
-        let test = if self.scanner.lookahead == Token::DefaultKeyword {
-            self.scanner.next_token();
+        let test = if self.eat(Token::DefaultKeyword) {
             None
         } else {
             self.expect(Token::CaseKeyword);
@@ -624,9 +630,9 @@ impl<'a> Parser<'a> {
 
         let mut consequent = Vec::new();
         loop {
-            if self.scanner.lookahead == Token::CloseCurly
-                || self.scanner.lookahead == Token::DefaultKeyword
-                    || self.scanner.lookahead == Token::CaseKeyword {
+            if self.matches(Token::CloseCurly)
+                || self.matches(Token::DefaultKeyword)
+                    || self.matches(Token::CaseKeyword) {
                         break;
                     };
             consequent.push(self.parse_statement_list_item()?);
@@ -646,7 +652,7 @@ impl<'a> Parser<'a> {
         let mut cases = Vec::new();
         self.expect(Token::OpenCurly);
         loop {
-            if self.scanner.lookahead == Token::CloseCurly {
+            if self.matches(Token::CloseCurly) {
                 break;
             };
 
@@ -665,9 +671,7 @@ impl<'a> Parser<'a> {
         self.expect(Token::OpenParen);
         let test = self.parse_expression()?;
         self.expect(Token::CloseParen);
-        if self.scanner.lookahead == Token::Semi {
-            self.scanner.next_token();
-        }
+        self.eat(Token::Semi);
         Ok(Statement::DoWhile(self.finalize(start), Box::new(body), test))
     }
 
@@ -689,14 +693,14 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_for_iter_statement(&mut self, start: Position, init: Option<ForInit>) -> Result<Statement> {
-        let test = if self.scanner.lookahead == Token::Semi {
+        let test = if self.matches(Token::Semi) {
             None
         } else {
             Some(self.parse_expression()?)
         };
         self.expect(Token::Semi);
 
-        let update = if self.scanner.lookahead == Token::CloseParen {
+        let update = if self.matches(Token::CloseParen) {
             None
         } else {
             Some(self.parse_expression()?)
@@ -711,20 +715,17 @@ impl<'a> Parser<'a> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::ForKeyword);
         self.expect(Token::OpenParen);
-        if self.scanner.lookahead == Token::Semi {
-            self.scanner.next_token();
+        if self.eat(Token::Semi) {
             self.parse_for_iter_statement(start, None)
         } else {
-            if self.scanner.lookahead == Token::Var {
-                self.scanner.next_token();
+            if self.eat(Token::Var) {
                 let decl = self.parse_variable_declaration()?;
                 let init = Some(ForInit::VarDecl(decl));
                 self.expect(Token::Semi);
                 self.parse_for_iter_statement(start, init)
             } else {
                 let init = self.allow_in(false, Parser::parse_expression)?;
-                if self.scanner.lookahead == Token::In {
-                    self.scanner.next_token();
+                if self.eat(Token::In) {
                     self.parse_for_in_statement(start, init)
                 } else {
                     self.expect(Token::Semi);
