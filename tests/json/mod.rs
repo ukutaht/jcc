@@ -27,6 +27,18 @@ fn expect_value<'a>(node: &'a Value, key: &str) -> &'a Value {
     node.as_object().unwrap().get(key).unwrap()
 }
 
+fn maybe<T>(value: &Value, reader: &Fn(&Value) -> Result<T>) -> Result<Option<T>> {
+    if value.is_null() {
+        Ok(None)
+    } else {
+        Ok(Some(reader(value)?))
+    }
+}
+
+fn maybe_key<T>(node: &Value, key: &str, reader: &Fn(&Value) -> Result<T>) -> Result<Option<T>> {
+    maybe(expect_value(node, key), reader)
+}
+
 fn position(node: &Value) -> Result<Position> {
     Ok(Position {
         line: expect_u64(node, "line") as u32,
@@ -107,11 +119,7 @@ fn array_expression(node: &Value) -> Result<Expression> {
     let mut elements = Vec::new();
 
     for element in expect_array(node, "elements") {
-        if element.is_null() {
-            elements.push(None)
-        } else {
-            elements.push(Some(expression(element)?));
-        }
+        elements.push(maybe(element, &expression)?);
     }
 
     Ok(Expression::Array(span, elements))
@@ -358,21 +366,13 @@ fn block_statement(node: &Value) -> Result<Statement> {
 fn if_statement(node: &Value) -> Result<Statement> {
     let test = expression(expect_value(node, "test"))?;
     let consequent = statement(expect_value(node, "consequent"))?;
-    let alternate = if expect_value(node, "alternate").is_null() {
-        None
-    } else {
-        Some(Box::new(statement(expect_value(node, "alternate"))?))
-    };
+    let alternate = maybe_key(node, "alternate", &statement)?.map(Box::new);
 
     Ok(Statement::If(test, Box::new(consequent), alternate))
 }
 
 fn variable_declarator(node: &Value) -> Result<VariableDeclarator> {
-    let init = if expect_value(node, "init").is_null() {
-        None
-    } else {
-        Some(expression(expect_value(node, "init"))?)
-    };
+    let init = maybe_key(node, "init", &expression)?;
 
     Ok(VariableDeclarator {
         id: expect_string(expect_value(node, "id"), "name").to_owned(),
@@ -411,16 +411,8 @@ fn catch_clause(node: &Value) -> Result<CatchClause> {
 
 fn try_statement(node: &Value) -> Result<Statement> {
     let body = block(expect_value(node, "block"))?;
-    let handler = if expect_value(node, "handler").is_null() {
-        None
-    } else {
-        Some(catch_clause(expect_value(node, "handler"))?)
-    };
-    let finalizer = if expect_value(node, "finalizer").is_null() {
-        None
-    } else {
-        Some(block(expect_value(node, "finalizer"))?)
-    };
+    let handler = maybe_key(node, "handler", &catch_clause)?;
+    let finalizer = maybe_key(node, "finalizer", &block)?;
 
     Ok(Statement::Try(span(node)?, body, handler, finalizer))
 }
@@ -466,21 +458,9 @@ fn while_statement(node: &Value) -> Result<Statement> {
 }
 
 fn for_statement(node: &Value) -> Result<Statement> {
-    let init = if expect_value(node, "init").is_null() {
-        None
-    } else {
-        Some(expression(expect_value(node, "init"))?)
-    };
-    let test = if expect_value(node, "test").is_null() {
-        None
-    } else {
-        Some(expression(expect_value(node, "test"))?)
-    };
-    let update = if expect_value(node, "update").is_null() {
-        None
-    } else {
-        Some(expression(expect_value(node, "update"))?)
-    };
+    let init = maybe_key(node, "init", &expression)?;
+    let test = maybe_key(node, "test", &expression)?;
+    let update = maybe_key(node, "update", &expression)?;
     let body = statement(expect_value(node, "body"))?;
 
     Ok(Statement::For(span(node)?, init, test, update, Box::new(body)))
