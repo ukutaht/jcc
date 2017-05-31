@@ -195,7 +195,8 @@ pub enum Statement {
     Switch(Span, Expression, Vec<SwitchCase>),
     Break(Span),
     DoWhile(Span, Box<Statement>, Expression),
-    While(Span, Expression, Box<Statement>)
+    While(Span, Expression, Box<Statement>),
+    For(Span, Option<Expression>, Option<Expression>, Option<Expression>, Box<Statement>)
 }
 
 #[derive(Debug, PartialEq)]

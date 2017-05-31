@@ -465,6 +465,27 @@ fn while_statement(node: &Value) -> Result<Statement> {
     Ok(Statement::While(span(node)?, test, Box::new(body)))
 }
 
+fn for_statement(node: &Value) -> Result<Statement> {
+    let init = if expect_value(node, "init").is_null() {
+        None
+    } else {
+        Some(expression(expect_value(node, "init"))?)
+    };
+    let test = if expect_value(node, "test").is_null() {
+        None
+    } else {
+        Some(expression(expect_value(node, "test"))?)
+    };
+    let update = if expect_value(node, "update").is_null() {
+        None
+    } else {
+        Some(expression(expect_value(node, "update"))?)
+    };
+    let body = statement(expect_value(node, "body"))?;
+
+    Ok(Statement::For(span(node)?, init, test, update, Box::new(body)))
+}
+
 fn statement(node: &Value) -> Result<Statement> {
     match expect_string(node, "type") {
         "ExpressionStatement" => {
@@ -501,6 +522,7 @@ fn statement(node: &Value) -> Result<Statement> {
         "SwitchStatement" => switch_statement(node),
         "DoWhileStatement" => do_while_statement(node),
         "WhileStatement" => while_statement(node),
+        "ForStatement" => for_statement(node),
         "BreakStatement" => {
             Ok(Statement::Break(span(node)?))
         }

@@ -31,6 +31,7 @@ pub enum Token {
     EqEqEq,
     FinallyKeyword,
     FunctionKeyword,
+    ForKeyword,
     Gt,
     Gte,
     Ident(String),

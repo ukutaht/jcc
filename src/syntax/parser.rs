@@ -662,6 +662,35 @@ impl<'a> Parser<'a> {
         Ok(Statement::While(self.finalize(start), test, Box::new(body)))
     }
 
+    fn parse_for_statement(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::ForKeyword);
+        self.expect(Token::OpenParen);
+        let init = if self.scanner.lookahead == Token::Semi {
+            self.scanner.next_token();
+            None
+        } else {
+            return Err(CompileError::UnexpectedToken(self.scanner.lookahead.clone()));
+        };
+
+        let test = if self.scanner.lookahead == Token::Semi {
+            None
+        } else {
+            Some(self.parse_expression()?)
+        };
+        self.expect(Token::Semi);
+
+        let update = if self.scanner.lookahead == Token::CloseParen {
+            None
+        } else {
+            Some(self.parse_expression()?)
+        };
+        self.expect(Token::CloseParen);
+
+        let body = self.parse_statement()?;
+        Ok(Statement::For(self.finalize(start), init, test, update, Box::new(body)))
+    }
+
     fn parse_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
 
@@ -693,6 +722,7 @@ impl<'a> Parser<'a> {
             Token::SwitchKeyword => self.parse_switch_statement(),
             Token::DoKeyword => self.parse_do_while_statement(),
             Token::WhileKeyword => self.parse_while_statement(),
+            Token::ForKeyword => self.parse_for_statement(),
             _ => self.parse_expression_statement(),
         }
     }
