@@ -670,7 +670,9 @@ impl<'a> Parser<'a> {
             self.scanner.next_token();
             None
         } else {
-            return Err(CompileError::UnexpectedToken(self.scanner.lookahead.clone()));
+            let temp = self.parse_assignment_expression()?;
+            self.expect(Token::Semi);
+            Some(temp)
         };
 
         let test = if self.scanner.lookahead == Token::Semi {
