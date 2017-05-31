@@ -682,9 +682,9 @@ impl<'a> Parser<'a> {
                 self.expect(Token::Semi);
                 temp
             } else {
-                let temp = self.parse_assignment_expression()?;
+                let expr = self.parse_expression()?;
                 self.expect(Token::Semi);
-                Some(ForInit::Expression(temp))
+                Some(ForInit::Expression(expr))
             }
         };
 
