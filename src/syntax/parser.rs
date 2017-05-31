@@ -415,19 +415,24 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_variable_statement(&mut self) -> Result<Statement> {
-        let start = self.scanner.lookahead_start;
-        self.expect(Token::Var);
+    fn parse_variable_declaration(&mut self) -> Result<VariableDeclaration> {
         let mut declarators = Vec::new();
         declarators.push(self.parse_variable_declarator()?);
         while self.scanner.lookahead == Token::Comma {
             self.scanner.next_token();
             declarators.push(self.parse_variable_declarator()?)
         }
-        Ok(Statement::VariableDeclaration(self.consume_semicolon(start)?, VariableDeclaration {
+        Ok(VariableDeclaration {
             kind: VariableDeclarationKind::Var,
             declarations: declarators
-        }))
+        })
+    }
+
+    fn parse_variable_statement(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::Var);
+        let declaration = self.parse_variable_declaration()?;
+        Ok(Statement::VariableDeclaration(self.consume_semicolon(start)?, declaration))
     }
 
     fn parse_function_parameter(&mut self) -> Pattern {
@@ -670,9 +675,17 @@ impl<'a> Parser<'a> {
             self.scanner.next_token();
             None
         } else {
-            let temp = self.parse_assignment_expression()?;
-            self.expect(Token::Semi);
-            Some(temp)
+            if self.scanner.lookahead == Token::Var {
+                self.scanner.next_token();
+                let decl = self.parse_variable_declaration()?;
+                let temp = Some(ForInit::VarDecl(decl));
+                self.expect(Token::Semi);
+                temp
+            } else {
+                let temp = self.parse_assignment_expression()?;
+                self.expect(Token::Semi);
+                Some(ForInit::Expression(temp))
+            }
         };
 
         let test = if self.scanner.lookahead == Token::Semi {

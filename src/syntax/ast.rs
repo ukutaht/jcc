@@ -181,6 +181,12 @@ pub struct SwitchCase {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum ForInit {
+    VarDecl(VariableDeclaration),
+    Expression(Expression)
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Statement {
     Expression(Span, Expression),
     VariableDeclaration(Span, VariableDeclaration),
@@ -196,7 +202,7 @@ pub enum Statement {
     Break(Span),
     DoWhile(Span, Box<Statement>, Expression),
     While(Span, Expression, Box<Statement>),
-    For(Span, Option<Expression>, Option<Expression>, Option<Expression>, Box<Statement>)
+    For(Span, Option<ForInit>, Option<Expression>, Option<Expression>, Box<Statement>)
 }
 
 #[derive(Debug, PartialEq)]

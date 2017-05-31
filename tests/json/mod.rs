@@ -457,8 +457,16 @@ fn while_statement(node: &Value) -> Result<Statement> {
     Ok(Statement::While(span(node)?, test, Box::new(body)))
 }
 
+fn for_init(node: &Value) -> Result<ForInit> {
+    if expect_string(node, "type") == "VariableDeclaration" {
+        Ok(ForInit::VarDecl(variable_declaration(node)?))
+    } else {
+        Ok(ForInit::Expression(expression(node)?))
+    }
+}
+
 fn for_statement(node: &Value) -> Result<Statement> {
-    let init = maybe_key(node, "init", &expression)?;
+    let init = maybe_key(node, "init", &for_init)?;
     let test = maybe_key(node, "test", &expression)?;
     let update = maybe_key(node, "update", &expression)?;
     let body = statement(expect_value(node, "body"))?;
