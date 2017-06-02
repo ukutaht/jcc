@@ -16,15 +16,15 @@ statement/expression/**
 
 # ES6
 statement/iteration/const_forin
-statement/iteration/for-in-let
 # ES6
 statement/iteration/for-let-let
 # ES6
 statement/iteration/migrated_0012
 # ES6
 statement/iteration/migrated_0020
-
+# ES6
 statement/iteration/pattern-in-for-in
+# Tolerant mode
 statement/iteration/unterminated-do-while
 
 statement/labelled/**
