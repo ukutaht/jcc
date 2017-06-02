@@ -685,7 +685,7 @@ impl<'a> Parser<'a> {
         Ok(Statement::While(self.finalize(start), test, Box::new(body)))
     }
 
-    fn parse_for_in_statement(&mut self, start: Position, left: Expression) -> Result<Statement> {
+    fn parse_for_in_statement(&mut self, start: Position, left: ForInit) -> Result<Statement> {
         let right = self.parse_expression()?;
         self.expect(Token::CloseParen);
         let body = self.parse_statement()?;
@@ -720,16 +720,21 @@ impl<'a> Parser<'a> {
         } else {
             if self.eat(Token::Var) {
                 let decl = self.parse_variable_declaration()?;
-                let init = Some(ForInit::VarDecl(decl));
-                self.expect(Token::Semi);
-                self.parse_for_iter_statement(start, init)
+                let init = ForInit::VarDecl(decl);
+                if self.eat(Token::In) {
+                    self.parse_for_in_statement(start, init)
+
+                } else {
+                    self.expect(Token::Semi);
+                    self.parse_for_iter_statement(start, Some(init))
+                }
             } else {
-                let init = self.allow_in(false, Parser::parse_expression)?;
+                let init = ForInit::Expression(self.allow_in(false, Parser::parse_expression)?);
                 if self.eat(Token::In) {
                     self.parse_for_in_statement(start, init)
                 } else {
                     self.expect(Token::Semi);
-                    self.parse_for_iter_statement(start, Some(ForInit::Expression(init)))
+                    self.parse_for_iter_statement(start, Some(init))
                 }
             }
         }

@@ -475,7 +475,7 @@ fn for_statement(node: &Value) -> Result<Statement> {
 }
 
 fn for_in_statement(node: &Value) -> Result<Statement> {
-    let left = expression(expect_value(node, "left"))?;
+    let left = for_init(expect_value(node, "left"))?;
     let right = expression(expect_value(node, "right"))?;
     let body = statement(expect_value(node, "body"))?;
 
