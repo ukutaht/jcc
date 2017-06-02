@@ -56,7 +56,7 @@ fn file_pairs(base_str: &str, pair_extension: &str, ignore_file: &str) -> Vec<(P
 }
 
 fn esprima_tests(target: &mut Vec<TestDescAndFn>) {
-    let pairs = file_pairs("tests/esprima-fixtures", ".tree.json", include_str!(".esprima-ignore"));
+    let pairs = file_pairs("tests/esprima-fixtures", ".tree.json", include_str!("esprima-ignore"));
 
     for (tree_path, source_path, name, ignore) in pairs {
         add_test(target, name, ignore, move || {
