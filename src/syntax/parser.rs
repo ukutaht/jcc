@@ -750,6 +750,16 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn parse_with_statement(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::WithKeyword);
+        self.expect(Token::OpenParen);
+        let object = self.parse_expression()?;
+        self.expect(Token::CloseParen);
+        let body = self.parse_statement()?;
+        Ok(Statement::With(self.finalize(start), object, Box::new(body)))
+    }
+
     fn parse_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
 
@@ -782,6 +792,7 @@ impl<'a> Parser<'a> {
             Token::DoKeyword => self.parse_do_while_statement(),
             Token::WhileKeyword => self.parse_while_statement(),
             Token::ForKeyword => self.parse_for_statement(),
+            Token::WithKeyword => self.parse_with_statement(),
             _ => self.parse_expression_statement(),
         }
     }

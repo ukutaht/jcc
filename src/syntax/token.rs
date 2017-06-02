@@ -79,4 +79,5 @@ pub enum Token {
     Var,
     Void,
     WhileKeyword,
+    WithKeyword
 }

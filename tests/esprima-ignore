@@ -31,7 +31,8 @@ statement/labelled/**
 
 statement/try/strict_simple_catch
 
-statement/with/**
+# Tolerant mode
+statement/with/unterminated-with
 
 expression/left-hand-side/let_object_computed
 

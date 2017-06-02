@@ -204,7 +204,8 @@ pub enum Statement {
     DoWhile(Span, Box<Statement>, Expression),
     While(Span, Expression, Box<Statement>),
     For(Span, Option<ForInit>, Option<Expression>, Option<Expression>, Box<Statement>),
-    ForIn(Span, ForInit, Expression, Box<Statement>)
+    ForIn(Span, ForInit, Expression, Box<Statement>),
+    With(Span, Expression, Box<Statement>),
 }
 
 #[derive(Debug, PartialEq)]
