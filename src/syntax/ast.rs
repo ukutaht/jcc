@@ -151,6 +151,7 @@ impl Tracking for Expression {
             &Expression::Unary(ref s, _, _) => s,
             &Expression::Object(ref s, _) => s,
             &Expression::Conditional(ref s, _, _, _) => s,
+            &Expression::Assignment(ref s, _, _, _) => s,
             e => panic!("Cannot get span for: {:?}", e)
         }
     }

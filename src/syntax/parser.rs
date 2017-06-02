@@ -1,6 +1,6 @@
 use errors::CompileError;
 use syntax::ast::*;
-use syntax::span::{Tracking, Span, Position};
+use syntax::span::{Span, Position};
 use syntax::token::Token;
 use syntax::scanner::Scanner;
 use syntax::ops::AsOperator;
@@ -136,7 +136,7 @@ impl<'a> Parser<'a> {
     fn parse_new_expression(&mut self) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::New);
-        let base = self.parse_lhs_expression(false)?;
+        let base = self.allow_in(true, Parser::parse_lhs_expression)?;
         let args = if self.matches(Token::OpenParen) {
             self.parse_arguments()
         } else {
@@ -167,7 +167,15 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_lhs_expression(&mut self, allow_call: bool) -> Result<Expression> {
+    fn parse_lhs_expression(&mut self) -> Result<Expression> {
+        self.parse_lhs_expression_opt(false)
+    }
+
+    fn parse_lhs_expression_allow_call(&mut self) -> Result<Expression> {
+        self.parse_lhs_expression_opt(true)
+    }
+
+    fn parse_lhs_expression_opt(&mut self, allow_call: bool) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
 
         let mut result = if self.matches(Token::New) {
@@ -225,7 +233,7 @@ impl<'a> Parser<'a> {
             let expr = self.parse_unary_expression()?;
             Ok(Expression::Update(self.finalize(start), op, Box::new(expr), true))
         } else {
-            let expr = self.parse_lhs_expression(true)?;
+            let expr = self.allow_in(true, Parser::parse_lhs_expression_allow_call)?;
             if let Some(op) = self.scanner.lookahead.as_update_op() {
                 self.scanner.next_token();
                 Ok(Expression::Update(self.finalize(start), op, Box::new(expr), false))
@@ -303,6 +311,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_assignment_expression(&mut self) -> Result<Expression> {
+        let start = self.scanner.lookahead_start;
         let left = self.parse_conditional_expression()?;
         match self.scanner.lookahead.as_assign_op() {
             Some(op) => {
@@ -310,7 +319,7 @@ impl<'a> Parser<'a> {
                 match left {
                     Expression::Identifier(_, _) => {
                         let right = self.parse_assignment_expression()?;
-                        let span = left.span().merge(right.span());
+                        let span = self.finalize(start);
                         Ok(Expression::Assignment(span, op, Box::new(left), Box::new(right)))
                     }
                     _ => panic!("Invalid assignment target")

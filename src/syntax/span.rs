@@ -23,13 +23,6 @@ impl Span {
             end: Position::origin()
         }
     }
-
-    pub fn merge(&self, other: &Span) -> Span {
-        Span {
-            start: self.start,
-            end: other.end
-        }
-    }
 }
 
 pub trait Tracking {
