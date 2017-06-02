@@ -163,6 +163,7 @@ impl<'a> Parser<'a> {
             Token::Null => Some("null".to_string()),
             Token::BoolTrue => Some("true".to_string()),
             Token::BoolFalse => Some("false".to_string()),
+            Token::In => Some("in".to_string()),
             _ => None
         }
     }
