@@ -21,3 +21,6 @@ http://elm-lang.org/blog/compiler-errors-for-humans
 
 8. How babel works with Commonjs
 http://www.2ality.com/2015/12/babel-commonjs.html
+
+9. Improve rust performance:
+https://llogiq.github.io/2017/06/01/perf-pitfalls.html
