@@ -430,7 +430,7 @@ impl<'a> Parser<'a> {
                 let init = match self.scanner.lookahead {
                     Token::Eq => {
                         self.scanner.next_token();
-                        Some(self.parse_primary_expression()?)
+                        Some(self.parse_assignment_expression()?)
                     }
                     _ => None
                 };
@@ -719,7 +719,7 @@ impl<'a> Parser<'a> {
             self.parse_for_iter_statement(start, None)
         } else {
             if self.eat(Token::Var) {
-                let decl = self.parse_variable_declaration()?;
+                let decl = self.allow_in(false, Parser::parse_variable_declaration)?;
                 let init = ForInit::VarDecl(decl);
                 if self.eat(Token::In) {
                     self.parse_for_in_statement(start, init)
