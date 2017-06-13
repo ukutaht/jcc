@@ -490,16 +490,15 @@ fn with_statement(node: &Value) -> Result<Statement> {
 }
 
 fn labeled_statement(node: &Value) -> Result<Statement> {
-    let id = expect_string(expect_value(node, "label"), "name").to_owned();
+    let id = identifier(expect_value(node, "label"))?;
     let body = statement(expect_value(node, "body"))?;
 
     Ok(Statement::Labeled(span(node)?, id, Box::new(body)))
 }
 
-fn identifier(node: &Value) -> Result<String> {
-    node.get("name").and_then(|name| {
-        name.as_str().map(|id| id.to_owned())
-    }).ok_or(())
+fn identifier(node: &Value) -> Result<Id> {
+    let name = expect_string(node, "name").to_owned();
+    Ok(Id(span(node)?, name))
 }
 
 fn statement(node: &Value) -> Result<Statement> {

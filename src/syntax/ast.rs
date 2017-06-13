@@ -10,6 +10,9 @@ pub enum Literal {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct Id(pub Span, pub String);
+
+#[derive(Debug, PartialEq)]
 pub enum ArgumentListElement {
     Expression(Expression),
 }
@@ -200,13 +203,13 @@ pub enum Statement {
     Throw(Span, Expression),
     Try(Span, Block, Option<CatchClause>, Option<Block>),
     Switch(Span, Expression, Vec<SwitchCase>),
-    Break(Span, Option<String>),
+    Break(Span, Option<Id>),
     DoWhile(Span, Box<Statement>, Expression),
     While(Span, Expression, Box<Statement>),
     For(Span, Option<ForInit>, Option<Expression>, Option<Expression>, Box<Statement>),
     ForIn(Span, ForInit, Expression, Box<Statement>),
     With(Span, Expression, Box<Statement>),
-    Labeled(Span, String, Box<Statement>),
+    Labeled(Span, Id, Box<Statement>),
 }
 
 #[derive(Debug, PartialEq)]

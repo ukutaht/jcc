@@ -763,7 +763,7 @@ impl<'a> Parser<'a> {
     fn parse_labeled_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         let expr = self.parse_expression()?;
-        let id_opt = self.extract_ident(&expr);
+        let id_opt = self.as_id(&expr);
         if id_opt.is_some() && self.eat(Token::Colon) {
             let body = self.parse_statement()?;
             Ok(Statement::Labeled(self.finalize(start), id_opt.unwrap(), Box::new(body)))
@@ -776,7 +776,7 @@ impl<'a> Parser<'a> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::BreakKeyword);
         if self.match_ident() && !self.scanner.at_newline() {
-            let id = self.parse_ident()?;
+            let id = self.parse_id()?;
             Ok(Statement::Break(self.consume_semicolon(start)?, Some(id)))
         } else {
             Ok(Statement::Break(self.consume_semicolon(start)?, None))
@@ -790,16 +790,19 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_ident(&mut self) -> Result<String> {
+    fn parse_id(&mut self) -> Result<Id> {
+        let start = self.scanner.lookahead_start;
         match self.scanner.next_token() {
-            Token::Ident(s) => Ok(s),
+            Token::Ident(s) => {
+                Ok(Id(self.finalize(start), s))
+            },
             t => Err(CompileError::UnexpectedToken(t))
         }
     }
 
-    fn extract_ident(&self, expr: &Expression) -> Option<String> {
+    fn as_id(&self, expr: &Expression) -> Option<Id> {
         match expr {
-            &Expression::Identifier(_, ref id) => Some(id.clone()),
+            &Expression::Identifier(ref sp, ref id) => Some(Id(sp.clone(), id.clone())),
             _ => None
         }
     }
