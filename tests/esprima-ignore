@@ -27,9 +27,6 @@ statement/iteration/pattern-in-for-in
 # Tolerant mode
 statement/iteration/unterminated-do-while
 
-statement/labelled/migrated_0001
-statement/labelled/migrated_0002
-
 statement/try/strict_simple_catch
 
 # Tolerant mode
