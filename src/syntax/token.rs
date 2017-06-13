@@ -17,6 +17,7 @@ pub enum Token {
     CloseSquare,
     Colon,
     Comma,
+    ContinueKeyword,
     DebuggerKeyword,
     DefaultKeyword,
     Delete,

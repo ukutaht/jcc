@@ -210,6 +210,7 @@ pub enum Statement {
     ForIn(Span, ForInit, Expression, Box<Statement>),
     With(Span, Expression, Box<Statement>),
     Labeled(Span, Id, Box<Statement>),
+    Continue(Span, Option<Id>),
 }
 
 #[derive(Debug, PartialEq)]

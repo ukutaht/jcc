@@ -10,8 +10,6 @@ invalid-syntax/**
 JSX/**
 whitespace/**
 
-statement/continue/**
-
 # ES6
 statement/iteration/const_forin
 # ES6

@@ -30,6 +30,7 @@ static KEYWORD_DO: &'static str = "do";
 static KEYWORD_WHILE: &'static str = "while";
 static KEYWORD_FOR: &'static str = "for";
 static KEYWORD_WITH: &'static str = "with";
+static KEYWORD_CONTINUE: &'static str = "continue";
 static BOOL_TRUE: &'static str = "true";
 static BOOL_FALSE: &'static str = "false";
 
@@ -371,6 +372,8 @@ impl<'a> Scanner<'a> {
             Token::ForKeyword
         } else if value == *KEYWORD_WITH {
             Token::WithKeyword
+        } else if value == *KEYWORD_CONTINUE {
+            Token::ContinueKeyword
         } else if value == *BOOL_TRUE {
             Token::BoolTrue
         } else if value == *BOOL_FALSE {

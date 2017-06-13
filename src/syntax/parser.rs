@@ -783,6 +783,17 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn parse_continue_statement(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::ContinueKeyword);
+        if self.match_ident() && !self.scanner.at_newline() {
+            let id = self.parse_id()?;
+            Ok(Statement::Continue(self.consume_semicolon(start)?, Some(id)))
+        } else {
+            Ok(Statement::Continue(self.consume_semicolon(start)?, None))
+        }
+    }
+
     fn match_ident(&self) -> bool {
         match self.scanner.lookahead {
             Token::Ident(_) => true,
@@ -829,6 +840,7 @@ impl<'a> Parser<'a> {
                 Ok(Statement::Debugger(self.consume_semicolon(start)?))
             }
             Token::BreakKeyword => self.parse_break_statement(),
+            Token::ContinueKeyword => self.parse_continue_statement(),
             Token::ThrowKeyword => self.parse_throw_statement(),
             Token::TryKeyword => self.parse_try_statement(),
             Token::Return => self.parse_return_statement(),

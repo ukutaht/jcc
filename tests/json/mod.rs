@@ -545,6 +545,10 @@ fn statement(node: &Value) -> Result<Statement> {
             let id = maybe_key(node, "label", &identifier)?;
             Ok(Statement::Break(span(node)?, id))
         }
+        "ContinueStatement" => {
+            let id = maybe_key(node, "label", &identifier)?;
+            Ok(Statement::Continue(span(node)?, id))
+        }
         _ => Err(())
     }
 }
