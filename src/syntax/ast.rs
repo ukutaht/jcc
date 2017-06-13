@@ -200,7 +200,7 @@ pub enum Statement {
     Throw(Span, Expression),
     Try(Span, Block, Option<CatchClause>, Option<Block>),
     Switch(Span, Expression, Vec<SwitchCase>),
-    Break(Span),
+    Break(Span, Option<String>),
     DoWhile(Span, Box<Statement>, Expression),
     While(Span, Expression, Box<Statement>),
     For(Span, Option<ForInit>, Option<Expression>, Option<Expression>, Box<Statement>),

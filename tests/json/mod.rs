@@ -496,6 +496,12 @@ fn labeled_statement(node: &Value) -> Result<Statement> {
     Ok(Statement::Labeled(span(node)?, id, Box::new(body)))
 }
 
+fn identifier(node: &Value) -> Result<String> {
+    node.get("name").and_then(|name| {
+        name.as_str().map(|id| id.to_owned())
+    }).ok_or(())
+}
+
 fn statement(node: &Value) -> Result<Statement> {
     match expect_string(node, "type") {
         "ExpressionStatement" => {
@@ -537,7 +543,8 @@ fn statement(node: &Value) -> Result<Statement> {
         "WithStatement" => with_statement(node),
         "LabeledStatement" => labeled_statement(node),
         "BreakStatement" => {
-            Ok(Statement::Break(span(node)?))
+            let id = maybe_key(node, "label", &identifier)?;
+            Ok(Statement::Break(span(node)?, id))
         }
         _ => Err(())
     }

@@ -772,6 +772,31 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn parse_break_statement(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::BreakKeyword);
+        if self.match_ident() && !self.scanner.at_newline() {
+            let id = self.parse_ident()?;
+            Ok(Statement::Break(self.consume_semicolon(start)?, Some(id)))
+        } else {
+            Ok(Statement::Break(self.consume_semicolon(start)?, None))
+        }
+    }
+
+    fn match_ident(&self) -> bool {
+        match self.scanner.lookahead {
+            Token::Ident(_) => true,
+            _ => false
+        }
+    }
+
+    fn parse_ident(&mut self) -> Result<String> {
+        match self.scanner.next_token() {
+            Token::Ident(s) => Ok(s),
+            t => Err(CompileError::UnexpectedToken(t))
+        }
+    }
+
     fn extract_ident(&self, expr: &Expression) -> Option<String> {
         match expr {
             &Expression::Identifier(_, ref id) => Some(id.clone()),
@@ -801,8 +826,7 @@ impl<'a> Parser<'a> {
                 Ok(Statement::Debugger(self.consume_semicolon(start)?))
             }
             Token::BreakKeyword => {
-                self.scanner.next_token();
-                Ok(Statement::Break(self.consume_semicolon(start)?))
+                self.parse_break_statement()
             }
             Token::ThrowKeyword => self.parse_throw_statement(),
             Token::TryKeyword => self.parse_try_statement(),
