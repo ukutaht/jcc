@@ -319,6 +319,9 @@ impl<'a> Scanner<'a> {
                         string.push('\n')
                     },
                     Some(ch) if ch.is_es_newline() => {
+                        if ch == '\r' && self.current_byte() == Some(b'\n')  {
+                            self.eat_byte(b'\n');
+                        }
                         self.line += 1;
                         self.column = 0;
                     },
