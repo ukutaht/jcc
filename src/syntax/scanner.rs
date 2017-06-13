@@ -308,12 +308,23 @@ impl<'a> Scanner<'a> {
 
     fn scan_string(&mut self, quote: u8) -> Token {
         self.eat_byte(quote);
-        let start = self.index;
-        self.take_while(|b| b != quote);
-        let end = self.index;
-        self.eat_byte(quote);
+        let mut string = String::new();
+        while let Some(ch) = self.next_char() {
+            if ch == (quote as char) {
+                self.eat_byte(quote);
+                break;
+            } else if ch == '\\' {
+                match self.next_char() {
+                    Some('n') => {
+                        string.push('\n')
+                    },
+                    _ => panic!("wat")
+                }
+            } else {
+                string.push(ch)
+            }
+        }
 
-        let string = unsafe { str::from_utf8_unchecked(&self.bytes[start..end]) }.to_string();
         Token::String(string)
     }
 
