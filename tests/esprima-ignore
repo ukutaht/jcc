@@ -1,6 +1,9 @@
 automatic-semicolon-insertion/**
 comment/**
-declaration/**
+
+declaration/const/**
+declaration/let/**
+
 directive-prolog/**
 ES2016/**
 es2017/**
