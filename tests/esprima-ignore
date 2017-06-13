@@ -35,7 +35,6 @@ expression/left-hand-side/let_object_computed
 
 expression/primary/keyword/**
 
-expression/primary/literal/numeric/invalid_hex
 # This one doesn't have loc for some reason
 expression/primary/literal/numeric/migrated_0002
 
