@@ -318,6 +318,10 @@ impl<'a> Scanner<'a> {
                     Some('n') => {
                         string.push('\n')
                     },
+                    Some(ch) if ch.is_es_newline() => {
+                        self.line += 1;
+                        self.column = 0;
+                    },
                     _ => panic!("wat")
                 }
             } else {
