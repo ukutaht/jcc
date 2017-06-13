@@ -489,6 +489,13 @@ fn with_statement(node: &Value) -> Result<Statement> {
     Ok(Statement::With(span(node)?, object, Box::new(body)))
 }
 
+fn labeled_statement(node: &Value) -> Result<Statement> {
+    let id = expect_string(expect_value(node, "label"), "name").to_owned();
+    let body = statement(expect_value(node, "body"))?;
+
+    Ok(Statement::Labeled(span(node)?, id, Box::new(body)))
+}
+
 fn statement(node: &Value) -> Result<Statement> {
     match expect_string(node, "type") {
         "ExpressionStatement" => {
@@ -528,6 +535,7 @@ fn statement(node: &Value) -> Result<Statement> {
         "ForStatement" => for_statement(node),
         "ForInStatement" => for_in_statement(node),
         "WithStatement" => with_statement(node),
+        "LabeledStatement" => labeled_statement(node),
         "BreakStatement" => {
             Ok(Statement::Break(span(node)?))
         }

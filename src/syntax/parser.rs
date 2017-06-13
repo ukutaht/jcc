@@ -760,6 +760,25 @@ impl<'a> Parser<'a> {
         Ok(Statement::With(self.finalize(start), object, Box::new(body)))
     }
 
+    fn parse_labeled_statement(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
+        let expr = self.parse_expression()?;
+        let id_opt = self.extract_ident(&expr);
+        if id_opt.is_some() && self.eat(Token::Colon) {
+            let body = self.parse_statement()?;
+            Ok(Statement::Labeled(self.finalize(start), id_opt.unwrap(), Box::new(body)))
+        } else {
+            Ok(Statement::Expression(self.consume_semicolon(start)?, expr))
+        }
+    }
+
+    fn extract_ident(&self, expr: &Expression) -> Option<String> {
+        match expr {
+            &Expression::Identifier(_, ref id) => Some(id.clone()),
+            _ => None
+        }
+    }
+
     fn parse_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
 
@@ -793,6 +812,7 @@ impl<'a> Parser<'a> {
             Token::WhileKeyword => self.parse_while_statement(),
             Token::ForKeyword => self.parse_for_statement(),
             Token::WithKeyword => self.parse_with_statement(),
+            Token::Ident(_) => self.parse_labeled_statement(),
             _ => self.parse_expression_statement(),
         }
     }
