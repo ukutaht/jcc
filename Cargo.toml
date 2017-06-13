@@ -11,6 +11,10 @@ doc = false
 name = "suite"
 harness = false
 
+[[bench]]
+name = "suite"
+harness = false
+
 [dependencies]
 serde_json = "1.0"
 
