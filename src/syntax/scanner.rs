@@ -326,6 +326,7 @@ impl<'a> Scanner<'a> {
                                         break;
                                     }
                                     code = new_code;
+                                    self.next_char();
                                 },
                                 _ => { break; }
                             }
