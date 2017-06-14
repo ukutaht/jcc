@@ -3,6 +3,7 @@ use syntax::span::Position;
 use syntax::token::Token;
 use std::str;
 use std::mem;
+use std::char;
 
 static KEYWORD_VAR: &'static str = "var";
 static KEYWORD_FUNCTION: &'static str = "function";
@@ -315,8 +316,24 @@ impl<'a> Scanner<'a> {
                 break;
             } else if ch == '\\' {
                 match self.next_char() {
-                    Some('n') => {
-                        string.push('\n')
+                    Some(ch) if ch.is_digit(8) => {
+                        let mut code = 0;
+                        for _ in 0..3 {
+                            match self.current_char() {
+                                Some(ch) if ch.is_digit(8) => {
+                                    let new_code = (code << 3) + ch.to_digit(8).unwrap();
+                                    if new_code > 255 {
+                                        break;
+                                    }
+                                    code = new_code;
+                                },
+                                _ => { break; }
+                            }
+                        }
+                        string.push(char::from_u32(code).unwrap_or('?'));
+                    },
+                    Some(ch) if ch.is_es_single_escape_char() => {
+                        string.push(ch.unescape())
                     },
                     Some(ch) if ch.is_es_newline() => {
                         if ch == '\r' && self.current_byte() == Some(b'\n')  {
@@ -325,7 +342,7 @@ impl<'a> Scanner<'a> {
                         self.line += 1;
                         self.column = 0;
                     },
-                    _ => panic!("wat")
+                    ch => panic!("{:?}", ch)
                 }
             } else {
                 string.push(ch)
