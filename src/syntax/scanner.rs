@@ -321,12 +321,12 @@ impl<'a> Scanner<'a> {
                         for _ in 0..3 {
                             match self.current_char() {
                                 Some(ch) if ch.is_digit(8) => {
-                                    let new_code = (code << 3) + ch.to_digit(8).unwrap();
+                                    let new_code = (code * 8) + ch.to_digit(8).unwrap();
                                     if new_code > 255 {
                                         break;
                                     }
-                                    code = new_code;
                                     self.next_char();
+                                    code = new_code;
                                 },
                                 _ => { break; }
                             }
