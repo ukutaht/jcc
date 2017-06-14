@@ -335,6 +335,12 @@ impl<'a> Scanner<'a> {
                     Some(ch) if ch.is_es_single_escape_char() => {
                         string.push(ch.unescape())
                     },
+                    Some('x') => {
+                        let mut code = 0;
+                        code += self.scan_hex_digit() * 16;
+                        code += self.scan_hex_digit();
+                        string.push(char::from_u32(code).unwrap_or('?'))
+                    },
                     Some(ch) if ch.is_es_newline() => {
                         if ch == '\r' && self.current_byte() == Some(b'\n')  {
                             self.eat_byte(b'\n');
@@ -350,6 +356,15 @@ impl<'a> Scanner<'a> {
         }
 
         Token::String(string)
+    }
+
+    fn scan_hex_digit(&mut self) -> u32 {
+        match self.next_char() {
+            Some(ch) if ch.is_es_hex_digit() => {
+                ch.to_digit(16).unwrap()
+            },
+            _ => panic!("Invalid hex")
+        }
     }
 
     fn scan_identifier(&mut self) -> Token {
