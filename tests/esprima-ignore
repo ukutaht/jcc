@@ -40,7 +40,6 @@ expression/primary/literal/numeric/migrated_0002
 
 expression/primary/literal/regular-expression/**
 
-expression/primary/literal/string/migrated_0009
 expression/primary/literal/string/migrated_0010
 expression/primary/literal/string/migrated_0011
 expression/primary/literal/string/migrated_0012
