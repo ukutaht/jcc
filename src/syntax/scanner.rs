@@ -146,7 +146,7 @@ impl<'a> Scanner<'a> {
         }
 
         self.lookahead_start = self.pos();
-        if character == b'\'' ||character == b'"' {
+        if character == b'\'' || character == b'"' {
             self.scan_string(character)
         } else if (character as char).is_digit(10) {
             self.scan_number()
