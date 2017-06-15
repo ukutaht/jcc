@@ -76,6 +76,18 @@ impl<'a> Scanner<'a> {
         Position { column: self.column, line: self.line }
     }
 
+    fn skip_single_line_comment(&mut self) {
+        panic!("Single");
+    }
+
+    fn skip_multi_line_comment(&mut self) {
+        while let Some(ch) = self.next_char() {
+            if ch == '*' && self.eat_byte(b'/') {
+                break;
+            }
+        }
+    }
+
     fn lex(&mut self) -> Token {
         let character;
 
@@ -88,6 +100,20 @@ impl<'a> Scanner<'a> {
                 }
                 Some(b' ') => {
                     self.next_byte();
+                },
+                Some(b'/') => {
+                    match self.peek_byte() {
+                        Some(b'/') => self.skip_single_line_comment(),
+                        Some(b'*') => self.skip_multi_line_comment(),
+                        Some(c) => {
+                            character = c;
+                            break;
+                        },
+                        None => {
+                            self.lookahead_start = self.pos();
+                            return Token::Eof
+                        }
+                    }
                 }
                 Some(c) => {
                     character = c;

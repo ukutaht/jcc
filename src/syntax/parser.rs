@@ -34,10 +34,10 @@ impl<'a> Parser<'a> {
         Ok(Program(body))
     }
 
-    fn allow_in<F, T>(&mut self, allow_in: bool, parse: F) -> Result<T>
+    fn allow_in<F, T>(&mut self, allow_in: bool, parse_fn: F) -> Result<T>
       where F: FnOnce(&mut Self) -> Result<T> {
         let allow_in = std::mem::replace(&mut self.context.allow_in, allow_in);
-        let result = parse(self);
+        let result = parse_fn(self);
         std::mem::replace(&mut self.context.allow_in, allow_in);
         result
     }
