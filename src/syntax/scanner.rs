@@ -82,6 +82,10 @@ impl<'a> Scanner<'a> {
 
     fn skip_multi_line_comment(&mut self) {
         while let Some(ch) = self.next_char() {
+            if ch.is_es_newline() {
+                self.line += 1;
+                self.column = 0;
+            }
             if ch == '*' && self.eat_byte(b'/') {
                 break;
             }
