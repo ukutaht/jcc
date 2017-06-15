@@ -263,7 +263,7 @@ impl<'a> Scanner<'a> {
     fn scan_hex(&mut self) -> Token {
         self.next_byte();self.next_byte();
         let start = self.index;
-        self.take_while(|c| (c as char).is_es_hex_digit());
+        self.take_while(|c| (c as char).is_digit(16));
         let hex = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]) };
 
         let value = u32::from_str_radix(hex, 16).unwrap() as f64;
@@ -333,9 +333,15 @@ impl<'a> Scanner<'a> {
                         }
                         string.push(char::from_u32(code).unwrap_or('?'));
                     },
-                    Some(ch) if ch.is_es_single_escape_char() => {
-                        string.push(ch.unescape())
-                    },
+                    Some('\\') => string.push('\\'),
+                    Some('\'') => string.push('\''),
+                    Some('"') => string.push('"'),
+                    Some('n') => string.push('\n'),
+                    Some('r') => string.push('\r'),
+                    Some('t') => string.push('\t'),
+                    Some('b') => string.push('\x08'),
+                    Some('v') => string.push('\x0B'),
+                    Some('f') => string.push('\x0C'),
                     Some('x') => {
                         let mut code = 0;
                         code += self.scan_hex_digit() * 16;
@@ -361,7 +367,7 @@ impl<'a> Scanner<'a> {
 
     fn scan_hex_digit(&mut self) -> u32 {
         match self.next_char() {
-            Some(ch) if ch.is_es_hex_digit() => {
+            Some(ch) if ch.is_digit(16) => {
                 ch.to_digit(16).unwrap()
             },
             _ => panic!("Invalid hex")

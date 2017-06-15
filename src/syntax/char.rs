@@ -21,15 +21,8 @@ macro_rules! match_char_class {
 pub trait ESCharExt {
     fn is_es_newline(self) -> bool;
     fn is_es_whitespace(self) -> bool;
-    fn is_es_quote(self) -> bool;
-    fn is_es_identifier(self) -> bool;
     fn is_es_identifier_start(self) -> bool;
     fn is_es_identifier_continue(self) -> bool;
-    fn is_es_single_escape_char(self) -> bool;
-    fn unescape(self) -> char;
-    fn is_es_hex_digit(self) -> bool;
-    fn is_es_oct_digit(self) -> bool;
-    fn is_es_bin_digit(self) -> bool;
     fn is_es_nonascii_identifier_start(self) -> bool;
     fn is_es_nonascii_identifier_continue(self) -> bool;
 }
@@ -42,13 +35,6 @@ impl ESCharExt for char {
         }
     }
 
-    fn is_es_quote(self) -> bool {
-        match self {
-            '\u{0027}' | '\u{0022}' => true,
-            _ => false,
-        }
-    }
-
     fn is_es_whitespace(self) -> bool {
         match self {
             '\u{0009}' | '\u{000b}' | '\u{000c}' | '\u{0020}' | '\u{00a0}' | '\u{1680}' |
@@ -57,10 +43,6 @@ impl ESCharExt for char {
             '\u{feff}' => true,
             _ => false,
         }
-    }
-
-    fn is_es_identifier(self) -> bool {
-        self.is_es_identifier_continue()
     }
 
     fn is_es_identifier_start(self) -> bool {
@@ -77,46 +59,6 @@ impl ESCharExt for char {
             ch if ch.is_es_nonascii_identifier_continue() => true,
             _ => false,
         }
-    }
-
-    fn is_es_single_escape_char(self) -> bool {
-        match self {
-            '\'' | '"' | '\\' | 'b' | 'f' | 'n' | 'r' | 't' | 'v' => true,
-            _ => false,
-        }
-    }
-
-    fn unescape(self) -> char {
-        match self {
-            '"' => '"',
-            '\'' => '\'',
-            '\\' => '\\',
-            'n' => '\n',
-            'r' => '\r',
-            't' => '\t',
-            'b' => '\x08',
-            'v' => '\x0B',
-            'f' => '\x0C',
-            _ => self,
-        }
-    }
-
-    fn is_es_hex_digit(self) -> bool {
-        match self {
-            '0'...'9' | 'a'...'f' | 'A'...'F' => true,
-            _ => false,
-        }
-    }
-
-    fn is_es_oct_digit(self) -> bool {
-        match self {
-            '0'...'7' => true,
-            _ => false,
-        }
-    }
-
-    fn is_es_bin_digit(self) -> bool {
-        self == '0' || self == '1'
     }
 
     // https://github.com/ariya/esprima/blob/master/tools/generate-identifier-regex.js
