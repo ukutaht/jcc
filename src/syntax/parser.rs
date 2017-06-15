@@ -235,6 +235,11 @@ impl<'a> Parser<'a> {
             Ok(Expression::Update(self.finalize(start), op, Box::new(expr), true))
         } else {
             let expr = self.allow_in(true, Parser::parse_lhs_expression_allow_call)?;
+
+            if self.scanner.at_newline() {
+                return Ok(expr);
+            };
+
             if let Some(op) = self.scanner.lookahead.as_update_op() {
                 self.scanner.next_token();
                 Ok(Expression::Update(self.finalize(start), op, Box::new(expr), false))
