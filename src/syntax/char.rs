@@ -1,3 +1,5 @@
+use std::ascii::AsciiExt;
+
 macro_rules! match_one_char_class {
     ( ( $start:expr, $end:expr ) ) => {
         $start ... $end
@@ -46,18 +48,31 @@ impl ESCharExt for char {
     }
 
     fn is_es_identifier_start(self) -> bool {
-        match self {
-            '$' | '_' | 'a'...'z' | 'A'...'Z' => true,
-            ch if ch.is_es_nonascii_identifier_start() => true,
-            _ => false,
+        if self.is_ascii() {
+            match self {
+                '$' | '_' | 'a'...'z' | 'A'...'Z' => true,
+                _ => false,
+            }
+
+        } else {
+            match self {
+                ch if ch.is_es_nonascii_identifier_start() => true,
+                _ => false,
+            }
         }
     }
 
     fn is_es_identifier_continue(self) -> bool {
-        match self {
-            '$' | '_' | 'a'...'z' | 'A'...'Z' | '0'...'9' => true,
-            ch if ch.is_es_nonascii_identifier_continue() => true,
-            _ => false,
+        if self.is_ascii() {
+            match self {
+                '$' | '_' | 'a'...'z' | 'A'...'Z' | '0'...'9' => true,
+                _ => false,
+            }
+        } else {
+            match self {
+                ch if ch.is_es_nonascii_identifier_continue() => true,
+                _ => false,
+            }
         }
     }
 
