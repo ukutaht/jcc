@@ -83,6 +83,9 @@ impl<'a> Scanner<'a> {
     fn skip_multi_line_comment(&mut self) {
         while let Some(ch) = self.next_char() {
             if ch.is_es_newline() {
+                if ch == '\r' && self.current_byte() == Some(b'\n') {
+                    self.next_byte();
+                }
                 self.line += 1;
                 self.column = 0;
             }
