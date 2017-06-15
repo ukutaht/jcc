@@ -24,6 +24,3 @@ http://www.2ality.com/2015/12/babel-commonjs.html
 
 9. Improve rust performance:
 https://llogiq.github.io/2017/06/01/perf-pitfalls.html
-
-9. Track less in lexer:
-Use `line_start` instead of `column` to keep track of column. Less updating state.
