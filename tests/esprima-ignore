@@ -1,4 +1,3 @@
-
 # No span
 comment/migrated_0001
 comment/migrated_0007
@@ -25,6 +24,7 @@ comment/migrated_0053
 comment/migrated_0054
 
 
+# ES6
 declaration/const/**
 declaration/let/**
 
@@ -59,7 +59,7 @@ expression/left-hand-side/let_object_computed
 
 expression/primary/keyword/**
 
-# This one doesn't have loc for some reason
+# No span
 expression/primary/literal/numeric/migrated_0002
 
 expression/primary/literal/regular-expression/**
