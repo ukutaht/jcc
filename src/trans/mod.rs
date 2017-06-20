@@ -171,6 +171,7 @@ fn transpile_function<W: Write>(out: &mut W, fun: &Function) -> Result<()> {
 fn transpile_statement<W: Write>(out: &mut W, statement: &Statement) -> Result<()> {
     match *statement {
         Statement::Expression(_, ref e) => transpile_expression(out, e),
+        Statement::Directive(_, ref e, _) => transpile_expression(out, e),
         Statement::VariableDeclaration(_, ref dec) => transpile_variable_declaration(out, dec),
         Statement::FunctionDeclaration(ref dec) => transpile_function(out, dec),
         Statement::Block(_, ref b) => transpile_block(out, b),
@@ -213,7 +214,7 @@ fn transpile_block<W: Write>(out: &mut W, block: &Block) -> Result<()> {
 fn transpile_literal<W: Write>(out: &mut W, lit: &Literal) -> Result<()> {
     match *lit {
         Literal::Number(num) => write!(out, "{}", num),
-        Literal::String(ref s) => write!(out, "\"{}\"", s),
+        Literal::String(ref s) => write!(out, "{}", s),
         Literal::Null => write!(out, "null"),
         Literal::True => write!(out, "true"),
         Literal::False => write!(out, "false"),

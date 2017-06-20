@@ -24,8 +24,38 @@ impl<'a> Parser<'a> {
         Parser { scanner: scanner, context: ParseContext { allow_in: true } }
     }
 
+    fn directive_opt(&mut self, expr: &Expression) -> Option<String> {
+        if let &Expression::Literal(_, Literal::String(ref val)) = expr {
+            let len = val.len();
+            Some(val.as_str()[1..len - 1].to_owned())
+        } else {
+            None
+        }
+    }
+
+    fn parse_directive(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
+
+        let expr = self.parse_expression()?;
+        match self.directive_opt(&expr) {
+            Some(dir) => Ok(Statement::Directive(self.consume_semicolon(start)?, expr, dir)),
+            None => Ok(Statement::Expression(self.consume_semicolon(start)?, expr))
+        }
+    }
+
+    fn parse_directive_prologues(&mut self) -> Result<Vec<StatementListItem>> {
+        let mut directives = Vec::new();
+
+        while let Token::String(_) = self.scanner.lookahead {
+            let dir = self.parse_directive()?;
+            directives.push(StatementListItem::Statement(dir))
+        }
+
+        Ok(directives)
+    }
+
     pub fn parse(&mut self) -> Result<Program> {
-        let mut body = Vec::new();
+        let mut body = self.parse_directive_prologues()?;
 
         while self.scanner.lookahead != Token::Eof {
             body.push(self.parse_statement_list_item()?);
@@ -517,7 +547,16 @@ impl<'a> Parser<'a> {
         };
 
         let parameters = self.parse_function_parameters();
-        let block = self.parse_block()?;
+
+        self.expect(Token::OpenCurly);
+        let mut statements = self.parse_directive_prologues()?;
+
+        while self.scanner.lookahead != Token::CloseCurly {
+            statements.push(self.parse_statement_list_item()?);
+        }
+
+        self.expect(Token::CloseCurly);
+        let block = Block(statements);
 
         Ok(Function { id: id, body: block, parameters: parameters })
     }

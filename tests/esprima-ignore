@@ -28,7 +28,6 @@ comment/migrated_0054
 declaration/const/**
 declaration/let/**
 
-directive-prolog/**
 ES2016/**
 es2017/**
 es2018/**
@@ -64,18 +63,6 @@ expression/primary/literal/numeric/migrated_0002
 
 expression/primary/literal/regular-expression/**
 
-# Has to do with them being directive prolouges
-expression/primary/literal/string/migrated_0010
-expression/primary/literal/string/migrated_0011
-expression/primary/literal/string/migrated_0012
-expression/primary/literal/string/migrated_0013
-expression/primary/literal/string/migrated_0015
-expression/primary/literal/string/migrated_0018
-
-expression/primary/object/migrated_0030
-expression/primary/object/migrated_0031
-expression/primary/object/migrated_0032
-expression/primary/object/migrated_0033
 expression/primary/object/migrated_0034
 expression/primary/object/migrated_0035
 expression/primary/object/migrated_0036

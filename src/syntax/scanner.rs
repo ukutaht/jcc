@@ -353,11 +353,11 @@ impl<'a> Scanner<'a> {
     }
 
     fn scan_string(&mut self, quote: u8) -> Token {
+        let start = self.index;
         self.eat_byte(quote);
-        let mut string = String::new();
+
         while let Some(ch) = self.next_char() {
             if ch == (quote as char) {
-                self.eat_byte(quote);
                 break;
             } else if ch == '\\' {
                 match self.next_char() {
@@ -376,22 +376,20 @@ impl<'a> Scanner<'a> {
                                 _ => { break; }
                             }
                         }
-                        string.push(char::from_u32(code).unwrap_or('?'));
                     },
-                    Some('\\') => string.push('\\'),
-                    Some('\'') => string.push('\''),
-                    Some('"') => string.push('"'),
-                    Some('n') => string.push('\n'),
-                    Some('r') => string.push('\r'),
-                    Some('t') => string.push('\t'),
-                    Some('b') => string.push('\x08'),
-                    Some('v') => string.push('\x0B'),
-                    Some('f') => string.push('\x0C'),
+                    Some('\\') => continue,
+                    Some('\'') => continue,
+                    Some('"') => continue,
+                    Some('n') => continue,
+                    Some('r') => continue,
+                    Some('t') => continue,
+                    Some('b') => continue,
+                    Some('v') => continue,
+                    Some('f') => continue,
                     Some('x') => {
-                        let mut code = 0;
-                        code += self.scan_hex_digit() * 16;
-                        code += self.scan_hex_digit();
-                        string.push(char::from_u32(code).unwrap_or('?'))
+                        self.scan_hex_digit();
+                        self.scan_hex_digit();
+                        continue;
                     },
                     Some(ch) if ch.is_es_newline() => {
                         if ch == '\r' && self.current_byte() == Some(b'\n')  {
@@ -403,10 +401,11 @@ impl<'a> Scanner<'a> {
                     ch => panic!("{:?}", ch)
                 }
             } else {
-                string.push(ch)
+                continue;
             }
         }
 
+        let string = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]).to_string() };
         Token::String(string)
     }
 
@@ -488,7 +487,7 @@ impl<'a> Scanner<'a> {
     fn get_identifier(&mut self) -> String {
         let start = self.index;
         self.take_chars_while(|c| (c as char).is_es_identifier_continue());
-        str::from_utf8(&self.bytes[start..self.index]).unwrap().to_string()
+        unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]).to_string() }
     }
 
     fn take_while<F>(&mut self, mut predicate: F) where F: FnMut(u8) -> bool {

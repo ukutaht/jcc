@@ -162,7 +162,8 @@ fn literal(node: &Value) -> Result<Expression> {
     } else if val.is_null() {
         Ok(Expression::Literal(span(node)?, Literal::Null))
     } else if val.is_string() {
-        Ok(Expression::Literal(span(node)?, Literal::String(val.as_str().unwrap().to_owned())))
+        let string = expect_string(node, "raw").to_owned();
+        Ok(Expression::Literal(span(node)?, Literal::String(string)))
     } else if val.is_boolean() {
         if val.as_bool().unwrap() {
             Ok(Expression::Literal(span(node)?, Literal::True))
@@ -239,7 +240,8 @@ fn prop_key(node: &Value) -> Result<PropKey> {
             let val = expect_value(node, "value");
 
             if val.is_string() {
-                Ok(PropKey::String(span(node)?, val.as_str().unwrap().to_owned()))
+                let string = expect_string(node, "raw").to_owned();
+                Ok(PropKey::String(span(node)?, string))
             } else if val.is_number() {
                 Ok(PropKey::Number(span(node)?, val.as_f64().unwrap()))
             } else {
@@ -505,7 +507,12 @@ fn statement(node: &Value) -> Result<Statement> {
     match expect_string(node, "type") {
         "ExpressionStatement" => {
             let expr = expression(expect_value(node, "expression"))?;
-            Ok(Statement::Expression(span(node)?, expr))
+            if let Some(_) = node.get("directive") {
+                let name = expect_string(node, "directive").to_owned();
+                Ok(Statement::Directive(span(node)?, expr, name))
+            } else {
+                Ok(Statement::Expression(span(node)?, expr))
+            }
         }
         "BlockStatement" => {
             block_statement(node)
