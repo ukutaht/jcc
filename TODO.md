@@ -26,3 +26,5 @@ http://www.2ality.com/2015/12/babel-commonjs.html
 https://llogiq.github.io/2017/06/01/perf-pitfalls.html
 
 10. Preserve comments config
+
+11. Add logging
