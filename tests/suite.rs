@@ -56,9 +56,9 @@ fn file_pairs(base_str: &str, pair_extension: &str, ignore_file: &str) -> Vec<(P
 }
 
 fn esprima_tests(target: &mut Vec<TestDescAndFn>) {
-    let pairs = file_pairs("tests/esprima-fixtures", ".tree.json", include_str!("esprima-ignore"));
+    let success_pairs = file_pairs("tests/esprima-fixtures", ".tree.json", include_str!("esprima-ignore"));
 
-    for (tree_path, source_path, name, ignore) in pairs {
+    for (tree_path, source_path, name, ignore) in success_pairs {
         add_test(target, name, ignore, move || {
             let expected_json: Value = serde_json::de::from_reader(File::open(tree_path).unwrap()).unwrap();
             let expected = json::parse_program(&expected_json);
@@ -75,7 +75,26 @@ fn esprima_tests(target: &mut Vec<TestDescAndFn>) {
                 }
             }
         });
-    }
+    };
+
+    let failure_pairs = file_pairs("tests/esprima-fixtures", ".failure.json", include_str!("esprima-ignore"));
+
+    for (tree_path, source_path, name, ignore) in failure_pairs {
+        add_test(target, name, ignore, move || {
+            let expected_json: Value = serde_json::de::from_reader(File::open(tree_path).unwrap()).unwrap();
+            let mut source = String::new();
+            File::open(source_path).unwrap().read_to_string(&mut source).unwrap();
+            match (jcc::parse(&source[..]), &expected_json) {
+                (Ok(_), _) => {
+                    assert!(false, "esprima test parsed successfully when it was supposed to fail:\n{:#?}", expected_json);
+                }
+                (Err(actual_err), _) => {
+                    let descr = format!("{}", actual_err);
+                    assert_eq!(descr, expected_json.get("message").unwrap().as_str().unwrap())
+                }
+            }
+        });
+    };
 }
 
 fn trans_tests(target: &mut Vec<TestDescAndFn>) {

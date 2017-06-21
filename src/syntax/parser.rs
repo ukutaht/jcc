@@ -1,4 +1,4 @@
-use errors::CompileError;
+use errors::{CompileError, ErrorCause};
 use syntax::ast::*;
 use syntax::span::{Span, Position};
 use syntax::token::Token;
@@ -131,7 +131,7 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token();
                 Ok(Expression::Literal(self.finalize(start), Literal::Null))
             },
-            _ => Err(CompileError::UnexpectedToken(token.clone()))
+            t => Err(self.unexpected_token(t.clone()))
         }
     }
 
@@ -181,7 +181,7 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token();
                 Ok(ident)
             }
-            None => Err(CompileError::UnexpectedToken(self.scanner.lookahead.clone()))
+            None => Err(self.error(ErrorCause::UnexpectedToken(self.scanner.lookahead.clone())))
         }
     }
 
@@ -481,7 +481,7 @@ impl<'a> Parser<'a> {
                 };
                 Ok(VariableDeclarator { id: name, init: init })
             }
-            t => Err(CompileError::UnexpectedToken(t))
+            t => Err(self.error(ErrorCause::UnexpectedToken(t)))
         }
     }
 
@@ -648,7 +648,7 @@ impl<'a> Parser<'a> {
         self.expect(Token::OpenParen);
         let param = match self.scanner.next_token() {
             Token::Ident(s) => s,
-            t => return Err(CompileError::UnexpectedToken(t))
+            t => return Err(self.error(ErrorCause::UnexpectedToken(t)))
         };
         self.expect(Token::CloseParen);
         let body = self.parse_block()?;
@@ -851,7 +851,7 @@ impl<'a> Parser<'a> {
             Token::Ident(s) => {
                 Ok(Id(self.finalize(start), s))
             },
-            t => Err(CompileError::UnexpectedToken(t))
+            t => Err(self.error(ErrorCause::UnexpectedToken(t)))
         }
     }
 
@@ -922,5 +922,21 @@ impl<'a> Parser<'a> {
         }
 
         next
+    }
+
+    fn unexpected_token(&self, token: Token) -> CompileError {
+        let span = Span { start: self.scanner.last_pos, end: self.scanner.pos() };
+
+        match token {
+            Token::Eof => CompileError { loc: span, cause: ErrorCause::UnexpectedEndOfInput },
+            t => CompileError { loc: span, cause: ErrorCause::UnexpectedToken(t) }
+        }
+    }
+
+    fn error(&self, cause: ErrorCause) -> CompileError {
+        CompileError {
+            loc: Span { start: self.scanner.last_pos, end: self.scanner.pos() },
+            cause: cause
+        }
     }
 }

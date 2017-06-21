@@ -1,30 +1,49 @@
 use syntax::token::Token;
+use syntax::span::Span;
 use std::error::Error;
 use std::fmt;
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum CompileError {
+pub enum ErrorCause {
     UnexpectedEndOfInput,
     UnexpectedToken(Token),
     IllegalChar(char)
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub struct CompileError {
+    pub loc: Span,
+    pub cause: ErrorCause
+}
+
 impl fmt::Display for CompileError {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.write_str(self.description())
+        let msg = match self.cause {
+            ErrorCause::UnexpectedEndOfInput => {
+                "Unexpected end of input"
+            },
+            ErrorCause::IllegalChar(_) => {
+                "Illegal character"
+            }
+            ErrorCause::UnexpectedToken(_) => {
+                "Unexpected token"
+            }
+        };
+
+        write!(fmt, "Error: Line {}: {}", self.loc.start.line, msg)
     }
 }
 
 impl Error for CompileError {
     fn description(&self) -> &str {
-        match *self {
-            CompileError::UnexpectedEndOfInput => {
+        match self.cause {
+            ErrorCause::UnexpectedEndOfInput => {
                 "Unexpected end of input"
             },
-            CompileError::IllegalChar(_) => {
+            ErrorCause::IllegalChar(_) => {
                 "Illegal character"
             }
-            CompileError::UnexpectedToken(_) => {
+            ErrorCause::UnexpectedToken(_) => {
                 "Unexpected token"
             }
         }
