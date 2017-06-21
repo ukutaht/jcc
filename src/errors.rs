@@ -18,19 +18,19 @@ pub struct CompileError {
 
 impl fmt::Display for CompileError {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        let msg = match self.cause {
+        write!(fmt, "Error: Line {}: ", self.loc.start.line)?;
+
+         match self.cause {
             ErrorCause::UnexpectedEndOfInput => {
-                "Unexpected end of input"
+                write!(fmt, "Unexpected end of input")
             },
             ErrorCause::IllegalChar(_) => {
-                "Illegal character"
+                write!(fmt, "Illegal character")
             }
-            ErrorCause::UnexpectedToken(_) => {
-                "Unexpected token"
+            ErrorCause::UnexpectedToken(ref t) => {
+                write!(fmt, "Unexpected token {}", t)
             }
-        };
-
-        write!(fmt, "Error: Line {}: {}", self.loc.start.line, msg)
+        }
     }
 }
 

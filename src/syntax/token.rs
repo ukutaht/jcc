@@ -82,3 +82,15 @@ pub enum Token {
     WhileKeyword,
     WithKeyword
 }
+
+use std::fmt;
+
+impl fmt::Display for Token {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Token::Bang => write!(fmt, "!"),
+            Token::CloseCurly => write!(fmt, "}}"),
+            _ => write!(fmt, "?")
+        }
+    }
+}
