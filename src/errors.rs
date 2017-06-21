@@ -1,5 +1,5 @@
 use syntax::token::Token;
-use syntax::span::Span;
+use syntax::span::Position;
 use std::error::Error;
 use std::fmt;
 
@@ -12,13 +12,13 @@ pub enum ErrorCause {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct CompileError {
-    pub loc: Span,
+    pub pos: Position,
     pub cause: ErrorCause
 }
 
 impl fmt::Display for CompileError {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "Error: Line {}: ", self.loc.start.line)?;
+        write!(fmt, "Error: Line {}: ", self.pos.line)?;
 
          match self.cause {
             ErrorCause::UnexpectedEndOfInput => {

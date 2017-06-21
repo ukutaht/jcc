@@ -925,17 +925,15 @@ impl<'a> Parser<'a> {
     }
 
     fn unexpected_token(&self, token: Token) -> CompileError {
-        let span = Span { start: self.scanner.last_pos, end: self.scanner.pos() };
-
         match token {
-            Token::Eof => CompileError { loc: span, cause: ErrorCause::UnexpectedEndOfInput },
-            t => CompileError { loc: span, cause: ErrorCause::UnexpectedToken(t) }
+            Token::Eof => self.error(ErrorCause::UnexpectedEndOfInput),
+            t => self.error(ErrorCause::UnexpectedToken(t))
         }
     }
 
     fn error(&self, cause: ErrorCause) -> CompileError {
         CompileError {
-            loc: Span { start: self.scanner.last_pos, end: self.scanner.pos() },
+            pos: self.scanner.pos(),
             cause: cause
         }
     }

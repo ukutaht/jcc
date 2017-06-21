@@ -90,7 +90,11 @@ fn esprima_tests(target: &mut Vec<TestDescAndFn>) {
                 }
                 (Err(actual_err), _) => {
                     let descr = format!("{}", actual_err);
-                    assert_eq!(descr, expected_json.get("message").unwrap().as_str().unwrap())
+                    assert_eq!(descr, expected_json.get("message").unwrap().as_str().unwrap());
+                    let expected_line = expected_json.get("lineNumber").unwrap().as_u64().unwrap() as u32;
+                    assert_eq!(actual_err.pos.line, expected_line, "Line number does not match");
+                    let expected_column = expected_json.get("column").unwrap().as_u64().unwrap() as u32;
+                    assert_eq!(actual_err.pos.column, expected_column, "Column does not match")
                 }
             }
         });
