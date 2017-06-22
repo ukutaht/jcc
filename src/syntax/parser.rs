@@ -138,14 +138,14 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_group_expression(&mut self) -> Result<Expression> {
-        self.expect(Token::OpenParen);
+        self.expect(Token::OpenParen)?;
         let result = self.parse_assignment_expression()?;
-        self.expect(Token::CloseParen);
+        self.expect(Token::CloseParen)?;
         Ok(result)
     }
 
-    fn parse_arguments(&mut self) -> Vec<ArgumentListElement> {
-        self.expect(Token::OpenParen);
+    fn parse_arguments(&mut self) -> Result<Vec<ArgumentListElement>> {
+        self.expect(Token::OpenParen)?;
         let mut arguments = Vec::new();
 
         loop {
@@ -156,21 +156,21 @@ impl<'a> Parser<'a> {
                 arguments.push(argument);
 
                 if self.scanner.lookahead != Token::CloseParen {
-                    self.expect(Token::Comma);
+                    self.expect(Token::Comma)?;
                 }
             }
         }
 
-        self.expect(Token::CloseParen);
-        arguments
+        self.expect(Token::CloseParen)?;
+        Ok(arguments)
     }
 
     fn parse_new_expression(&mut self) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
-        self.expect(Token::New);
+        self.expect(Token::New)?;
         let base = self.allow_in(true, Parser::parse_lhs_expression)?;
         let args = if self.matches(Token::OpenParen) {
-            self.parse_arguments()
+            self.parse_arguments()?
         } else {
             Vec::new()
         };
@@ -221,7 +221,7 @@ impl<'a> Parser<'a> {
             match self.scanner.lookahead {
                 Token::OpenParen => {
                     if allow_call {
-                        let args = self.parse_arguments();
+                        let args = self.parse_arguments()?;
                         let span = self.finalize(start);
                         result = Expression::Call(span, Box::new(result), args);
                     } else {
@@ -229,9 +229,9 @@ impl<'a> Parser<'a> {
                     }
                 },
                 Token::OpenSquare => {
-                    self.expect(Token::OpenSquare);
+                    self.expect(Token::OpenSquare)?;
                     let expr = self.parse_expression()?;
-                    self.expect(Token::CloseSquare);
+                    self.expect(Token::CloseSquare)?;
                     let span = self.finalize(start);
                     result = Expression::ComputedMember(span, Box::new(result), Box::new(expr));
                 },
@@ -339,7 +339,7 @@ impl<'a> Parser<'a> {
 
         if self.eat(Token::QuestionMark) {
             let consequent = self.parse_assignment_expression()?;
-            self.expect(Token::Colon);
+            self.expect(Token::Colon)?;
             let alternate = self.parse_assignment_expression()?;
             let span = self.finalize(start);
             Ok(Expression::Conditional(span, Box::new(expr), Box::new(consequent), Box::new(alternate)))
@@ -369,7 +369,7 @@ impl<'a> Parser<'a> {
 
     fn parse_array_initializer(&mut self) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
-        self.expect(Token::OpenSquare);
+        self.expect(Token::OpenSquare)?;
         let mut elements = Vec::new();
 
         loop {
@@ -385,11 +385,11 @@ impl<'a> Parser<'a> {
             }
 
             if self.scanner.lookahead != Token::CloseSquare {
-                self.expect(Token::Comma);
+                self.expect(Token::Comma)?;
             }
         }
 
-        self.expect(Token::CloseSquare);
+        self.expect(Token::CloseSquare)?;
         Ok(Expression::Array(self.finalize(start), elements))
     }
 
@@ -416,7 +416,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_prop_init(&mut self, start: Position, key: PropKey) -> Result<Prop> {
-        self.expect(Token::Colon);
+        self.expect(Token::Colon)?;
         let value = self.parse_assignment_expression()?;
         Ok(Prop::Init(self.finalize(start), key, value))
     }
@@ -455,7 +455,7 @@ impl<'a> Parser<'a> {
 
     fn parse_object_initializer(&mut self) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
-        self.expect(Token::OpenCurly);
+        self.expect(Token::OpenCurly)?;
 
         let mut properties = Vec::new();
 
@@ -463,11 +463,11 @@ impl<'a> Parser<'a> {
             properties.push(self.parse_object_property()?);
 
             if self.scanner.lookahead != Token::CloseCurly {
-                self.expect(Token::Comma);
+                self.expect(Token::Comma)?;
             }
         };
 
-        self.expect(Token::CloseCurly);
+        self.expect(Token::CloseCurly)?;
         Ok(Expression::Object(self.finalize(start), properties))
     }
 
@@ -504,7 +504,7 @@ impl<'a> Parser<'a> {
 
     fn parse_variable_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
-        self.expect(Token::Var);
+        self.expect(Token::Var)?;
         let declaration = self.parse_variable_declaration()?;
         Ok(Statement::VariableDeclaration(self.consume_semicolon(start)?, declaration))
     }
@@ -519,7 +519,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_function_parameters(&mut self) -> Result<Vec<Pattern>> {
-        self.expect(Token::OpenParen);
+        self.expect(Token::OpenParen)?;
         let mut parameters = Vec::new();
 
         loop {
@@ -530,16 +530,16 @@ impl<'a> Parser<'a> {
             if let Token::CloseParen = self.scanner.lookahead {
                 break;
             }
-            self.expect(Token::Comma);
+            self.expect(Token::Comma)?;
         }
 
-        self.expect(Token::CloseParen);
+        self.expect(Token::CloseParen)?;
 
         Ok(parameters)
     }
 
     fn parse_function(&mut self) -> Result<Function> {
-        self.expect(Token::FunctionKeyword);
+        self.expect(Token::FunctionKeyword)?;
 
         let id = match self.scanner.lookahead.clone() {
             Token::Ident(name) => {
@@ -556,14 +556,14 @@ impl<'a> Parser<'a> {
 
         let parameters = self.parse_function_parameters()?;
 
-        self.expect(Token::OpenCurly);
+        self.expect(Token::OpenCurly)?;
         let mut statements = self.parse_directive_prologues()?;
 
         while self.scanner.lookahead != Token::CloseCurly {
             statements.push(self.parse_statement_list_item()?);
         }
 
-        self.expect(Token::CloseCurly);
+        self.expect(Token::CloseCurly)?;
         let block = Block(statements);
 
         Ok(Function { id: id, body: block, parameters: parameters })
@@ -610,10 +610,10 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_if_statement(&mut self) -> Result<Statement> {
-        self.expect(Token::If);
-        self.expect(Token::OpenParen);
+        self.expect(Token::If)?;
+        self.expect(Token::OpenParen)?;
         let test = self.parse_expression()?;
-        self.expect(Token::CloseParen);
+        self.expect(Token::CloseParen)?;
         let then = self.parse_statement()?;
         let alternate = match self.scanner.lookahead {
             Token::Else => {
@@ -628,7 +628,7 @@ impl<'a> Parser<'a> {
 
     fn parse_return_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
-        self.expect(Token::Return);
+        self.expect(Token::Return)?;
 
         let mut argument = None;
 
@@ -648,26 +648,26 @@ impl<'a> Parser<'a> {
 
     fn parse_throw_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
-        self.expect(Token::ThrowKeyword);
+        self.expect(Token::ThrowKeyword)?;
         let argument = self.parse_expression()?;
         Ok(Statement::Throw(self.consume_semicolon(start)?, argument))
     }
 
     fn parse_catch_clause(&mut self) -> Result<CatchClause> {
-        self.expect(Token::CatchKeyword);
-        self.expect(Token::OpenParen);
+        self.expect(Token::CatchKeyword)?;
+        self.expect(Token::OpenParen)?;
         let param = match self.scanner.next_token() {
             Token::Ident(s) => s,
             t => return Err(self.error(ErrorCause::UnexpectedToken(t)))
         };
-        self.expect(Token::CloseParen);
+        self.expect(Token::CloseParen)?;
         let body = self.parse_block()?;
         Ok(CatchClause { param: param, body: body })
     }
 
     fn parse_try_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
-        self.expect(Token::TryKeyword);
+        self.expect(Token::TryKeyword)?;
         let block = self.parse_block()?;
         let handler = if self.matches(Token::CatchKeyword) {
             Some(self.parse_catch_clause()?)
@@ -687,10 +687,10 @@ impl<'a> Parser<'a> {
         let test = if self.eat(Token::DefaultKeyword) {
             None
         } else {
-            self.expect(Token::CaseKeyword);
+            self.expect(Token::CaseKeyword)?;
             Some(self.parse_expression()?)
         };
-        self.expect(Token::Colon);
+        self.expect(Token::Colon)?;
 
         let mut consequent = Vec::new();
         loop {
@@ -707,14 +707,14 @@ impl<'a> Parser<'a> {
 
     fn parse_switch_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
-        self.expect(Token::SwitchKeyword);
+        self.expect(Token::SwitchKeyword)?;
 
-        self.expect(Token::OpenParen);
+        self.expect(Token::OpenParen)?;
         let discriminant = self.parse_expression()?;
-        self.expect(Token::CloseParen);
+        self.expect(Token::CloseParen)?;
 
         let mut cases = Vec::new();
-        self.expect(Token::OpenCurly);
+        self.expect(Token::OpenCurly)?;
         loop {
             if self.matches(Token::CloseCurly) {
                 break;
@@ -722,36 +722,36 @@ impl<'a> Parser<'a> {
 
             cases.push(self.parse_switch_case()?);
         };
-        self.expect(Token::CloseCurly);
+        self.expect(Token::CloseCurly)?;
 
         Ok(Statement::Switch(self.consume_semicolon(start)?, discriminant, cases))
     }
 
     fn parse_do_while_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
-        self.expect(Token::DoKeyword);
+        self.expect(Token::DoKeyword)?;
         let body = self.parse_statement()?;
-        self.expect(Token::WhileKeyword);
-        self.expect(Token::OpenParen);
+        self.expect(Token::WhileKeyword)?;
+        self.expect(Token::OpenParen)?;
         let test = self.parse_expression()?;
-        self.expect(Token::CloseParen);
+        self.expect(Token::CloseParen)?;
         self.eat(Token::Semi);
         Ok(Statement::DoWhile(self.finalize(start), Box::new(body), test))
     }
 
     fn parse_while_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
-        self.expect(Token::WhileKeyword);
-        self.expect(Token::OpenParen);
+        self.expect(Token::WhileKeyword)?;
+        self.expect(Token::OpenParen)?;
         let test = self.parse_expression()?;
-        self.expect(Token::CloseParen);
+        self.expect(Token::CloseParen)?;
         let body = self.parse_statement()?;
         Ok(Statement::While(self.finalize(start), test, Box::new(body)))
     }
 
     fn parse_for_in_statement(&mut self, start: Position, left: ForInit) -> Result<Statement> {
         let right = self.parse_expression()?;
-        self.expect(Token::CloseParen);
+        self.expect(Token::CloseParen)?;
         let body = self.parse_statement()?;
         Ok(Statement::ForIn(self.finalize(start), left, right, Box::new(body)))
     }
@@ -762,14 +762,14 @@ impl<'a> Parser<'a> {
         } else {
             Some(self.parse_expression()?)
         };
-        self.expect(Token::Semi);
+        self.expect(Token::Semi)?;
 
         let update = if self.matches(Token::CloseParen) {
             None
         } else {
             Some(self.parse_expression()?)
         };
-        self.expect(Token::CloseParen);
+        self.expect(Token::CloseParen)?;
 
         let body = self.parse_statement()?;
         Ok(Statement::For(self.finalize(start), init, test, update, Box::new(body)))
@@ -777,8 +777,8 @@ impl<'a> Parser<'a> {
 
     fn parse_for_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
-        self.expect(Token::ForKeyword);
-        self.expect(Token::OpenParen);
+        self.expect(Token::ForKeyword)?;
+        self.expect(Token::OpenParen)?;
         if self.eat(Token::Semi) {
             self.parse_for_iter_statement(start, None)
         } else {
@@ -789,7 +789,7 @@ impl<'a> Parser<'a> {
                     self.parse_for_in_statement(start, init)
 
                 } else {
-                    self.expect(Token::Semi);
+                    self.expect(Token::Semi)?;
                     self.parse_for_iter_statement(start, Some(init))
                 }
             } else {
@@ -797,7 +797,7 @@ impl<'a> Parser<'a> {
                 if self.eat(Token::In) {
                     self.parse_for_in_statement(start, init)
                 } else {
-                    self.expect(Token::Semi);
+                    self.expect(Token::Semi)?;
                     self.parse_for_iter_statement(start, Some(init))
                 }
             }
@@ -806,10 +806,10 @@ impl<'a> Parser<'a> {
 
     fn parse_with_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
-        self.expect(Token::WithKeyword);
-        self.expect(Token::OpenParen);
+        self.expect(Token::WithKeyword)?;
+        self.expect(Token::OpenParen)?;
         let object = self.parse_expression()?;
-        self.expect(Token::CloseParen);
+        self.expect(Token::CloseParen)?;
         let body = self.parse_statement()?;
         Ok(Statement::With(self.finalize(start), object, Box::new(body)))
     }
@@ -828,7 +828,7 @@ impl<'a> Parser<'a> {
 
     fn parse_break_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
-        self.expect(Token::BreakKeyword);
+        self.expect(Token::BreakKeyword)?;
         if self.match_ident() && !self.scanner.at_newline() {
             let id = self.parse_id()?;
             Ok(Statement::Break(self.consume_semicolon(start)?, Some(id)))
@@ -839,7 +839,7 @@ impl<'a> Parser<'a> {
 
     fn parse_continue_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
-        self.expect(Token::ContinueKeyword);
+        self.expect(Token::ContinueKeyword)?;
         if self.match_ident() && !self.scanner.at_newline() {
             let id = self.parse_id()?;
             Ok(Statement::Continue(self.consume_semicolon(start)?, Some(id)))
@@ -913,25 +913,26 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_block(&mut self) -> Result<Block> {
-        self.expect(Token::OpenCurly);
+        self.expect(Token::OpenCurly)?;
         let mut statements = Vec::new();
 
         while self.scanner.lookahead != Token::CloseCurly {
             statements.push(self.parse_statement_list_item()?);
         }
 
-        self.expect(Token::CloseCurly);
+        self.expect(Token::CloseCurly)?;
         Ok(Block(statements))
     }
 
-    fn expect(&mut self, expected: Token) -> Token {
-        let next = self.scanner.next_token();
+    fn expect(&mut self, expected: Token) -> Result<Token> {
+        let next = self.scanner.lookahead.clone();
 
-        if next != expected {
-            panic!("Expected {:?}, got {:?}", expected, next);
+        if next == expected {
+            self.scanner.next_token();
+            Ok(next)
+        } else {
+            Err(self.unexpected_token(next))
         }
-
-        next
     }
 
     fn unexpected_token(&self, token: Token) -> CompileError {
