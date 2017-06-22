@@ -6,6 +6,7 @@ use std::fmt;
 #[derive(Debug, PartialEq, Clone)]
 pub enum ErrorCause {
     UnexpectedEndOfInput,
+    MissingCatchOrFinally,
     UnexpectedToken(Token),
     IllegalChar(char)
 }
@@ -23,6 +24,9 @@ impl fmt::Display for CompileError {
          match self.cause {
             ErrorCause::UnexpectedEndOfInput => {
                 write!(fmt, "Unexpected end of input")
+            },
+            ErrorCause::MissingCatchOrFinally => {
+                write!(fmt, "Missing catch or finally after try")
             },
             ErrorCause::IllegalChar(_) => {
                 write!(fmt, "Illegal character")
@@ -42,6 +46,9 @@ impl Error for CompileError {
         match self.cause {
             ErrorCause::UnexpectedEndOfInput => {
                 "Unexpected end of input"
+            },
+            ErrorCause::MissingCatchOrFinally => {
+                "Missing catch or finally after try"
             },
             ErrorCause::IllegalChar(_) => {
                 "Illegal character"

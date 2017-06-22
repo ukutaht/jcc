@@ -680,6 +680,10 @@ impl<'a> Parser<'a> {
             None
         };
 
+        if handler.is_none() && finalizer.is_none() {
+            return Err(self.error(ErrorCause::MissingCatchOrFinally))
+        }
+
         Ok(Statement::Try(self.consume_semicolon(start)?, block, handler, finalizer))
     }
 
