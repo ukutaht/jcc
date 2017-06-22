@@ -92,6 +92,9 @@ impl fmt::Display for Token {
             Token::CloseCurly => write!(fmt, "}}"),
             Token::If => write!(fmt, "if"),
             Token::CloseParen => write!(fmt, ")"),
+            Token::BoolTrue => write!(fmt, "true"),
+            Token::BoolFalse => write!(fmt, "false"),
+            Token::Null => write!(fmt, "null"),
             _ => write!(fmt, "?")
         }
     }
