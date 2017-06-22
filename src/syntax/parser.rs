@@ -447,9 +447,10 @@ impl<'a> Parser<'a> {
                 let span = self.finalize(start);
                 self.parse_prop_init(start, PropKey::Identifier(span, "set".to_string()))
             }
-        } else {
-            let key = self.match_object_property_key().unwrap();
+        } else if let Some(key) = self.match_object_property_key() {
             self.parse_prop_init(start, key)
+        } else {
+            Err(self.unexpected_token(token))
         }
     }
 
