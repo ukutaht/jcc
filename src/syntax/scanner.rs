@@ -317,8 +317,10 @@ impl<'a> Scanner<'a> {
         self.take_while(|c| (c as char).is_digit(16));
         let hex = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]) };
 
-        let value = u32::from_str_radix(hex, 16).unwrap() as f64;
-        Token::Number(value)
+        match u32::from_str_radix(hex, 16) {
+            Ok(val) => Token::Number(val as f64),
+            Err(_) => self.invalid_token()
+        }
     }
 
     fn scan_float(&mut self) -> Token {
