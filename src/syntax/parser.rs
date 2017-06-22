@@ -656,9 +656,12 @@ impl<'a> Parser<'a> {
     fn parse_catch_clause(&mut self) -> Result<CatchClause> {
         self.expect(Token::CatchKeyword)?;
         self.expect(Token::OpenParen)?;
-        let param = match self.scanner.next_token() {
-            Token::Ident(s) => s,
-            t => return Err(self.error(ErrorCause::UnexpectedToken(t)))
+        let param = match self.scanner.lookahead.clone() {
+            Token::Ident(s) => {
+                self.scanner.next_token();
+                s
+            },
+            t => return Err(self.unexpected_token(t))
         };
         self.expect(Token::CloseParen)?;
         let body = self.parse_block()?;
