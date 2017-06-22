@@ -10,7 +10,6 @@ pub enum ErrorCause {
     InvalidLHSAssignment,
     IllegalBreak,
     UnexpectedToken(Token),
-    IllegalChar(char)
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -36,9 +35,6 @@ impl fmt::Display for CompileError {
             ErrorCause::MultipleDefaultsInSwitch => {
                 write!(fmt, "More than one default clause in switch statement")
             },
-            ErrorCause::IllegalChar(_) => {
-                write!(fmt, "Illegal character")
-            }
             ErrorCause::UnexpectedToken(Token::Eof) => {
                 write!(fmt, "Unexpected end of input")
             }
