@@ -296,13 +296,19 @@ impl<'a> Scanner<'a> {
     }
 
     fn scan_number(&mut self) -> Token {
-        match (self.current_byte(), self.peek_byte()) {
+        let nr = match (self.current_byte(), self.peek_byte()) {
             (Some(b'0'), Some(b'x')) | (Some(b'0'), Some(b'X')) => {
                 self.scan_hex()
             }
             _ => self.scan_float()
-        }
+        };
 
+        match self.current_char() {
+            Some(ch) if ch.is_es_identifier_start() => {
+                self.invalid_token()
+            },
+            _ => nr
+        }
     }
 
     fn scan_hex(&mut self) -> Token {
@@ -344,12 +350,17 @@ impl<'a> Scanner<'a> {
                 Some(ch) if (ch as char).is_digit(10) => {
                     self.take_while(|c| (c as char).is_digit(10));
                 }
-                _ => panic!("Invalid exponent")
+                _ => return self.invalid_token()
             }
         }
 
         let float = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]) }.parse().unwrap();
         Token::Number(float)
+    }
+
+    fn invalid_token(&mut self) -> Token {
+        self.lookahead_start = self.pos();
+        Token::Illegal
     }
 
     fn scan_string(&mut self, quote: u8) -> Token {

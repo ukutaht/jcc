@@ -80,7 +80,8 @@ pub enum Token {
     Var,
     Void,
     WhileKeyword,
-    WithKeyword
+    WithKeyword,
+    Illegal,
 }
 
 use std::fmt;
@@ -103,6 +104,7 @@ impl fmt::Display for Token {
             Token::Minus => write!(fmt, "-"),
             Token::Times => write!(fmt, "*"),
             Token::Div => write!(fmt, "/"),
+            Token::Illegal => write!(fmt, "ILLEGAL"),
             _ => write!(fmt, "?")
         }
     }
