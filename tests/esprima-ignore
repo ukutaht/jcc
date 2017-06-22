@@ -45,6 +45,7 @@ invalid-syntax/GH-1106-08
 invalid-syntax/GH-1106-09
 
 
+# ES6 numeric literals
 invalid-syntax/migrated_0011
 invalid-syntax/migrated_0012
 invalid-syntax/migrated_0013
@@ -63,7 +64,7 @@ invalid-syntax/migrated_0025
 invalid-syntax/migrated_0026
 invalid-syntax/migrated_0027
 invalid-syntax/migrated_0028
-invalid-syntax/migrated_0029
+
 invalid-syntax/migrated_0030
 invalid-syntax/migrated_0031
 invalid-syntax/migrated_0032
