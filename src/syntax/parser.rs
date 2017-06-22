@@ -353,14 +353,14 @@ impl<'a> Parser<'a> {
         let left = self.parse_conditional_expression()?;
         match self.scanner.lookahead.as_assign_op() {
             Some(op) => {
-                self.scanner.next_token();
                 match left {
                     Expression::Identifier(_, _) => {
+                        self.scanner.next_token();
                         let right = self.parse_assignment_expression()?;
                         let span = self.finalize(start);
                         Ok(Expression::Assignment(span, op, Box::new(left), Box::new(right)))
                     }
-                    _ => panic!("Invalid assignment target")
+                    _ => Err(self.error(ErrorCause::InvalidLHSAssignment))
                 }
             }
             None => Ok(left)

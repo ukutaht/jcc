@@ -7,6 +7,7 @@ use std::fmt;
 pub enum ErrorCause {
     MissingCatchOrFinally,
     MultipleDefaultsInSwitch,
+    InvalidLHSAssignment,
     UnexpectedToken(Token),
     IllegalChar(char)
 }
@@ -24,6 +25,9 @@ impl fmt::Display for CompileError {
          match self.cause {
             ErrorCause::MissingCatchOrFinally => {
                 write!(fmt, "Missing catch or finally after try")
+            },
+            ErrorCause::InvalidLHSAssignment => {
+                write!(fmt, "Invalid left-hand side in assignment")
             },
             ErrorCause::MultipleDefaultsInSwitch => {
                 write!(fmt, "More than one default clause in switch statement")
