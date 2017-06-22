@@ -25,7 +25,7 @@ impl<'a> Parser<'a> {
     }
 
     fn directive_opt(&mut self, expr: &Expression) -> Option<String> {
-        if let &Expression::Literal(_, Literal::String(ref val)) = expr {
+        if let Expression::Literal(_, Literal::String(ref val)) = *expr {
             let len = val.len();
             Some(val.as_str()[1..len - 1].to_owned())
         } else {
@@ -589,9 +589,7 @@ impl<'a> Parser<'a> {
     }
 
     fn consume_semicolon(&mut self, start: Position) -> Result<Span> {
-        if self.eat(Token::Semi) {
-            Ok(self.finalize(start))
-        } else if self.scanner.at_newline() {
+        if self.eat(Token::Semi) || self.scanner.at_newline() {
             Ok(self.finalize(start))
         } else if self.matches(Token::Eof) || self.matches(Token::CloseCurly) {
             Ok(Span {
@@ -797,25 +795,23 @@ impl<'a> Parser<'a> {
         self.expect(Token::OpenParen)?;
         if self.eat(Token::Semi) {
             self.parse_for_iter_statement(start, None)
-        } else {
-            if self.eat(Token::Var) {
-                let decl = self.allow_in(false, Parser::parse_variable_declaration)?;
-                let init = ForInit::VarDecl(decl);
-                if self.eat(Token::In) {
-                    self.parse_for_in_statement(start, init)
+        } else if self.eat(Token::Var) {
+            let decl = self.allow_in(false, Parser::parse_variable_declaration)?;
+            let init = ForInit::VarDecl(decl);
+            if self.eat(Token::In) {
+                self.parse_for_in_statement(start, init)
 
-                } else {
-                    self.expect(Token::Semi)?;
-                    self.parse_for_iter_statement(start, Some(init))
-                }
             } else {
-                let init = ForInit::Expression(self.allow_in(false, Parser::parse_expression)?);
-                if self.eat(Token::In) {
-                    self.parse_for_in_statement(start, init)
-                } else {
-                    self.expect(Token::Semi)?;
-                    self.parse_for_iter_statement(start, Some(init))
-                }
+                self.expect(Token::Semi)?;
+                self.parse_for_iter_statement(start, Some(init))
+            }
+        } else {
+            let init = ForInit::Expression(self.allow_in(false, Parser::parse_expression)?);
+            if self.eat(Token::In) {
+                self.parse_for_in_statement(start, init)
+            } else {
+                self.expect(Token::Semi)?;
+                self.parse_for_iter_statement(start, Some(init))
             }
         }
     }
@@ -882,8 +878,8 @@ impl<'a> Parser<'a> {
     }
 
     fn as_id(&self, expr: &Expression) -> Option<Id> {
-        match expr {
-            &Expression::Identifier(ref sp, ref id) => Some(Id(sp.clone(), id.clone())),
+        match *expr {
+            Expression::Identifier(ref sp, ref id) => Some(Id(sp.clone(), id.clone())),
             _ => None
         }
     }
