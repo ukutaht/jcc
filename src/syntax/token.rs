@@ -91,12 +91,14 @@ impl fmt::Display for Token {
             Token::Bang => write!(fmt, "!"),
             Token::CloseCurly => write!(fmt, "}}"),
             Token::If => write!(fmt, "if"),
+            Token::OpenParen => write!(fmt, "("),
             Token::CloseParen => write!(fmt, ")"),
             Token::BoolTrue => write!(fmt, "true"),
             Token::BoolFalse => write!(fmt, "false"),
             Token::Null => write!(fmt, "null"),
             Token::Dot => write!(fmt, "."),
             Token::Semi => write!(fmt, ";"),
+            Token::Minus => write!(fmt, "-"),
             _ => write!(fmt, "?")
         }
     }

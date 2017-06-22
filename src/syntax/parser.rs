@@ -485,7 +485,7 @@ impl<'a> Parser<'a> {
                 Ok(VariableDeclarator { id: name, init: init })
             }
             t => {
-                Err(self.error(ErrorCause::UnexpectedToken(t)))
+                Err(self.unexpected_token(t))
             }
         }
     }
@@ -721,13 +721,22 @@ impl<'a> Parser<'a> {
         self.expect(Token::CloseParen)?;
 
         let mut cases = Vec::new();
+        let mut default_found = false;
         self.expect(Token::OpenCurly)?;
         loop {
             if self.matches(Token::CloseCurly) {
                 break;
             };
 
-            cases.push(self.parse_switch_case()?);
+            let case = self.parse_switch_case()?;
+            if case.test.is_none() {
+                if default_found {
+                    return Err(self.error(ErrorCause::MultipleDefaultsInSwitch))
+                }
+                default_found = true;
+            }
+
+            cases.push(case);
         };
         self.expect(Token::CloseCurly)?;
 
@@ -943,15 +952,15 @@ impl<'a> Parser<'a> {
     }
 
     fn unexpected_token(&self, token: Token) -> CompileError {
-        match token {
-            Token::Eof => self.error(ErrorCause::UnexpectedEndOfInput),
-            t => self.error(ErrorCause::UnexpectedToken(t))
+        CompileError {
+            pos: self.scanner.lookahead_start.one_indexed(),
+            cause: ErrorCause::UnexpectedToken(token)
         }
     }
 
     fn error(&self, cause: ErrorCause) -> CompileError {
         CompileError {
-            pos: self.scanner.lookahead_start.one_indexed(),
+            pos: self.scanner.last_pos.one_indexed(),
             cause: cause
         }
     }

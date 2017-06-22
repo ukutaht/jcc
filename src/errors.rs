@@ -5,8 +5,8 @@ use std::fmt;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ErrorCause {
-    UnexpectedEndOfInput,
     MissingCatchOrFinally,
+    MultipleDefaultsInSwitch,
     UnexpectedToken(Token),
     IllegalChar(char)
 }
@@ -22,14 +22,17 @@ impl fmt::Display for CompileError {
         write!(fmt, "Error: Line {}: ", self.pos.line)?;
 
          match self.cause {
-            ErrorCause::UnexpectedEndOfInput => {
-                write!(fmt, "Unexpected end of input")
-            },
             ErrorCause::MissingCatchOrFinally => {
                 write!(fmt, "Missing catch or finally after try")
             },
+            ErrorCause::MultipleDefaultsInSwitch => {
+                write!(fmt, "More than one default clause in switch statement")
+            },
             ErrorCause::IllegalChar(_) => {
                 write!(fmt, "Illegal character")
+            }
+            ErrorCause::UnexpectedToken(Token::Eof) => {
+                write!(fmt, "Unexpected end of input")
             }
             ErrorCause::UnexpectedToken(Token::Ident(_)) => {
                 write!(fmt, "Unexpected identifier")
@@ -46,20 +49,7 @@ impl fmt::Display for CompileError {
 
 impl Error for CompileError {
     fn description(&self) -> &str {
-        match self.cause {
-            ErrorCause::UnexpectedEndOfInput => {
-                "Unexpected end of input"
-            },
-            ErrorCause::MissingCatchOrFinally => {
-                "Missing catch or finally after try"
-            },
-            ErrorCause::IllegalChar(_) => {
-                "Illegal character"
-            }
-            ErrorCause::UnexpectedToken(_) => {
-                "Unexpected token"
-            }
-        }
+        "Compile error"
     }
 
     fn cause(&self) -> Option<&Error> {
