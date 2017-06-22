@@ -122,26 +122,25 @@ invalid-syntax/migrated_0101
 invalid-syntax/migrated_0115
 
 # isAssignmentTarget
+invalid-syntax/migrated_0125
 invalid-syntax/migrated_0126
 
+# ES6: Let, const
 invalid-syntax/migrated_0137.source
 invalid-syntax/migrated_0138
 invalid-syntax/migrated_0139
 invalid-syntax/migrated_0140
 invalid-syntax/migrated_0141
 invalid-syntax/migrated_0142
+
+# Comments
 invalid-syntax/migrated_0145
 invalid-syntax/migrated_0146
 invalid-syntax/migrated_0147
 invalid-syntax/migrated_0148
 invalid-syntax/migrated_0149
 invalid-syntax/migrated_0150
-invalid-syntax/migrated_0151
-invalid-syntax/migrated_0152
-invalid-syntax/migrated_0153
-invalid-syntax/migrated_0154
-invalid-syntax/migrated_0155
-invalid-syntax/migrated_0156
+
 invalid-syntax/migrated_0157
 invalid-syntax/migrated_0158
 invalid-syntax/migrated_0159

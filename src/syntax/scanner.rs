@@ -117,6 +117,12 @@ impl<'a> Scanner<'a> {
                     self.line += 1;
                     self.column = 0;
                 }
+                Some(b'\r') => {
+                    self.next_byte();
+                    self.eat_byte(b'\n');
+                    self.line += 1;
+                    self.column = 0;
+                }
                 Some(b' ') => {
                     self.next_byte();
                 },
