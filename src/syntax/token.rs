@@ -96,6 +96,7 @@ impl fmt::Display for Token {
             Token::BoolFalse => write!(fmt, "false"),
             Token::Null => write!(fmt, "null"),
             Token::Dot => write!(fmt, "."),
+            Token::Semi => write!(fmt, ";"),
             _ => write!(fmt, "?")
         }
     }
