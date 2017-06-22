@@ -367,6 +367,7 @@ impl<'a> Scanner<'a> {
 
     fn scan_string(&mut self, quote: u8) -> Token {
         let start = self.index;
+        let start_column = self.column;
         self.eat_byte(quote);
 
         while let Some(ch) = self.next_char() {
@@ -413,6 +414,9 @@ impl<'a> Scanner<'a> {
                     },
                     ch => panic!("{:?}", ch)
                 }
+            } else if ch.is_es_newline() {
+                self.last_pos = Position { line: self.line, column: start_column };
+                return Token::Illegal;
             } else {
                 continue;
             }
