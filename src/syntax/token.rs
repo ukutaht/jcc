@@ -99,6 +99,7 @@ impl fmt::Display for Token {
             Token::Dot => write!(fmt, "."),
             Token::Semi => write!(fmt, ";"),
             Token::Minus => write!(fmt, "-"),
+            Token::Times => write!(fmt, "*"),
             _ => write!(fmt, "?")
         }
     }
