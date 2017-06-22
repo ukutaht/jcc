@@ -291,7 +291,7 @@ impl<'a> Scanner<'a> {
         } else if self.current_char().unwrap().is_es_identifier_start() {
             self.scan_identifier()
         } else {
-            panic!("Unknown character: {}", self.current_char().unwrap());
+            Token::Illegal
         }
     }
 
