@@ -418,7 +418,7 @@ impl<'a> Scanner<'a> {
                         self.line += 1;
                         self.column = 0;
                     },
-                    ch => panic!("{:?}", ch)
+                    _ => return Token::Illegal
                 }
             } else if ch.is_es_newline() {
                 self.last_pos = Position { line: self.line, column: start_column };

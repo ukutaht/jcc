@@ -141,18 +141,17 @@ invalid-syntax/migrated_0148
 invalid-syntax/migrated_0149
 invalid-syntax/migrated_0150
 
+# Regex
 invalid-syntax/migrated_0157
-invalid-syntax/migrated_0158
-invalid-syntax/migrated_0159
-invalid-syntax/migrated_0160
-invalid-syntax/migrated_0161
+
+# Backslash
 invalid-syntax/migrated_0162
 invalid-syntax/migrated_0163.source
 invalid-syntax/migrated_0164
 invalid-syntax/migrated_0165.source
 invalid-syntax/migrated_0166.source
 invalid-syntax/migrated_0167.source
-invalid-syntax/migrated_0168
+
 invalid-syntax/migrated_0169.source
 invalid-syntax/migrated_0170
 invalid-syntax/migrated_0171
