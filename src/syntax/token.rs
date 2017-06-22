@@ -91,6 +91,7 @@ impl fmt::Display for Token {
             Token::Bang => write!(fmt, "!"),
             Token::CloseCurly => write!(fmt, "}}"),
             Token::If => write!(fmt, "if"),
+            Token::CloseParen => write!(fmt, ")"),
             _ => write!(fmt, "?")
         }
     }
