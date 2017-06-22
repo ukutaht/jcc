@@ -826,13 +826,12 @@ impl<'a> Parser<'a> {
             self.parse_for_iter_statement(start, None)
         } else if self.eat(Token::Var) {
             let decl = self.allow_in(false, Parser::parse_variable_declaration)?;
-            let init = ForInit::VarDecl(decl);
-            if self.eat(Token::In) {
-                self.parse_for_in_statement(start, init)
+            if decl.declarations.len() == 1 && self.eat(Token::In) {
+                self.parse_for_in_statement(start, ForInit::VarDecl(decl))
 
             } else {
                 self.expect(Token::Semi)?;
-                self.parse_for_iter_statement(start, Some(init))
+                self.parse_for_iter_statement(start, Some(ForInit::VarDecl(decl)))
             }
         } else {
             let init = ForInit::Expression(self.allow_in(false, Parser::parse_expression)?);

@@ -104,6 +104,7 @@ impl fmt::Display for Token {
             Token::Minus => write!(fmt, "-"),
             Token::Times => write!(fmt, "*"),
             Token::Div => write!(fmt, "/"),
+            Token::In => write!(fmt, "in"),
             Token::Illegal => write!(fmt, "ILLEGAL"),
             ref t => write!(fmt, "{:?}", t)
         }
