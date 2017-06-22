@@ -9,6 +9,7 @@ pub enum ErrorCause {
     MultipleDefaultsInSwitch,
     InvalidLHSAssignment,
     IllegalBreak,
+    IllegalContinue,
     UnexpectedToken(Token),
 }
 
@@ -28,6 +29,9 @@ impl fmt::Display for CompileError {
             },
             ErrorCause::IllegalBreak => {
                 write!(fmt, "Illegal break statement")
+            },
+            ErrorCause::IllegalContinue => {
+                write!(fmt, "Illegal continue statement")
             },
             ErrorCause::InvalidLHSAssignment => {
                 write!(fmt, "Invalid left-hand side in assignment")

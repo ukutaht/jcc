@@ -873,6 +873,7 @@ impl<'a> Parser<'a> {
         } else if self.context.in_switch || self.context.in_iteration {
             Ok(Statement::Break(self.consume_semicolon(start)?, None))
         } else {
+            self.consume_semicolon(start)?;
             Err(self.error(ErrorCause::IllegalBreak))
         }
     }
@@ -883,8 +884,11 @@ impl<'a> Parser<'a> {
         if self.match_ident() && !self.scanner.at_newline() {
             let id = self.parse_id()?;
             Ok(Statement::Continue(self.consume_semicolon(start)?, Some(id)))
-        } else {
+        } else if self.context.in_switch || self.context.in_iteration {
             Ok(Statement::Continue(self.consume_semicolon(start)?, None))
+        } else {
+            self.consume_semicolon(start)?;
+            Err(self.error(ErrorCause::IllegalContinue))
         }
     }
 
