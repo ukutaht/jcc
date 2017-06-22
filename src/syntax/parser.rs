@@ -9,7 +9,9 @@ use std;
 pub type Result<T> = std::result::Result<T, CompileError>;
 
 struct ParseContext {
-    allow_in: bool
+    allow_in: bool,
+    in_iteration: bool,
+    in_switch: bool
 }
 
 pub struct Parser<'a> {
@@ -21,7 +23,14 @@ impl<'a> Parser<'a> {
     pub fn new(source: &'a str) -> Parser {
         let mut scanner = Scanner::new(source);
         scanner.position_at_start();
-        Parser { scanner: scanner, context: ParseContext { allow_in: true } }
+        Parser {
+            scanner: scanner,
+            context: ParseContext {
+                allow_in: true,
+                in_iteration: false,
+                in_switch: false
+            }
+        }
     }
 
     fn directive_opt(&mut self, expr: &Expression) -> Option<String> {
@@ -69,6 +78,22 @@ impl<'a> Parser<'a> {
         let allow_in = std::mem::replace(&mut self.context.allow_in, allow_in);
         let result = parse_fn(self);
         std::mem::replace(&mut self.context.allow_in, allow_in);
+        result
+    }
+
+    fn in_switch<F, T>(&mut self, in_switch: bool, parse_fn: F) -> Result<T>
+      where F: FnOnce(&mut Self) -> Result<T> {
+        let in_switch = std::mem::replace(&mut self.context.in_switch, in_switch);
+        let result = parse_fn(self);
+        std::mem::replace(&mut self.context.in_switch, in_switch);
+        result
+    }
+
+    fn in_iteration<F, T>(&mut self, in_iteration: bool, parse_fn: F) -> Result<T>
+      where F: FnOnce(&mut Self) -> Result<T> {
+        let in_iteration = std::mem::replace(&mut self.context.in_iteration, in_iteration);
+        let result = parse_fn(self);
+        std::mem::replace(&mut self.context.in_iteration, in_iteration);
         result
     }
 
@@ -727,7 +752,7 @@ impl<'a> Parser<'a> {
                 break;
             };
 
-            let case = self.parse_switch_case()?;
+            let case = self.in_switch(true, Parser::parse_switch_case)?;
             if case.test.is_none() {
                 if default_found {
                     return Err(self.error(ErrorCause::MultipleDefaultsInSwitch))
@@ -745,7 +770,7 @@ impl<'a> Parser<'a> {
     fn parse_do_while_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::DoKeyword)?;
-        let body = self.parse_statement()?;
+        let body = self.in_iteration(true, Parser::parse_statement)?;
         self.expect(Token::WhileKeyword)?;
         self.expect(Token::OpenParen)?;
         let test = self.parse_expression()?;
@@ -760,14 +785,14 @@ impl<'a> Parser<'a> {
         self.expect(Token::OpenParen)?;
         let test = self.parse_expression()?;
         self.expect(Token::CloseParen)?;
-        let body = self.parse_statement()?;
+        let body = self.in_iteration(true, Parser::parse_statement)?;
         Ok(Statement::While(self.finalize(start), test, Box::new(body)))
     }
 
     fn parse_for_in_statement(&mut self, start: Position, left: ForInit) -> Result<Statement> {
         let right = self.parse_expression()?;
         self.expect(Token::CloseParen)?;
-        let body = self.parse_statement()?;
+        let body = self.in_iteration(true, Parser::parse_statement)?;
         Ok(Statement::ForIn(self.finalize(start), left, right, Box::new(body)))
     }
 
@@ -786,7 +811,7 @@ impl<'a> Parser<'a> {
         };
         self.expect(Token::CloseParen)?;
 
-        let body = self.parse_statement()?;
+        let body = self.in_iteration(true, Parser::parse_statement)?;
         Ok(Statement::For(self.finalize(start), init, test, update, Box::new(body)))
     }
 
@@ -845,8 +870,10 @@ impl<'a> Parser<'a> {
         if self.match_ident() && !self.scanner.at_newline() {
             let id = self.parse_id()?;
             Ok(Statement::Break(self.consume_semicolon(start)?, Some(id)))
-        } else {
+        } else if self.context.in_switch || self.context.in_iteration {
             Ok(Statement::Break(self.consume_semicolon(start)?, None))
+        } else {
+            Err(self.error(ErrorCause::IllegalBreak))
         }
     }
 

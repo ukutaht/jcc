@@ -8,6 +8,7 @@ pub enum ErrorCause {
     MissingCatchOrFinally,
     MultipleDefaultsInSwitch,
     InvalidLHSAssignment,
+    IllegalBreak,
     UnexpectedToken(Token),
     IllegalChar(char)
 }
@@ -25,6 +26,9 @@ impl fmt::Display for CompileError {
          match self.cause {
             ErrorCause::MissingCatchOrFinally => {
                 write!(fmt, "Missing catch or finally after try")
+            },
+            ErrorCause::IllegalBreak => {
+                write!(fmt, "Illegal break statement")
             },
             ErrorCause::InvalidLHSAssignment => {
                 write!(fmt, "Invalid left-hand side in assignment")

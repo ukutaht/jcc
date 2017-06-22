@@ -118,8 +118,9 @@ invalid-syntax/migrated_0099
 invalid-syntax/migrated_0100
 invalid-syntax/migrated_0101
 
+# Reserved words
 invalid-syntax/migrated_0115
-invalid-syntax/migrated_0116
+
 invalid-syntax/migrated_0117
 invalid-syntax/migrated_0118
 invalid-syntax/migrated_0119
