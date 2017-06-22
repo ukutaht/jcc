@@ -131,7 +131,9 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token();
                 Ok(Expression::Literal(self.finalize(start), Literal::Null))
             },
-            t => Err(self.unexpected_token(t.clone()))
+            t => {
+                Err(self.unexpected_token(t.clone()))
+            }
         }
     }
 
@@ -470,8 +472,9 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_variable_declarator(&mut self) -> Result<VariableDeclarator> {
-        match self.scanner.next_token() {
+        match self.scanner.lookahead.clone() {
             Token::Ident(name) => {
+                self.scanner.next_token();
                 let init = match self.scanner.lookahead {
                     Token::Eq => {
                         self.scanner.next_token();
@@ -481,7 +484,9 @@ impl<'a> Parser<'a> {
                 };
                 Ok(VariableDeclarator { id: name, init: init })
             }
-            t => Err(self.error(ErrorCause::UnexpectedToken(t)))
+            t => {
+                Err(self.error(ErrorCause::UnexpectedToken(t)))
+            }
         }
     }
 
@@ -933,7 +938,7 @@ impl<'a> Parser<'a> {
 
     fn error(&self, cause: ErrorCause) -> CompileError {
         CompileError {
-            pos: self.scanner.pos(),
+            pos: self.scanner.lookahead_start.one_indexed(),
             cause: cause
         }
     }

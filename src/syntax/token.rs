@@ -90,6 +90,7 @@ impl fmt::Display for Token {
         match *self {
             Token::Bang => write!(fmt, "!"),
             Token::CloseCurly => write!(fmt, "}}"),
+            Token::If => write!(fmt, "if"),
             _ => write!(fmt, "?")
         }
     }

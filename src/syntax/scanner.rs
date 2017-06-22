@@ -140,7 +140,6 @@ impl<'a> Scanner<'a> {
                 }
                 None => {
                     self.lookahead_start = self.pos();
-                    self.column += 1;
                     return Token::Eof
                 }
             };
