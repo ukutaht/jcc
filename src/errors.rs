@@ -10,6 +10,7 @@ pub enum ErrorCause {
     InvalidLHSAssignment,
     IllegalBreak,
     IllegalContinue,
+    NewLineAfterThrow,
     UnexpectedToken(Token),
 }
 
@@ -29,6 +30,9 @@ impl fmt::Display for CompileError {
             },
             ErrorCause::IllegalBreak => {
                 write!(fmt, "Illegal break statement")
+            },
+            ErrorCause::NewLineAfterThrow => {
+                write!(fmt, "Illegal newline after throw")
             },
             ErrorCause::IllegalContinue => {
                 write!(fmt, "Illegal continue statement")

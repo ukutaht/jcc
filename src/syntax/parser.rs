@@ -673,6 +673,9 @@ impl<'a> Parser<'a> {
     fn parse_throw_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::ThrowKeyword)?;
+        if self.scanner.at_newline() {
+            return Err(self.error(ErrorCause::NewLineAfterThrow))
+        }
         let argument = self.parse_expression()?;
         Ok(Statement::Throw(self.consume_semicolon(start)?, argument))
     }
