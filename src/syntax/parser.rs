@@ -549,7 +549,9 @@ impl<'a> Parser<'a> {
             Token::OpenParen => {
                 None
             }
-            _ => panic!("Unexpected token"),
+            t => {
+                return Err(self.unexpected_token(t));
+            }
         };
 
         let parameters = self.parse_function_parameters()?;
