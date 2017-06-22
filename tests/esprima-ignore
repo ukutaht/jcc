@@ -121,9 +121,9 @@ invalid-syntax/migrated_0101
 # Reserved words
 invalid-syntax/migrated_0115
 
-invalid-syntax/migrated_0124
-invalid-syntax/migrated_0125
+# isAssignmentTarget
 invalid-syntax/migrated_0126
+
 invalid-syntax/migrated_0137.source
 invalid-syntax/migrated_0138
 invalid-syntax/migrated_0139
