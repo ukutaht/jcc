@@ -593,11 +593,13 @@ impl<'a> Parser<'a> {
             Ok(self.finalize(start))
         } else if self.scanner.at_newline() {
             Ok(self.finalize(start))
-        } else {
+        } else if self.matches(Token::Eof) || self.matches(Token::CloseCurly) {
             Ok(Span {
                 start: start,
                 end: self.scanner.lookahead_start
             })
+        } else {
+            Err(self.unexpected_token(self.scanner.lookahead.clone()))
         }
     }
 

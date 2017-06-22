@@ -27,6 +27,9 @@ impl fmt::Display for CompileError {
             ErrorCause::IllegalChar(_) => {
                 write!(fmt, "Illegal character")
             }
+            ErrorCause::UnexpectedToken(Token::Ident(_)) => {
+                write!(fmt, "Unexpected identifier")
+            }
             ErrorCause::UnexpectedToken(ref t) => {
                 write!(fmt, "Unexpected token {}", t)
             }
