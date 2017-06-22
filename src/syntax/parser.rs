@@ -428,7 +428,7 @@ impl<'a> Parser<'a> {
         if token == Token::Ident("get".to_string()) {
             self.scanner.next_token();
             if let Some(key) = self.match_object_property_key() {
-                let parameters = self.parse_function_parameters();
+                let parameters = self.parse_function_parameters()?;
                 let block = self.parse_block()?;
                 let value = Function { id: None, body: block, parameters: parameters };
                 Ok(Prop::Get(self.finalize(start), key, value))
@@ -439,7 +439,7 @@ impl<'a> Parser<'a> {
         } else if token == Token::Ident("set".to_string()) {
             self.scanner.next_token();
             if let Some(key) = self.match_object_property_key() {
-                let parameters = self.parse_function_parameters();
+                let parameters = self.parse_function_parameters()?;
                 let block = self.parse_block()?;
                 let value = Function { id: None, body: block, parameters: parameters };
                 Ok(Prop::Set(self.finalize(start), key, value))
@@ -509,15 +509,16 @@ impl<'a> Parser<'a> {
         Ok(Statement::VariableDeclaration(self.consume_semicolon(start)?, declaration))
     }
 
-    fn parse_function_parameter(&mut self) -> Pattern {
-        if let Token::Ident(name) = self.scanner.next_token() {
-            Pattern::Identifier(name)
+    fn parse_function_parameter(&mut self) -> Result<Pattern> {
+        if let Token::Ident(name) = self.scanner.lookahead.clone() {
+            self.scanner.next_token();
+            Ok(Pattern::Identifier(name))
         } else {
-            panic!("ONLY IDENTIFIERS IN PARAMETERS PLZ")
+            Err(self.unexpected_token(self.scanner.lookahead.clone()))
         }
     }
 
-    fn parse_function_parameters(&mut self) -> Vec<Pattern> {
+    fn parse_function_parameters(&mut self) -> Result<Vec<Pattern>> {
         self.expect(Token::OpenParen);
         let mut parameters = Vec::new();
 
@@ -525,7 +526,7 @@ impl<'a> Parser<'a> {
             if let Token::CloseParen = self.scanner.lookahead {
                 break;
             }
-            parameters.push(self.parse_function_parameter());
+            parameters.push(self.parse_function_parameter()?);
             if let Token::CloseParen = self.scanner.lookahead {
                 break;
             }
@@ -534,7 +535,7 @@ impl<'a> Parser<'a> {
 
         self.expect(Token::CloseParen);
 
-        parameters
+        Ok(parameters)
     }
 
     fn parse_function(&mut self) -> Result<Function> {
@@ -551,7 +552,7 @@ impl<'a> Parser<'a> {
             _ => panic!("Unexpected token"),
         };
 
-        let parameters = self.parse_function_parameters();
+        let parameters = self.parse_function_parameters()?;
 
         self.expect(Token::OpenCurly);
         let mut statements = self.parse_directive_prologues()?;
