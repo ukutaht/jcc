@@ -40,6 +40,9 @@ impl fmt::Display for CompileError {
             ErrorCause::UnexpectedToken(Token::Number(_)) => {
                 write!(fmt, "Unexpected number")
             }
+            ErrorCause::UnexpectedToken(Token::String(_)) => {
+                write!(fmt, "Unexpected string")
+            }
             ErrorCause::UnexpectedToken(ref t) => {
                 write!(fmt, "Unexpected token {}", t)
             }
