@@ -28,7 +28,3 @@ impl Span {
         }
     }
 }
-
-pub trait Tracking {
-    fn span(&self) -> &Span;
-}

@@ -1,4 +1,4 @@
-use syntax::span::{Tracking, Span};
+use syntax::span::Span;
 
 #[derive(Debug, PartialEq)]
 pub enum Literal {
@@ -137,27 +137,6 @@ pub enum Expression {
     Update(Span, UpdateOp, Box<Expression>, bool),
     Sequence(Span, Vec<Expression>),
     This(Span),
-}
-
-impl Tracking for Expression {
-    fn span(&self) -> &Span {
-        match self {
-            &Expression::Array(ref s, _) => s,
-            &Expression::Binary(ref s, _, _, _) => s,
-            &Expression::Call(ref s, _, _) => s,
-            &Expression::ComputedMember(ref s, _, _) => s,
-            &Expression::Identifier(ref s, _) => s,
-            &Expression::Literal(ref s, _) => s,
-            &Expression::Logical(ref s, _, _, _) => s,
-            &Expression::New(ref s, _, _) => s,
-            &Expression::StaticMember(ref s, _, _) => s,
-            &Expression::Unary(ref s, _, _) => s,
-            &Expression::Object(ref s, _) => s,
-            &Expression::Conditional(ref s, _, _, _) => s,
-            &Expression::Assignment(ref s, _, _, _) => s,
-            e => panic!("Cannot get span for: {:?}", e)
-        }
-    }
 }
 
 #[derive(Debug, PartialEq)]
