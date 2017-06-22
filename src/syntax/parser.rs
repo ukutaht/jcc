@@ -152,7 +152,7 @@ impl<'a> Parser<'a> {
             if let Token::CloseParen = self.scanner.lookahead {
                 break;
             } else {
-                let argument = ArgumentListElement::Expression(self.parse_assignment_expression().unwrap());
+                let argument = ArgumentListElement::Expression(self.parse_assignment_expression()?);
                 arguments.push(argument);
 
                 if self.scanner.lookahead != Token::CloseParen {
