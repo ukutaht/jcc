@@ -292,12 +292,6 @@ statement/if/invalid-function-declaration4
 statement/iteration/invalid-assign-for-in
 statement/iteration/invalid-strict-for-in-let
 statement/variable/complex-pattern-requires-init
-statement/variable/invalid_trailing_comma_1
-statement/variable/invalid_trailing_comma_2
-statement/variable/invalid_trailing_comma_3
-statement/variable/invalid_trailing_comma_4
-statement/variable/invalid_trailing_comma_5
-statement/variable/invalid_trailing_comma_6
 
 # Tolerant mode
 statement/with/unterminated-with
