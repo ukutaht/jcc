@@ -153,6 +153,7 @@ invalid-syntax/migrated_0166.source
 invalid-syntax/migrated_0167.source
 invalid-syntax/migrated_0169.source
 
+# Labels
 invalid-syntax/migrated_0176
 invalid-syntax/migrated_0177
 invalid-syntax/migrated_0178
@@ -160,6 +161,8 @@ invalid-syntax/migrated_0179
 invalid-syntax/migrated_0180
 invalid-syntax/migrated_0181
 invalid-syntax/migrated_0182
+
+# Strict mode
 invalid-syntax/migrated_0183
 invalid-syntax/migrated_0184
 invalid-syntax/migrated_0185
@@ -226,10 +229,10 @@ invalid-syntax/migrated_0247
 invalid-syntax/migrated_0248
 invalid-syntax/migrated_0249
 invalid-syntax/migrated_0250
-invalid-syntax/migrated_0252
+
+# ES6: Const
 invalid-syntax/migrated_0254
-invalid-syntax/migrated_0255
-invalid-syntax/migrated_0256
+
 invalid-syntax/migrated_0257
 invalid-syntax/migrated_0258
 invalid-syntax/migrated_0260
