@@ -305,6 +305,7 @@ expression/primary/literal/numeric/migrated_0002
 
 expression/primary/literal/regular-expression/**
 
+# ES6
 expression/primary/object/migrated_0034
 expression/primary/object/migrated_0035
 expression/primary/object/migrated_0036
