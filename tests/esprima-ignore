@@ -267,7 +267,6 @@ invalid-syntax/strict_assignment_yield
 JSX/**
 whitespace/**
 
-expression/primary/literal/numeric/invalid_hex
 expression/primary/literal/string/invalid_escaped_hex
 expression/primary/literal/string/invalid_hex
 
