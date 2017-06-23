@@ -901,7 +901,7 @@ impl<'a> Parser<'a> {
         if self.match_ident() && !self.scanner.at_newline() {
             let id = self.parse_id()?;
             Ok(Statement::Continue(self.consume_semicolon(start)?, Some(id)))
-        } else if self.context.in_switch || self.context.in_iteration {
+        } else if self.context.in_iteration {
             Ok(Statement::Continue(self.consume_semicolon(start)?, None))
         } else {
             self.consume_semicolon(start)?;
