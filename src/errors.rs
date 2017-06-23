@@ -10,6 +10,7 @@ pub enum ErrorCause {
     InvalidLHSAssignment,
     IllegalBreak,
     IllegalContinue,
+    IllegalReturn,
     NewLineAfterThrow,
     UnexpectedToken(Token),
 }
@@ -27,6 +28,9 @@ impl fmt::Display for CompileError {
          match self.cause {
             ErrorCause::MissingCatchOrFinally => {
                 write!(fmt, "Missing catch or finally after try")
+            },
+            ErrorCause::IllegalReturn => {
+                write!(fmt, "Illegal return statement")
             },
             ErrorCause::IllegalBreak => {
                 write!(fmt, "Illegal break statement")

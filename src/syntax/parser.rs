@@ -11,7 +11,8 @@ pub type Result<T> = std::result::Result<T, CompileError>;
 struct ParseContext {
     allow_in: bool,
     in_iteration: bool,
-    in_switch: bool
+    in_switch: bool,
+    in_function_body: bool
 }
 
 pub struct Parser<'a> {
@@ -28,7 +29,8 @@ impl<'a> Parser<'a> {
             context: ParseContext {
                 allow_in: true,
                 in_iteration: false,
-                in_switch: false
+                in_switch: false,
+                in_function_body: false
             }
         }
     }
@@ -94,6 +96,14 @@ impl<'a> Parser<'a> {
         let in_iteration = std::mem::replace(&mut self.context.in_iteration, in_iteration);
         let result = parse_fn(self);
         std::mem::replace(&mut self.context.in_iteration, in_iteration);
+        result
+    }
+
+    fn in_function_body<F, T>(&mut self, in_function_body: bool, parse_fn: F) -> Result<T>
+      where F: FnOnce(&mut Self) -> Result<T> {
+        let in_function_body = std::mem::replace(&mut self.context.in_function_body, in_function_body);
+        let result = parse_fn(self);
+        std::mem::replace(&mut self.context.in_iteration, in_function_body);
         result
     }
 
@@ -454,7 +464,7 @@ impl<'a> Parser<'a> {
             self.scanner.next_token();
             if let Some(key) = self.match_object_property_key() {
                 let parameters = self.parse_function_parameters()?;
-                let block = self.parse_block()?;
+                let block = self.in_function_body(true, Parser::parse_block)?;
                 let value = Function { id: None, body: block, parameters: parameters };
                 Ok(Prop::Get(self.finalize(start), key, value))
             } else {
@@ -465,7 +475,7 @@ impl<'a> Parser<'a> {
             self.scanner.next_token();
             if let Some(key) = self.match_object_property_key() {
                 let parameters = self.parse_function_parameters()?;
-                let block = self.parse_block()?;
+                let block = self.in_function_body(true, Parser::parse_block)?;
                 let value = Function { id: None, body: block, parameters: parameters };
                 Ok(Prop::Set(self.finalize(start), key, value))
             } else {
@@ -583,10 +593,11 @@ impl<'a> Parser<'a> {
         let parameters = self.parse_function_parameters()?;
 
         self.expect(Token::OpenCurly)?;
-        let mut statements = self.parse_directive_prologues()?;
+
+        let mut statements = self.in_function_body(true, Parser::parse_directive_prologues)?;
 
         while self.scanner.lookahead != Token::CloseCurly {
-            statements.push(self.parse_statement_list_item()?);
+            statements.push(self.in_function_body(true, Parser::parse_statement_list_item)?);
         }
 
         self.expect(Token::CloseCurly)?;
@@ -653,6 +664,10 @@ impl<'a> Parser<'a> {
     fn parse_return_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::Return)?;
+
+        if !self.context.in_function_body {
+            return Err(self.error(ErrorCause::IllegalReturn))
+        };
 
         let mut argument = None;
 
