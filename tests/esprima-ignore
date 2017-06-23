@@ -284,7 +284,6 @@ statement/iteration/pattern-in-for-in
 # Tolerant mode
 statement/iteration/unterminated-do-while
 
-statement/try/strict_simple_catch
 
 statement/if/invalid-function-declaration1
 statement/if/invalid-function-declaration2
