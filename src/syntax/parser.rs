@@ -811,7 +811,11 @@ impl<'a> Parser<'a> {
         let right = self.parse_expression()?;
         self.expect(Token::CloseParen)?;
         let body = self.in_iteration(true, Parser::parse_statement)?;
-        Ok(Statement::ForIn(self.finalize(start), left, right, Box::new(body)))
+        Ok(Statement::ForIn(self.finalize(start), Box::new(ForInStatement {
+            left: left,
+            right: right,
+            body: body
+        })))
     }
 
     fn parse_for_iter_statement(&mut self, start: Position, init: Option<ForInit>) -> Result<Statement> {
@@ -830,7 +834,12 @@ impl<'a> Parser<'a> {
         self.expect(Token::CloseParen)?;
 
         let body = self.in_iteration(true, Parser::parse_statement)?;
-        Ok(Statement::For(self.finalize(start), init, test, update, Box::new(body)))
+        Ok(Statement::For(self.finalize(start), Box::new(ForStatement {
+            init: init,
+            test: test,
+            update: update,
+            body: body
+        })))
     }
 
     fn parse_for_statement(&mut self) -> Result<Statement> {

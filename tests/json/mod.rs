@@ -473,7 +473,9 @@ fn for_statement(node: &Value) -> Result<Statement> {
     let update = maybe_key(node, "update", &expression)?;
     let body = statement(expect_value(node, "body"))?;
 
-    Ok(Statement::For(span(node)?, init, test, update, Box::new(body)))
+    Ok(Statement::For(span(node)?, Box::new(ForStatement {
+        init, test, update, body
+    })))
 }
 
 fn for_in_statement(node: &Value) -> Result<Statement> {
@@ -481,7 +483,9 @@ fn for_in_statement(node: &Value) -> Result<Statement> {
     let right = expression(expect_value(node, "right"))?;
     let body = statement(expect_value(node, "body"))?;
 
-    Ok(Statement::ForIn(span(node)?, left, right, Box::new(body)))
+    Ok(Statement::ForIn(span(node)?, Box::new(ForInStatement {
+        left, right, body
+    })))
 }
 
 fn with_statement(node: &Value) -> Result<Statement> {

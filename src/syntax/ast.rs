@@ -170,6 +170,21 @@ pub enum ForInit {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct ForStatement {
+    pub init: Option<ForInit>,
+    pub test: Option<Expression>,
+    pub update: Option<Expression>,
+    pub body: Statement
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ForInStatement {
+    pub left: ForInit,
+    pub right: Expression,
+    pub body: Statement
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Statement {
     Expression(Span, Expression),
     VariableDeclaration(Span, VariableDeclaration),
@@ -185,8 +200,8 @@ pub enum Statement {
     Break(Span, Option<Id>),
     DoWhile(Span, Box<Statement>, Expression),
     While(Span, Expression, Box<Statement>),
-    For(Span, Option<ForInit>, Option<Expression>, Option<Expression>, Box<Statement>),
-    ForIn(Span, ForInit, Expression, Box<Statement>),
+    For(Span, Box<ForStatement>),
+    ForIn(Span, Box<ForInStatement>),
     With(Span, Expression, Box<Statement>),
     Labeled(Span, Id, Box<Statement>),
     Continue(Span, Option<Id>),
