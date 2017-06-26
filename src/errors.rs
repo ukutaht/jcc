@@ -2,6 +2,9 @@ use syntax::token::Token;
 use syntax::span::Position;
 use std::error::Error;
 use std::fmt;
+use std;
+
+pub type Result<T> = std::result::Result<T, CompileError>;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ErrorCause {
@@ -11,6 +14,8 @@ pub enum ErrorCause {
     IllegalBreak,
     IllegalContinue,
     IllegalReturn,
+    IllegalToken,
+    InvalidHexEscape,
     NewLineAfterThrow,
     UnexpectedToken(Token),
 }
@@ -28,6 +33,12 @@ impl fmt::Display for CompileError {
          match self.cause {
             ErrorCause::MissingCatchOrFinally => {
                 write!(fmt, "Missing catch or finally after try")
+            },
+            ErrorCause::IllegalToken => {
+                write!(fmt, "Unexpected token ILLEGAL")
+            },
+            ErrorCause::InvalidHexEscape => {
+                write!(fmt, "Invalid hexadecimal escape sequence")
             },
             ErrorCause::IllegalReturn => {
                 write!(fmt, "Illegal return statement")

@@ -1,12 +1,10 @@
-use errors::{CompileError, ErrorCause};
+use errors::{CompileError, ErrorCause, Result};
 use syntax::ast::*;
 use syntax::span::{Span, Position};
 use syntax::token::Token;
 use syntax::scanner::Scanner;
 use syntax::ops::AsOperator;
 use std;
-
-pub type Result<T> = std::result::Result<T, CompileError>;
 
 struct ParseContext {
     allow_in: bool,
@@ -22,10 +20,8 @@ pub struct Parser<'a> {
 
 impl<'a> Parser<'a> {
     pub fn new(source: &'a str) -> Parser {
-        let mut scanner = Scanner::new(source);
-        scanner.position_at_start();
         Parser {
-            scanner: scanner,
+            scanner: Scanner::new(source),
             context: ParseContext {
                 allow_in: true,
                 in_iteration: false,
@@ -66,6 +62,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse(&mut self) -> Result<Program> {
+        self.scanner.position_at_start()?;
         let mut body = self.parse_directive_prologues()?;
 
         while self.scanner.lookahead != Token::Eof {
@@ -111,12 +108,12 @@ impl<'a> Parser<'a> {
         self.scanner.lookahead == tok
     }
 
-    fn eat(&mut self, tok: Token) -> bool {
+    fn eat(&mut self, tok: Token) -> Result<bool> {
         if self.matches(tok) {
-            self.scanner.next_token();
-            true
+            self.scanner.next_token()?;
+            Ok(true)
         } else {
-            false
+            Ok(false)
         }
     }
 
@@ -132,23 +129,23 @@ impl<'a> Parser<'a> {
         let token = self.scanner.lookahead.clone();
         match token {
             Token::Number(n) => {
-                self.scanner.next_token();
+                self.scanner.next_token()?;
                 Ok(Expression::Literal(self.finalize(start), Literal::Number(n)))
             }
             Token::BoolTrue => {
-                self.scanner.next_token();
+                self.scanner.next_token()?;
                 Ok(Expression::Literal(self.finalize(start), Literal::True))
             }
             Token::BoolFalse => {
-                self.scanner.next_token();
+                self.scanner.next_token()?;
                 Ok(Expression::Literal(self.finalize(start), Literal::False))
             }
             Token::String(ref s) => {
-                self.scanner.next_token();
+                self.scanner.next_token()?;
                 Ok(Expression::Literal(self.finalize(start), Literal::String(s.clone())))
             }
             Token::Ident(n) => {
-                self.scanner.next_token();
+                self.scanner.next_token()?;
                 Ok(Expression::Identifier(self.finalize(start), n))
             }
             Token::OpenSquare => self.parse_array_initializer(),
@@ -159,11 +156,11 @@ impl<'a> Parser<'a> {
                 Ok(Expression::Function(self.finalize(start), fun))
             },
             Token::ThisKeyword => {
-                self.scanner.next_token();
+                self.scanner.next_token()?;
                 Ok(Expression::This(self.finalize(start)))
             },
             Token::Null => {
-                self.scanner.next_token();
+                self.scanner.next_token()?;
                 Ok(Expression::Literal(self.finalize(start), Literal::Null))
             },
             t => {
@@ -215,7 +212,7 @@ impl<'a> Parser<'a> {
     fn expect_identifier_name(&mut self) -> Result<String> {
         match self.match_identifier_name() {
             Some(ident) => {
-                self.scanner.next_token();
+                self.scanner.next_token()?;
                 Ok(ident)
             }
             None => Err(self.error(ErrorCause::UnexpectedToken(self.scanner.lookahead.clone())))
@@ -271,7 +268,7 @@ impl<'a> Parser<'a> {
                     result = Expression::ComputedMember(span, Box::new(result), Box::new(expr));
                 },
                 Token::Dot => {
-                    self.scanner.next_token();
+                    self.scanner.next_token()?;
                     let identifier_name = self.expect_identifier_name()?;
                     result = Expression::StaticMember(self.finalize(start), Box::new(result), identifier_name)
 
@@ -286,7 +283,7 @@ impl<'a> Parser<'a> {
     fn parse_unary_expression(&mut self) -> Result<Expression> {
         if let Some(prefix) = self.scanner.lookahead.as_unary_op() {
             let start = self.scanner.lookahead_start;
-            self.scanner.next_token();
+            self.scanner.next_token()?;
             let expr = self.parse_unary_expression()?;
             Ok(Expression::Unary(self.finalize(start), prefix, Box::new(expr)))
         } else {
@@ -297,7 +294,7 @@ impl<'a> Parser<'a> {
     fn parse_update_expression(&mut self) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
         if let Some(op) = self.scanner.lookahead.as_update_op() {
-            self.scanner.next_token();
+            self.scanner.next_token()?;
             let expr = self.parse_unary_expression()?;
             Ok(Expression::Update(self.finalize(start), op, Box::new(expr), true))
         } else {
@@ -308,7 +305,7 @@ impl<'a> Parser<'a> {
             };
 
             if let Some(op) = self.scanner.lookahead.as_update_op() {
-                self.scanner.next_token();
+                self.scanner.next_token()?;
                 Ok(Expression::Update(self.finalize(start), op, Box::new(expr), false))
             } else {
                 Ok(expr)
@@ -334,7 +331,7 @@ impl<'a> Parser<'a> {
         let mut expr = self.parse_unary_expression()?;
 
         if let Some(first_op) = self.scanner.lookahead.as_infix_op(self.context.allow_in) {
-            self.scanner.next_token();
+            self.scanner.next_token()?;
             let mut markers = vec![start, self.scanner.lookahead_start];
             let mut right = self.parse_unary_expression()?;
             let mut expressions = vec![expr, right];
@@ -349,7 +346,7 @@ impl<'a> Parser<'a> {
                     let marker = markers.last().unwrap();
                     expressions.push(self.combine_binary(operator, expr, right, *marker))
                 }
-                self.scanner.next_token();
+                self.scanner.next_token()?;
                 operators.push(op);
                 markers.push(self.scanner.lookahead_start);
                 expressions.push(self.parse_unary_expression()?)
@@ -372,7 +369,7 @@ impl<'a> Parser<'a> {
         let start = self.scanner.lookahead_start;
         let expr = self.parse_binary_expression()?;
 
-        if self.eat(Token::QuestionMark) {
+        if self.eat(Token::QuestionMark)? {
             let consequent = self.parse_assignment_expression()?;
             self.expect(Token::Colon)?;
             let alternate = self.parse_assignment_expression()?;
@@ -390,7 +387,7 @@ impl<'a> Parser<'a> {
             Some(op) => {
                 match left {
                     Expression::Identifier(_, _) => {
-                        self.scanner.next_token();
+                        self.scanner.next_token()?;
                         let right = self.parse_assignment_expression()?;
                         let span = self.finalize(start);
                         Ok(Expression::Assignment(span, op, Box::new(left), Box::new(right)))
@@ -412,7 +409,7 @@ impl<'a> Parser<'a> {
                 break;
             }
             if let Token::Comma = self.scanner.lookahead {
-                self.scanner.next_token();
+                self.scanner.next_token()?;
                 elements.push(None);
                 continue;
             } else {
@@ -428,24 +425,26 @@ impl<'a> Parser<'a> {
         Ok(Expression::Array(self.finalize(start), elements))
     }
 
-    fn match_object_property_key(&mut self) -> Option<PropKey> {
+    fn match_object_property_key(&mut self) -> Result<Option<PropKey>> {
         let start = self.scanner.lookahead_start;
 
         let token = self.scanner.lookahead.clone();
         match token {
             Token::String(ref s) => {
-                self.scanner.next_token();
-                Some(PropKey::String(self.finalize(start), s.to_string()))
+                self.scanner.next_token()?;
+                Ok(Some(PropKey::String(self.finalize(start), s.to_string())))
             }
             Token::Number(n) => {
-                self.scanner.next_token();
-                Some(PropKey::Number(self.finalize(start), n))
+                self.scanner.next_token()?;
+                Ok(Some(PropKey::Number(self.finalize(start), n)))
             },
             _ => {
-                self.match_identifier_name().map(|name| {
-                    self.scanner.next_token();
-                    PropKey::Identifier(self.finalize(start), name)
-                })
+                if let Some(name) = self.match_identifier_name() {
+                    self.scanner.next_token()?;
+                    Ok(Some(PropKey::Identifier(self.finalize(start), name)))
+                } else {
+                    Ok(None)
+                }
             }
         }
     }
@@ -461,8 +460,8 @@ impl<'a> Parser<'a> {
         let token = self.scanner.lookahead.clone();
 
         if token == Token::Ident("get".to_string()) {
-            self.scanner.next_token();
-            if let Some(key) = self.match_object_property_key() {
+            self.scanner.next_token()?;
+            if let Some(key) = self.match_object_property_key()? {
                 let parameters = self.parse_function_parameters()?;
                 let block = self.in_function_body(true, Parser::parse_block)?;
                 let value = Function { id: None, body: block, parameters: parameters };
@@ -472,8 +471,8 @@ impl<'a> Parser<'a> {
                 self.parse_prop_init(start, PropKey::Identifier(span, "get".to_string()))
             }
         } else if token == Token::Ident("set".to_string()) {
-            self.scanner.next_token();
-            if let Some(key) = self.match_object_property_key() {
+            self.scanner.next_token()?;
+            if let Some(key) = self.match_object_property_key()? {
                 let parameters = self.parse_function_parameters()?;
                 let block = self.in_function_body(true, Parser::parse_block)?;
                 let value = Function { id: None, body: block, parameters: parameters };
@@ -482,7 +481,7 @@ impl<'a> Parser<'a> {
                 let span = self.finalize(start);
                 self.parse_prop_init(start, PropKey::Identifier(span, "set".to_string()))
             }
-        } else if let Some(key) = self.match_object_property_key() {
+        } else if let Some(key) = self.match_object_property_key()? {
             self.parse_prop_init(start, key)
         } else {
             Err(self.unexpected_token(token))
@@ -510,10 +509,10 @@ impl<'a> Parser<'a> {
     fn parse_variable_declarator(&mut self) -> Result<VariableDeclarator> {
         match self.scanner.lookahead.clone() {
             Token::Ident(name) => {
-                self.scanner.next_token();
+                self.scanner.next_token()?;
                 let init = match self.scanner.lookahead {
                     Token::Eq => {
-                        self.scanner.next_token();
+                        self.scanner.next_token()?;
                         Some(self.parse_assignment_expression()?)
                     }
                     _ => None
@@ -529,7 +528,7 @@ impl<'a> Parser<'a> {
     fn parse_variable_declaration(&mut self) -> Result<VariableDeclaration> {
         let mut declarators = Vec::new();
         declarators.push(self.parse_variable_declarator()?);
-        while self.eat(Token::Comma) {
+        while self.eat(Token::Comma)? {
             declarators.push(self.parse_variable_declarator()?)
         }
         Ok(VariableDeclaration {
@@ -547,7 +546,7 @@ impl<'a> Parser<'a> {
 
     fn parse_function_parameter(&mut self) -> Result<Pattern> {
         if let Token::Ident(name) = self.scanner.lookahead.clone() {
-            self.scanner.next_token();
+            self.scanner.next_token()?;
             Ok(Pattern::Identifier(name))
         } else {
             Err(self.unexpected_token(self.scanner.lookahead.clone()))
@@ -579,7 +578,7 @@ impl<'a> Parser<'a> {
 
         let id = match self.scanner.lookahead.clone() {
             Token::Ident(name) => {
-                self.scanner.next_token();
+                self.scanner.next_token()?;
                 Some(name)
             }
             Token::OpenParen => {
@@ -613,7 +612,7 @@ impl<'a> Parser<'a> {
         if self.matches(Token::Comma) {
             let mut expressions = vec![expr];
             while !self.matches(Token::Eof) {
-                if self.eat(Token::Comma) {
+                if self.eat(Token::Comma)? {
                     expressions.push(self.parse_assignment_expression()?);
                 } else {
                     break;
@@ -626,7 +625,7 @@ impl<'a> Parser<'a> {
     }
 
     fn consume_semicolon(&mut self, start: Position) -> Result<Span> {
-        if self.eat(Token::Semi) || self.scanner.at_newline() {
+        if self.eat(Token::Semi)? || self.scanner.at_newline() {
             Ok(self.finalize(start))
         } else if self.matches(Token::Eof) || self.matches(Token::CloseCurly) {
             Ok(Span {
@@ -652,7 +651,7 @@ impl<'a> Parser<'a> {
         let then = self.parse_statement()?;
         let alternate = match self.scanner.lookahead {
             Token::Else => {
-                self.scanner.next_token();
+                self.scanner.next_token()?;
                 Some(Box::new(self.parse_statement()?))
             },
             _ => None
@@ -700,7 +699,7 @@ impl<'a> Parser<'a> {
         self.expect(Token::OpenParen)?;
         let param = match self.scanner.lookahead.clone() {
             Token::Ident(s) => {
-                self.scanner.next_token();
+                self.scanner.next_token()?;
                 s
             },
             t => return Err(self.unexpected_token(t))
@@ -719,7 +718,7 @@ impl<'a> Parser<'a> {
         } else {
             None
         };
-        let finalizer = if self.eat(Token::FinallyKeyword) {
+        let finalizer = if self.eat(Token::FinallyKeyword)? {
             Some(self.parse_block()?)
         } else {
             None
@@ -733,7 +732,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_switch_case(&mut self) -> Result<SwitchCase> {
-        let test = if self.eat(Token::DefaultKeyword) {
+        let test = if self.eat(Token::DefaultKeyword)? {
             None
         } else {
             self.expect(Token::CaseKeyword)?;
@@ -793,7 +792,7 @@ impl<'a> Parser<'a> {
         self.expect(Token::OpenParen)?;
         let test = self.parse_expression()?;
         self.expect(Token::CloseParen)?;
-        self.eat(Token::Semi);
+        self.eat(Token::Semi)?;
         Ok(Statement::DoWhile(self.finalize(start), Box::new(body), test))
     }
 
@@ -846,11 +845,11 @@ impl<'a> Parser<'a> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::ForKeyword)?;
         self.expect(Token::OpenParen)?;
-        if self.eat(Token::Semi) {
+        if self.eat(Token::Semi)? {
             self.parse_for_iter_statement(start, None)
-        } else if self.eat(Token::Var) {
+        } else if self.eat(Token::Var)? {
             let decl = self.allow_in(false, Parser::parse_variable_declaration)?;
-            if decl.declarations.len() == 1 && self.eat(Token::In) {
+            if decl.declarations.len() == 1 && self.eat(Token::In)? {
                 self.parse_for_in_statement(start, ForInit::VarDecl(decl))
 
             } else {
@@ -859,7 +858,7 @@ impl<'a> Parser<'a> {
             }
         } else {
             let init = ForInit::Expression(self.allow_in(false, Parser::parse_expression)?);
-            if self.eat(Token::In) {
+            if self.eat(Token::In)? {
                 self.parse_for_in_statement(start, init)
             } else {
                 self.expect(Token::Semi)?;
@@ -882,7 +881,7 @@ impl<'a> Parser<'a> {
         let start = self.scanner.lookahead_start;
         let expr = self.parse_expression()?;
         let id_opt = self.as_id(&expr);
-        if id_opt.is_some() && self.eat(Token::Colon) {
+        if id_opt.is_some() && self.eat(Token::Colon)? {
             let body = self.parse_statement()?;
             Ok(Statement::Labeled(self.finalize(start), id_opt.unwrap(), Box::new(body)))
         } else {
@@ -927,7 +926,7 @@ impl<'a> Parser<'a> {
 
     fn parse_id(&mut self) -> Result<Id> {
         let start = self.scanner.lookahead_start;
-        match self.scanner.next_token() {
+        match self.scanner.next_token()? {
             Token::Ident(s) => {
                 Ok(Id(self.finalize(start), s))
             },
@@ -956,11 +955,11 @@ impl<'a> Parser<'a> {
                 Ok(Statement::Block(self.finalize(start), block))
             },
             Token::Semi => {
-                self.scanner.next_token();
+                self.scanner.next_token()?;
                 Ok(Statement::Empty(self.finalize(start)))
             }
             Token::DebuggerKeyword => {
-                self.scanner.next_token();
+                self.scanner.next_token()?;
                 Ok(Statement::Debugger(self.consume_semicolon(start)?))
             }
             Token::BreakKeyword => self.parse_break_statement(),
@@ -998,7 +997,7 @@ impl<'a> Parser<'a> {
         let next = self.scanner.lookahead.clone();
 
         if next == expected {
-            self.scanner.next_token();
+            self.scanner.next_token()?;
             Ok(next)
         } else {
             Err(self.unexpected_token(next))

@@ -1,6 +1,7 @@
 use syntax::char::ESCharExt;
 use syntax::span::Position;
 use syntax::token::Token;
+use errors::{CompileError, ErrorCause, Result};
 use std::str;
 use std::mem;
 use std::char;
@@ -62,14 +63,15 @@ impl<'a> Scanner<'a> {
         self.last_pos.line != self.lookahead_start.line
     }
 
-    pub fn position_at_start(&mut self) {
-        self.lookahead = self.lex();
+    pub fn position_at_start(&mut self) -> Result<()> {
+        self.lookahead = self.lex()?;
+        Ok(())
     }
 
-    pub fn next_token(&mut self) -> Token {
+    pub fn next_token(&mut self) -> Result<Token> {
         self.last_pos = self.pos();
-        let tok = self.lex();
-        mem::replace(&mut self.lookahead, tok)
+        let tok = self.lex()?;
+        Ok(mem::replace(&mut self.lookahead, tok))
     }
 
     pub fn pos(&self) -> Position {
@@ -107,7 +109,7 @@ impl<'a> Scanner<'a> {
         }
     }
 
-    fn lex(&mut self) -> Token {
+    fn lex(&mut self) -> Result<Token> {
         let character;
 
         loop {
@@ -136,7 +138,7 @@ impl<'a> Scanner<'a> {
                         },
                         None => {
                             self.lookahead_start = self.pos();
-                            return Token::Eof
+                            return Ok(Token::Eof)
                         }
                     }
                 }
@@ -146,7 +148,7 @@ impl<'a> Scanner<'a> {
                 }
                 None => {
                     self.lookahead_start = self.pos();
-                    return Token::Eof
+                    return Ok(Token::Eof)
                 }
             };
         }
@@ -159,94 +161,94 @@ impl<'a> Scanner<'a> {
         } else if self.eat_byte(b'=') {
             if self.eat_byte(b'=') {
                 if self.eat_byte(b'=') {
-                    Token::EqEqEq
+                    Ok(Token::EqEqEq)
                 } else {
-                    Token::EqEq
+                    Ok(Token::EqEq)
                 }
             } else {
-                Token::Eq
+                Ok(Token::Eq)
             }
         } else if self.eat_byte(b'(') {
-            Token::OpenParen
+            Ok(Token::OpenParen)
         } else if self.eat_byte(b')') {
-            Token::CloseParen
+            Ok(Token::CloseParen)
         } else if self.eat_byte(b'{') {
-            Token::OpenCurly
+            Ok(Token::OpenCurly)
         } else if self.eat_byte(b'}') {
-            Token::CloseCurly
+            Ok(Token::CloseCurly)
         } else if self.eat_byte(b'[') {
-            Token::OpenSquare
+            Ok(Token::OpenSquare)
         } else if self.eat_byte(b']') {
-            Token::CloseSquare
+            Ok(Token::CloseSquare)
         } else if self.eat_byte(b'?') {
-            Token::QuestionMark
+            Ok(Token::QuestionMark)
         } else if self.eat_byte(b':') {
-            Token::Colon
+            Ok(Token::Colon)
         } else if self.eat_byte(b';') {
-            Token::Semi
+            Ok(Token::Semi)
         } else if self.eat_byte(b'+') {
             if self.eat_byte(b'+') {
-                Token::PlusPlus
+                Ok(Token::PlusPlus)
             } else if self.eat_byte(b'=') {
-                Token::PlusEq
+                Ok(Token::PlusEq)
             } else {
-                Token::Plus
+                Ok(Token::Plus)
             }
         } else if self.eat_byte(b'^') {
             if self.eat_byte(b'=') {
-                Token::BitXorEq
+                Ok(Token::BitXorEq)
             } else {
-                Token::BitXor
+                Ok(Token::BitXor)
             }
         } else if self.eat_byte(b'*') {
             if self.eat_byte(b'=') {
-                Token::TimesEq
+                Ok(Token::TimesEq)
             } else {
-                Token::Times
+                Ok(Token::Times)
             }
         } else if self.eat_byte(b'/') {
             if self.eat_byte(b'=') {
-                Token::DivEq
+                Ok(Token::DivEq)
             } else {
-                Token::Div
+                Ok(Token::Div)
             }
         } else if self.eat_byte(b'%') {
             if self.eat_byte(b'=') {
-                Token::ModEq
+                Ok(Token::ModEq)
             } else {
-                Token::Mod
+                Ok(Token::Mod)
             }
         } else if self.eat_byte(b',') {
-            Token::Comma
+            Ok(Token::Comma)
         } else if self.eat_byte(b'<') {
             if self.eat_byte(b'<') {
                 if self.eat_byte(b'=') {
-                    Token::LShiftEq
+                    Ok(Token::LShiftEq)
                 } else {
-                    Token::LShift
+                    Ok(Token::LShift)
                 }
             } else if self.eat_byte(b'=') {
-                Token::Lte
+                Ok(Token::Lte)
             } else {
-                Token::Lt
+                Ok(Token::Lt)
             }
         } else if self.eat_byte(b'>') {
             if self.eat_byte(b'>') {
                 if self.eat_byte(b'>') {
                     if self.eat_byte(b'=') {
-                        Token::URShiftEq
+                        Ok(Token::URShiftEq)
                     } else {
-                        Token::URShift
+                        Ok(Token::URShift)
                     }
                 } else if self.eat_byte(b'=') {
-                    Token::RShiftEq
+                    Ok(Token::RShiftEq)
                 } else {
-                    Token::RShift
+                    Ok(Token::RShift)
                 }
             } else if self.eat_byte(b'=') {
-                Token::Gte
+                Ok(Token::Gte)
             } else {
-                Token::Gt
+                Ok(Token::Gt)
             }
         } else if character == b'.' {
             match self.peek_byte() {
@@ -255,81 +257,81 @@ impl<'a> Scanner<'a> {
                 }
                 _ => {
                     self.next_byte();
-                    Token::Dot
+                    Ok(Token::Dot)
                }
             }
         } else if self.eat_byte(b'!') {
             if self.eat_byte(b'=') {
                 if self.eat_byte(b'=') {
-                    Token::NotEqEq
+                    Ok(Token::NotEqEq)
                 } else {
-                    Token::NotEq
+                    Ok(Token::NotEq)
                 }
             } else {
-                Token::Bang
+                Ok(Token::Bang)
             }
         } else if self.eat_byte(b'-') {
             if self.eat_byte(b'-') {
-                Token::MinusMinus
+                Ok(Token::MinusMinus)
             } else if self.eat_byte(b'=') {
-                Token::MinusEq
+                Ok(Token::MinusEq)
             } else {
-                Token::Minus
+                Ok(Token::Minus)
             }
         } else if self.eat_byte(b'~') {
-            Token::Tilde
+            Ok(Token::Tilde)
         } else if self.eat_byte(b'&') {
             if self.eat_byte(b'&') {
-                Token::LogicalAnd
+                Ok(Token::LogicalAnd)
             } else if self.eat_byte(b'=') {
-                Token::BitAndEq
+                Ok(Token::BitAndEq)
             } else {
-                Token::BitAnd
+                Ok(Token::BitAnd)
             }
         } else if self.eat_byte(b'|') {
             if self.eat_byte(b'|') {
-                Token::LogicalOr
+                Ok(Token::LogicalOr)
             } else if self.eat_byte(b'=') {
-                Token::BitOrEq
+                Ok(Token::BitOrEq)
             } else {
-                Token::BitOr
+                Ok(Token::BitOr)
             }
         } else if self.current_char().unwrap().is_es_identifier_start() {
-            self.scan_identifier()
+            Ok(self.scan_identifier())
         } else {
-            Token::Illegal
+            self.invalid_token()
         }
     }
 
-    fn scan_number(&mut self) -> Token {
+    fn scan_number(&mut self) -> Result<Token> {
         let nr = match (self.current_byte(), self.peek_byte()) {
             (Some(b'0'), Some(b'x')) | (Some(b'0'), Some(b'X')) => {
-                self.scan_hex()
+                self.scan_hex()?
             }
-            _ => self.scan_float()
+            _ => self.scan_float()?
         };
 
         match self.current_char() {
             Some(ch) if ch.is_es_identifier_start() => {
                 self.invalid_token()
             },
-            _ => nr
+            _ => Ok(nr)
         }
     }
 
-    fn scan_hex(&mut self) -> Token {
+    fn scan_hex(&mut self) -> Result<Token> {
         self.next_byte();self.next_byte();
         let start = self.index;
         self.take_while(|c| (c as char).is_digit(16));
         let hex = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]) };
 
         match u32::from_str_radix(hex, 16) {
-            Ok(val) => Token::Number(val as f64),
+            Ok(val) => Ok(Token::Number(val as f64)),
             Err(_) => self.invalid_token()
         }
     }
 
-    fn scan_float(&mut self) -> Token {
+    fn scan_float(&mut self) -> Result<Token> {
         let start = self.index;
 
         if self.eat_byte(b'0') {
@@ -341,7 +343,7 @@ impl<'a> Scanner<'a> {
 
             if is_octal {
                 let number = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]) };
-                return Token::Number(i32::from_str_radix(number, 8).unwrap() as f64);
+                return Ok(Token::Number(i32::from_str_radix(number, 8).unwrap() as f64));
             }
         } else {
             self.take_while(|c| (c as char).is_digit(10));
@@ -363,17 +365,19 @@ impl<'a> Scanner<'a> {
         }
 
         let float = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]) }.parse().unwrap();
-        Token::Number(float)
+        Ok(Token::Number(float))
     }
 
-    fn invalid_token(&mut self) -> Token {
-        self.lookahead_start = self.pos();
-        Token::Illegal
+    fn invalid_token(&mut self) -> Result<Token> {
+        self.invalid_token_at(self.pos())
     }
 
-    fn scan_string(&mut self, quote: u8) -> Token {
+    fn invalid_token_at(&self, pos: Position) -> Result<Token> {
+        Err(CompileError {pos: pos.one_indexed(), cause: ErrorCause::IllegalToken})
+    }
+
+    fn scan_string(&mut self, quote: u8) -> Result<Token> {
         let start = self.index;
-        let start_column = self.column;
         self.eat_byte(quote);
 
         while let Some(ch) = self.next_char() {
@@ -407,8 +411,8 @@ impl<'a> Scanner<'a> {
                     Some('v') => continue,
                     Some('f') => continue,
                     Some('x') => {
-                        self.scan_hex_digit();
-                        self.scan_hex_digit();
+                        self.scan_hex_digit()?;
+                        self.scan_hex_digit()?;
                         continue;
                     },
                     Some(ch) if ch.is_es_newline() => {
@@ -418,26 +422,26 @@ impl<'a> Scanner<'a> {
                         self.line += 1;
                         self.column = 0;
                     },
-                    _ => return Token::Illegal
+                    _ => return self.invalid_token_at(self.lookahead_start)
                 }
             } else if ch.is_es_newline() {
-                self.last_pos = Position { line: self.line, column: start_column };
-                return Token::Illegal;
+                return self.invalid_token_at(self.lookahead_start);
             } else {
                 continue;
             }
         }
 
         let string = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]).to_string() };
-        Token::String(string)
+        Ok(Token::String(string))
     }
 
-    fn scan_hex_digit(&mut self) -> u32 {
-        match self.next_char() {
+    fn scan_hex_digit(&mut self) -> Result<u32> {
+        match self.current_char() {
             Some(ch) if ch.is_digit(16) => {
-                ch.to_digit(16).unwrap()
+                self.next_char();
+                Ok(ch.to_digit(16).unwrap())
             },
-            _ => panic!("Invalid hex")
+            _ => Err(CompileError { pos: self.pos().one_indexed(), cause: ErrorCause::InvalidHexEscape })
         }
     }
 

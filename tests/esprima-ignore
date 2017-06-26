@@ -33,9 +33,6 @@ es2017/**
 es2018/**
 ES6/**
 
-invalid-syntax/GH-1106-00
-invalid-syntax/GH-1106-01
-invalid-syntax/GH-1106-02
 invalid-syntax/GH-1106-03
 invalid-syntax/GH-1106-04
 invalid-syntax/GH-1106-05
