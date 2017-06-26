@@ -4,13 +4,15 @@ use syntax::span::{Span, Position};
 use syntax::token::Token;
 use syntax::scanner::Scanner;
 use syntax::ops::AsOperator;
+use std::collections::HashSet;
 use std;
 
 struct ParseContext {
     allow_in: bool,
     in_iteration: bool,
     in_switch: bool,
-    in_function_body: bool
+    in_function_body: bool,
+    labels: HashSet<String>
 }
 
 pub struct Parser<'a> {
@@ -26,7 +28,8 @@ impl<'a> Parser<'a> {
                 allow_in: true,
                 in_iteration: false,
                 in_switch: false,
-                in_function_body: false
+                in_function_body: false,
+                labels: HashSet::new()
             }
         }
     }
@@ -93,14 +96,6 @@ impl<'a> Parser<'a> {
         let in_iteration = std::mem::replace(&mut self.context.in_iteration, in_iteration);
         let result = parse_fn(self);
         std::mem::replace(&mut self.context.in_iteration, in_iteration);
-        result
-    }
-
-    fn in_function_body<F, T>(&mut self, in_function_body: bool, parse_fn: F) -> Result<T>
-      where F: FnOnce(&mut Self) -> Result<T> {
-        let in_function_body = std::mem::replace(&mut self.context.in_function_body, in_function_body);
-        let result = parse_fn(self);
-        std::mem::replace(&mut self.context.in_iteration, in_function_body);
         result
     }
 
@@ -455,6 +450,27 @@ impl<'a> Parser<'a> {
         Ok(Prop::Init(self.finalize(start), key, value))
     }
 
+    fn parse_function_source_elements(&mut self) -> Result<Block> {
+        let old_in_function_body = std::mem::replace(&mut self.context.in_function_body, true);
+        let old_labels = std::mem::replace(&mut self.context.labels, HashSet::new());
+        let old_in_switch = std::mem::replace(&mut self.context.in_switch, false);
+        let old_in_iteration = std::mem::replace(&mut self.context.in_iteration, false);
+
+        self.expect(Token::OpenCurly)?;
+        let mut statements = self.parse_directive_prologues()?;
+
+        while self.scanner.lookahead != Token::CloseCurly {
+            statements.push(self.parse_statement_list_item()?);
+        }
+
+        self.expect(Token::CloseCurly)?;
+        std::mem::replace(&mut self.context.in_function_body, old_in_function_body);
+        std::mem::replace(&mut self.context.labels, old_labels);
+        std::mem::replace(&mut self.context.in_switch, old_in_switch);
+        std::mem::replace(&mut self.context.in_iteration, old_in_iteration);
+        Ok(Block(statements))
+    }
+
     fn parse_object_property(&mut self) -> Result<Prop> {
         let start = self.scanner.lookahead_start;
         let token = self.scanner.lookahead.clone();
@@ -463,7 +479,7 @@ impl<'a> Parser<'a> {
             self.scanner.next_token()?;
             if let Some(key) = self.match_object_property_key()? {
                 let parameters = self.parse_function_parameters()?;
-                let block = self.in_function_body(true, Parser::parse_block)?;
+                let block = self.parse_function_source_elements()?;
                 let value = Function { id: None, body: block, parameters: parameters };
                 Ok(Prop::Get(self.finalize(start), key, value))
             } else {
@@ -474,7 +490,7 @@ impl<'a> Parser<'a> {
             self.scanner.next_token()?;
             if let Some(key) = self.match_object_property_key()? {
                 let parameters = self.parse_function_parameters()?;
-                let block = self.in_function_body(true, Parser::parse_block)?;
+                let block = self.parse_function_source_elements()?;
                 let value = Function { id: None, body: block, parameters: parameters };
                 Ok(Prop::Set(self.finalize(start), key, value))
             } else {
@@ -590,17 +606,7 @@ impl<'a> Parser<'a> {
         };
 
         let parameters = self.parse_function_parameters()?;
-
-        self.expect(Token::OpenCurly)?;
-
-        let mut statements = self.in_function_body(true, Parser::parse_directive_prologues)?;
-
-        while self.scanner.lookahead != Token::CloseCurly {
-            statements.push(self.in_function_body(true, Parser::parse_statement_list_item)?);
-        }
-
-        self.expect(Token::CloseCurly)?;
-        let block = Block(statements);
+        let block = self.parse_function_source_elements()?;
 
         Ok(Function { id: id, body: block, parameters: parameters })
     }
@@ -882,8 +888,14 @@ impl<'a> Parser<'a> {
         let expr = self.parse_expression()?;
         let id_opt = self.as_id(&expr);
         if id_opt.is_some() && self.eat(Token::Colon)? {
+            let id = id_opt.unwrap();
+            if self.context.labels.contains(&id.1) {
+                return Err(self.error(ErrorCause::DuplicateLabel(id.1.clone())))
+            }
+            self.context.labels.insert(id.1.clone());
             let body = self.parse_statement()?;
-            Ok(Statement::Labeled(self.finalize(start), id_opt.unwrap(), Box::new(body)))
+            self.context.labels.remove(&id.1);
+            Ok(Statement::Labeled(self.finalize(start), id, Box::new(body)))
         } else {
             Ok(Statement::Expression(self.consume_semicolon(start)?, expr))
         }
@@ -894,6 +906,9 @@ impl<'a> Parser<'a> {
         self.expect(Token::BreakKeyword)?;
         if self.match_ident() && !self.scanner.at_newline() {
             let id = self.parse_id()?;
+            if !self.context.labels.contains(&id.1) {
+                return Err(self.error(ErrorCause::UndefinedLabel(id.1.clone())))
+            };
             Ok(Statement::Break(self.consume_semicolon(start)?, Some(id)))
         } else if self.context.in_switch || self.context.in_iteration {
             Ok(Statement::Break(self.consume_semicolon(start)?, None))
@@ -908,6 +923,9 @@ impl<'a> Parser<'a> {
         self.expect(Token::ContinueKeyword)?;
         if self.match_ident() && !self.scanner.at_newline() {
             let id = self.parse_id()?;
+            if !self.context.labels.contains(&id.1) {
+                return Err(self.error(ErrorCause::UndefinedLabel(id.1.clone())))
+            };
             Ok(Statement::Continue(self.consume_semicolon(start)?, Some(id)))
         } else if self.context.in_iteration {
             Ok(Statement::Continue(self.consume_semicolon(start)?, None))

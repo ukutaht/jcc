@@ -33,6 +33,7 @@ es2017/**
 es2018/**
 ES6/**
 
+# Unicode escapes
 invalid-syntax/GH-1106-03
 invalid-syntax/GH-1106-04
 invalid-syntax/GH-1106-05
@@ -147,15 +148,6 @@ invalid-syntax/migrated_0165.source
 invalid-syntax/migrated_0166.source
 invalid-syntax/migrated_0167.source
 invalid-syntax/migrated_0169.source
-
-# Labels
-invalid-syntax/migrated_0176
-invalid-syntax/migrated_0177
-invalid-syntax/migrated_0178
-invalid-syntax/migrated_0179
-invalid-syntax/migrated_0180
-invalid-syntax/migrated_0181
-invalid-syntax/migrated_0182
 
 # Strict mode
 invalid-syntax/migrated_0183

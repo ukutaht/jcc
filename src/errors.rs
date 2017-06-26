@@ -17,6 +17,8 @@ pub enum ErrorCause {
     IllegalToken,
     InvalidHexEscape,
     NewLineAfterThrow,
+    UndefinedLabel(String),
+    DuplicateLabel(String),
     UnexpectedToken(Token),
 }
 
@@ -33,6 +35,12 @@ impl fmt::Display for CompileError {
          match self.cause {
             ErrorCause::MissingCatchOrFinally => {
                 write!(fmt, "Missing catch or finally after try")
+            },
+            ErrorCause::UndefinedLabel(ref s) => {
+                write!(fmt, "Undefined label '{}'", s)
+            },
+            ErrorCause::DuplicateLabel(ref s) => {
+                write!(fmt, "Label '{}' has already been declared", s)
             },
             ErrorCause::IllegalToken => {
                 write!(fmt, "Unexpected token ILLEGAL")
