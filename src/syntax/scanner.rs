@@ -422,6 +422,9 @@ impl<'a> Scanner<'a> {
                         self.line += 1;
                         self.column = 0;
                     },
+                    Some('8') | Some('9') => {
+                        return self.invalid_token();
+                    }
                     _ => return self.invalid_token_at(self.lookahead_start)
                 }
             } else if ch.is_es_newline() {
