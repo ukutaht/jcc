@@ -368,14 +368,6 @@ impl<'a> Scanner<'a> {
         Ok(Token::Number(float))
     }
 
-    fn invalid_token(&mut self) -> Result<Token> {
-        self.invalid_token_at(self.pos())
-    }
-
-    fn invalid_token_at(&self, pos: Position) -> Result<Token> {
-        Err(CompileError {pos: pos.one_indexed(), cause: ErrorCause::IllegalToken})
-    }
-
     fn scan_string(&mut self, quote: u8) -> Result<Token> {
         let start = self.index;
         self.eat_byte(quote);
@@ -586,5 +578,13 @@ impl<'a> Scanner<'a> {
             self.column += 1;
             c
         })
+    }
+
+    fn invalid_token(&mut self) -> Result<Token> {
+        self.invalid_token_at(self.pos())
+    }
+
+    fn invalid_token_at(&self, pos: Position) -> Result<Token> {
+        Err(CompileError {pos: pos.one_indexed(), cause: ErrorCause::IllegalToken})
     }
 }
