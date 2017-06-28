@@ -22,6 +22,8 @@ pub enum ErrorCause {
     RestrictedVarName,
     RestrictedVarNameInAssignment,
     RestrictedVarNameInCatch,
+    RestrictedVarNameInPrefix,
+    RestrictedVarNameInPostfix,
     UndefinedLabel(String),
     DuplicateLabel(String),
     UnexpectedToken(Token),
@@ -55,6 +57,12 @@ impl fmt::Display for CompileError {
             },
             ErrorCause::RestrictedVarNameInCatch => {
                 write!(fmt, "Catch variable may not be eval or arguments in strict mode")
+            },
+            ErrorCause::RestrictedVarNameInPrefix => {
+                write!(fmt, "Prefix increment/decrement may not have eval or arguments operand in strict mode")
+            },
+            ErrorCause::RestrictedVarNameInPostfix => {
+                write!(fmt, "Postfix increment/decrement may not have eval or arguments operand in strict mode")
             },
             ErrorCause::RestrictedVarNameInAssignment => {
                 write!(fmt, "Assignment to eval or arguments is not allowed in strict mode")

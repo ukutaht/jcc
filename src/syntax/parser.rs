@@ -287,7 +287,7 @@ impl<'a> Parser<'a> {
             let start = self.scanner.lookahead_start;
             self.scanner.next_token()?;
             let expr = self.parse_unary_expression()?;
-            if self.context.strict {
+            if self.context.strict && prefix == UnOp::Delete {
                 if let Expression::Identifier(_, _) = expr {
                     return Err(self.error(ErrorCause::UnqualifiedDelete))
                 }
@@ -298,11 +298,32 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn check_reserved_expr(&self, expr: &Expression, cause: ErrorCause) -> Result<()> {
+        if self.context.strict {
+            if let &Expression::Identifier(_, ref s) = expr {
+                if self.is_restricted_word(&s) {
+                    return Err(self.error(cause))
+                }
+            }
+        }
+        return Ok(())
+    }
+
+    fn check_reserved(&self, word: &str, cause: ErrorCause) -> Result<()> {
+        if self.context.strict {
+            if self.is_restricted_word(word) {
+                return Err(self.error(cause))
+            }
+        }
+        return Ok(())
+    }
+
     fn parse_update_expression(&mut self) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
         if let Some(op) = self.scanner.lookahead.as_update_op() {
             self.scanner.next_token()?;
             let expr = self.parse_unary_expression()?;
+            self.check_reserved_expr(&expr, ErrorCause::RestrictedVarNameInPrefix)?;
             Ok(Expression::Update(self.finalize(start), op, Box::new(expr), true))
         } else {
             let expr = self.allow_in(true, Parser::parse_lhs_expression_allow_call)?;
@@ -312,6 +333,7 @@ impl<'a> Parser<'a> {
             };
 
             if let Some(op) = self.scanner.lookahead.as_update_op() {
+                self.check_reserved_expr(&expr, ErrorCause::RestrictedVarNameInPostfix)?;
                 self.scanner.next_token()?;
                 Ok(Expression::Update(self.finalize(start), op, Box::new(expr), false))
             } else {
@@ -550,9 +572,7 @@ impl<'a> Parser<'a> {
         match self.scanner.lookahead.clone() {
             Token::Ident(name) => {
                 self.scanner.next_token()?;
-                if self.context.strict && self.is_restricted_word(&name) {
-                    return Err(self.error(ErrorCause::RestrictedVarName))
-                }
+                self.check_reserved(&name, ErrorCause::RestrictedVarName)?;
                 let init = match self.scanner.lookahead {
                     Token::Eq => {
                         self.scanner.next_token()?;
@@ -733,9 +753,7 @@ impl<'a> Parser<'a> {
         let param = match self.scanner.lookahead.clone() {
             Token::Ident(s) => {
                 self.scanner.next_token()?;
-                if self.context.strict && self.is_restricted_word(&s) {
-                    return Err(self.error(ErrorCause::RestrictedVarNameInCatch))
-                }
+                self.check_reserved(&s, ErrorCause::RestrictedVarNameInCatch)?;
                 s
             },
             t => return Err(self.unexpected_token(t))
