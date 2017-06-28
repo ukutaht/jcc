@@ -18,6 +18,7 @@ pub enum ErrorCause {
     InvalidHexEscape,
     NewLineAfterThrow,
     UnqualifiedDelete,
+    StrictModeWith,
     UndefinedLabel(String),
     DuplicateLabel(String),
     UnexpectedToken(Token),
@@ -36,6 +37,9 @@ impl fmt::Display for CompileError {
          match self.cause {
             ErrorCause::MissingCatchOrFinally => {
                 write!(fmt, "Missing catch or finally after try")
+            },
+            ErrorCause::StrictModeWith => {
+                write!(fmt, "Strict mode code may not include a with statement")
             },
             ErrorCause::UndefinedLabel(ref s) => {
                 write!(fmt, "Undefined label '{}'", s)

@@ -886,6 +886,9 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_with_statement(&mut self) -> Result<Statement> {
+        if self.context.strict {
+            return Err(self.error(ErrorCause::StrictModeWith))
+        }
         let start = self.scanner.lookahead_start;
         self.expect(Token::WithKeyword)?;
         self.expect(Token::OpenParen)?;
