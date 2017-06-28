@@ -534,10 +534,20 @@ impl<'a> Parser<'a> {
         Ok(Expression::Object(self.finalize(start), properties))
     }
 
+    fn is_restricted_word(&self, word: &str) -> bool {
+        match word {
+            "eval" | "arguments" => true,
+            _ => false
+        }
+    }
+
     fn parse_variable_declarator(&mut self) -> Result<VariableDeclarator> {
         match self.scanner.lookahead.clone() {
             Token::Ident(name) => {
                 self.scanner.next_token()?;
+                if self.context.strict && self.is_restricted_word(&name) {
+                    return Err(self.error(ErrorCause::RestrictedVarName))
+                }
                 let init = match self.scanner.lookahead {
                     Token::Eq => {
                         self.scanner.next_token()?;
