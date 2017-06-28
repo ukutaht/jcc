@@ -20,6 +20,7 @@ pub enum ErrorCause {
     UnqualifiedDelete,
     StrictModeWith,
     RestrictedVarName,
+    RestrictedVarNameInCatch,
     UndefinedLabel(String),
     DuplicateLabel(String),
     UnexpectedToken(Token),
@@ -44,6 +45,9 @@ impl fmt::Display for CompileError {
             },
             ErrorCause::RestrictedVarName => {
                 write!(fmt, "Variable name may not be eval or arguments in strict mode")
+            },
+            ErrorCause::RestrictedVarNameInCatch => {
+                write!(fmt, "Catch variable may not be eval or arguments in strict mode")
             },
             ErrorCause::UndefinedLabel(ref s) => {
                 write!(fmt, "Undefined label '{}'", s)

@@ -728,6 +728,9 @@ impl<'a> Parser<'a> {
         let param = match self.scanner.lookahead.clone() {
             Token::Ident(s) => {
                 self.scanner.next_token()?;
+                if self.context.strict && self.is_restricted_word(&s) {
+                    return Err(self.error(ErrorCause::RestrictedVarNameInCatch))
+                }
                 s
             },
             t => return Err(self.unexpected_token(t))
