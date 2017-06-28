@@ -92,19 +92,27 @@ impl<'a> Scanner<'a> {
         }
     }
 
-    fn skip_multi_line_comment(&mut self) {
+    fn skip_multi_line_comment(&mut self) -> Result<()> {
         self.next_byte(); self.next_byte();
 
-        while let Some(ch) = self.next_char() {
-            if ch.is_es_newline() {
-                if ch == '\r' && self.current_byte() == Some(b'\n') {
-                    self.next_byte();
+        loop {
+            match self.next_char() {
+                Some(ch) if ch.is_es_newline() => {
+                    if ch == '\r' && self.current_byte() == Some(b'\n') {
+                        self.next_byte();
+                    }
+                    self.line += 1;
+                    self.column = 0;
+                },
+                Some('*') => {
+                    if self.eat_byte(b'/') {
+                        return Ok(())
+                    }
+                },
+                Some(_) => continue,
+                None => {
+                    return Err(self.invalid_token())
                 }
-                self.line += 1;
-                self.column = 0;
-            }
-            if ch == '*' && self.eat_byte(b'/') {
-                break;
             }
         }
     }
@@ -131,7 +139,7 @@ impl<'a> Scanner<'a> {
                 Some(b'/') => {
                     match self.peek_byte() {
                         Some(b'/') => self.skip_single_line_comment(),
-                        Some(b'*') => self.skip_multi_line_comment(),
+                        Some(b'*') => self.skip_multi_line_comment()?,
                         Some(c) => {
                             character = c;
                             break;
@@ -299,7 +307,7 @@ impl<'a> Scanner<'a> {
         } else if self.current_char().unwrap().is_es_identifier_start() {
             Ok(self.scan_identifier())
         } else {
-            self.invalid_token()
+            Err(self.invalid_token())
         }
     }
 
@@ -313,7 +321,7 @@ impl<'a> Scanner<'a> {
 
         match self.current_char() {
             Some(ch) if ch.is_es_identifier_start() => {
-                self.invalid_token()
+                Err(self.invalid_token())
             },
             _ => Ok(nr)
         }
@@ -327,7 +335,7 @@ impl<'a> Scanner<'a> {
 
         match u32::from_str_radix(hex, 16) {
             Ok(val) => Ok(Token::Number(val as f64)),
-            Err(_) => self.invalid_token()
+            Err(_) => Err(self.invalid_token())
         }
     }
 
@@ -360,7 +368,7 @@ impl<'a> Scanner<'a> {
                 Some(ch) if (ch as char).is_digit(10) => {
                     self.take_while(|c| (c as char).is_digit(10));
                 }
-                _ => return self.invalid_token()
+                _ => return Err(self.invalid_token())
             }
         }
 
@@ -415,12 +423,12 @@ impl<'a> Scanner<'a> {
                         self.column = 0;
                     },
                     Some('8') | Some('9') => {
-                        return self.invalid_token();
+                        return Err(self.invalid_token());
                     }
-                    _ => return self.invalid_token_at(self.lookahead_start)
+                    _ => return Err(self.invalid_token_at(self.lookahead_start))
                 }
             } else if ch.is_es_newline() {
-                return self.invalid_token_at(self.lookahead_start);
+                return Err(self.invalid_token_at(self.lookahead_start));
             } else {
                 continue;
             }
@@ -580,11 +588,11 @@ impl<'a> Scanner<'a> {
         })
     }
 
-    fn invalid_token(&mut self) -> Result<Token> {
+    fn invalid_token(&mut self) -> CompileError {
         self.invalid_token_at(self.pos())
     }
 
-    fn invalid_token_at(&self, pos: Position) -> Result<Token> {
-        Err(CompileError {pos: pos.one_indexed(), cause: ErrorCause::IllegalToken})
+    fn invalid_token_at(&self, pos: Position) -> CompileError {
+        CompileError {pos: pos.one_indexed(), cause: ErrorCause::IllegalToken}
     }
 }
