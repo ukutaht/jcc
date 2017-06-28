@@ -12,6 +12,7 @@ struct ParseContext {
     in_iteration: bool,
     in_switch: bool,
     in_function_body: bool,
+    strict: bool,
     labels: HashSet<String>
 }
 
@@ -29,6 +30,7 @@ impl<'a> Parser<'a> {
                 in_iteration: false,
                 in_switch: false,
                 in_function_body: false,
+                strict: false,
                 labels: HashSet::new()
             }
         }
@@ -48,7 +50,12 @@ impl<'a> Parser<'a> {
 
         let expr = self.parse_expression()?;
         match self.directive_opt(&expr) {
-            Some(dir) => Ok(Statement::Directive(self.consume_semicolon(start)?, expr, dir)),
+            Some(dir) => {
+                if dir == "use strict" {
+                    self.context.strict = true;
+                }
+                Ok(Statement::Directive(self.consume_semicolon(start)?, expr, dir))
+            },
             None => Ok(Statement::Expression(self.consume_semicolon(start)?, expr))
         }
     }
@@ -280,6 +287,11 @@ impl<'a> Parser<'a> {
             let start = self.scanner.lookahead_start;
             self.scanner.next_token()?;
             let expr = self.parse_unary_expression()?;
+            if self.context.strict {
+                if let Expression::Identifier(_, _) = expr {
+                    return Err(self.error(ErrorCause::UnqualifiedDelete))
+                }
+            }
             Ok(Expression::Unary(self.finalize(start), prefix, Box::new(expr)))
         } else {
             self.parse_update_expression()

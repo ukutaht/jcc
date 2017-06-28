@@ -17,6 +17,7 @@ pub enum ErrorCause {
     IllegalToken,
     InvalidHexEscape,
     NewLineAfterThrow,
+    UnqualifiedDelete,
     UndefinedLabel(String),
     DuplicateLabel(String),
     UnexpectedToken(Token),
@@ -38,6 +39,9 @@ impl fmt::Display for CompileError {
             },
             ErrorCause::UndefinedLabel(ref s) => {
                 write!(fmt, "Undefined label '{}'", s)
+            },
+            ErrorCause::UnqualifiedDelete => {
+                write!(fmt, "Delete of an unqualified identifier in strict mode.")
             },
             ErrorCause::DuplicateLabel(ref s) => {
                 write!(fmt, "Label '{}' has already been declared", s)
