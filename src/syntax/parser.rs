@@ -392,6 +392,11 @@ impl<'a> Parser<'a> {
         let left = self.parse_conditional_expression()?;
         match self.scanner.lookahead.as_assign_op() {
             Some(op) => {
+                if let &Expression::Identifier(_, ref s) = &left {
+                    if self.context.strict && self.is_restricted_word(&s) {
+                        return Err(CompileError {pos: start.one_indexed(), cause: ErrorCause::RestrictedVarNameInAssignment})
+                    }
+                }
                 match left {
                     Expression::Identifier(_, _) => {
                         self.scanner.next_token()?;
