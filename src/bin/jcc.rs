@@ -13,7 +13,7 @@ fn parse(filename: &str) {
 
     match ast {
         Ok(code) => println!("{:#?}", code),
-        Err(err) => panic!("{:?}", err),
+        Err(err) => panic!("{}", err),
     }
 }
 
