@@ -33,6 +33,12 @@ pub struct CompileError {
     pub cause: ErrorCause
 }
 
+impl CompileError {
+    pub fn new(pos: Position, cause: ErrorCause) -> CompileError {
+        CompileError { pos: pos.one_indexed(), cause: cause }
+    }
+}
+
 impl fmt::Display for CompileError {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         write!(fmt, "Error: Line {}: ", self.pos.line)?;

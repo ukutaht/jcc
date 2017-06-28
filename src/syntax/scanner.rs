@@ -444,7 +444,7 @@ impl<'a> Scanner<'a> {
                 self.next_char();
                 Ok(ch.to_digit(16).unwrap())
             },
-            _ => Err(CompileError { pos: self.pos().one_indexed(), cause: ErrorCause::InvalidHexEscape })
+            _ => Err(CompileError::new(self.pos(), ErrorCause::InvalidHexEscape))
         }
     }
 
@@ -593,6 +593,6 @@ impl<'a> Scanner<'a> {
     }
 
     fn invalid_token_at(&self, pos: Position) -> CompileError {
-        CompileError {pos: pos.one_indexed(), cause: ErrorCause::IllegalToken}
+        CompileError::new(pos, ErrorCause::IllegalToken)
     }
 }

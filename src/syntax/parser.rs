@@ -394,7 +394,7 @@ impl<'a> Parser<'a> {
             Some(op) => {
                 if let &Expression::Identifier(_, ref s) = &left {
                     if self.context.strict && self.is_restricted_word(&s) {
-                        return Err(CompileError {pos: start.one_indexed(), cause: ErrorCause::RestrictedVarNameInAssignment})
+                        return Err(CompileError::new(start, ErrorCause::RestrictedVarNameInAssignment))
                     }
                 }
                 match left {
@@ -1056,16 +1056,10 @@ impl<'a> Parser<'a> {
     }
 
     fn unexpected_token(&self, token: Token) -> CompileError {
-        CompileError {
-            pos: self.scanner.lookahead_start.one_indexed(),
-            cause: ErrorCause::UnexpectedToken(token)
-        }
+        CompileError::new(self.scanner.lookahead_start, ErrorCause::UnexpectedToken(token))
     }
 
     fn error(&self, cause: ErrorCause) -> CompileError {
-        CompileError {
-            pos: self.scanner.last_pos.one_indexed(),
-            cause: cause
-        }
+        CompileError::new(self.scanner.last_pos, cause)
     }
 }
