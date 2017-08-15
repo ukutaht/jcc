@@ -309,10 +309,10 @@ impl<'a> Parser<'a> {
         return Ok(())
     }
 
-    fn check_reserved(&self, word: &str, cause: ErrorCause) -> Result<()> {
+    fn check_reserved_at(&self, word: &str, pos: Position, cause: ErrorCause) -> Result<()> {
         if self.context.strict {
             if self.is_restricted_word(word) {
-                return Err(self.error(cause))
+                return Err(CompileError::new(pos, cause))
             }
         }
         return Ok(())
@@ -572,7 +572,7 @@ impl<'a> Parser<'a> {
         match self.scanner.lookahead.clone() {
             Token::Ident(name) => {
                 self.scanner.next_token()?;
-                self.check_reserved(&name, ErrorCause::RestrictedVarName)?;
+                self.check_reserved_at(&name, self.scanner.last_pos, ErrorCause::RestrictedVarName)?;
                 let init = match self.scanner.lookahead {
                     Token::Eq => {
                         self.scanner.next_token()?;
@@ -641,6 +641,7 @@ impl<'a> Parser<'a> {
 
         let id = match self.scanner.lookahead.clone() {
             Token::Ident(name) => {
+                self.check_reserved_at(&name, self.scanner.lookahead_start, ErrorCause::RestrictedVarNameInFunction)?;
                 self.scanner.next_token()?;
                 Some(name)
             }
@@ -753,7 +754,7 @@ impl<'a> Parser<'a> {
         let param = match self.scanner.lookahead.clone() {
             Token::Ident(s) => {
                 self.scanner.next_token()?;
-                self.check_reserved(&s, ErrorCause::RestrictedVarNameInCatch)?;
+                self.check_reserved_at(&s, self.scanner.lookahead_start, ErrorCause::RestrictedVarNameInCatch)?;
                 s
             },
             t => return Err(self.unexpected_token(t))
