@@ -311,6 +311,9 @@ impl<'a> Parser<'a> {
 
     fn check_reserved_at(&self, word: &str, pos: Position, cause: ErrorCause) -> Result<()> {
         if self.context.strict {
+            if self.is_strict_mode_reserved_word(word) {
+                return Err(CompileError::new(pos, ErrorCause::StrictReservedWord))
+            }
             if self.is_restricted_word(word) {
                 return Err(CompileError::new(pos, cause))
             }
@@ -575,6 +578,13 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn is_strict_mode_reserved_word(&self, word: &str) -> bool {
+        match word {
+            "implements" | "package" | "private" | "protected" | "public" | "static" | "yield" | "let" => true,
+            _ => false
+        }
+    }
+
     fn parse_variable_declarator(&mut self) -> Result<VariableDeclarator> {
         match self.scanner.lookahead.clone() {
             Token::Ident(name) => {
@@ -667,9 +677,7 @@ impl<'a> Parser<'a> {
         let block = self.parse_function_source_elements()?;
 
         if let Some(ref name) = id {
-            if self.context.strict {
-                self.check_reserved_at(&name, id_loc, ErrorCause::RestrictedVarNameInFunction)?;
-            }
+            self.check_reserved_at(&name, id_loc, ErrorCause::RestrictedVarNameInFunction)?;
         }
 
         self.context.strict = previous_strict;

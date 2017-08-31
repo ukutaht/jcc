@@ -19,6 +19,7 @@ pub enum ErrorCause {
     NewLineAfterThrow,
     UnqualifiedDelete,
     StrictModeWith,
+    StrictReservedWord,
     RestrictedVarName,
     RestrictedVarNameInAssignment,
     RestrictedVarNameInCatch,
@@ -48,6 +49,9 @@ impl fmt::Display for CompileError {
         write!(fmt, "Error: Line {}: ", self.pos.line)?;
 
          match self.cause {
+            ErrorCause::StrictReservedWord => {
+                write!(fmt, "Use of future reserved word in strict mode")
+            },
             ErrorCause::MissingCatchOrFinally => {
                 write!(fmt, "Missing catch or finally after try")
             },
