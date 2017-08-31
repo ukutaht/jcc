@@ -1,5 +1,3 @@
-extern crate jcc;
-
 use std;
 use jcc::syntax::ast::*;
 use jcc::syntax::span::{Span, Position};
