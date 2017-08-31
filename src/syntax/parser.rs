@@ -626,6 +626,7 @@ impl<'a> Parser<'a> {
 
     fn parse_function_parameter(&mut self) -> Result<Pattern> {
         if let Token::Ident(name) = self.scanner.lookahead.clone() {
+            self.check_reserved_at(&name, self.scanner.lookahead_start, ErrorCause::StrictParamName)?;
             self.scanner.next_token()?;
             Ok(Pattern::Identifier(name))
         } else {
