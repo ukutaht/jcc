@@ -28,6 +28,7 @@ pub enum ErrorCause {
     UndefinedLabel(String),
     DuplicateLabel(String),
     UnexpectedToken(Token),
+    UnexpectedReservedWord,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -118,6 +119,9 @@ impl fmt::Display for CompileError {
             }
             ErrorCause::UnexpectedToken(ref t) => {
                 write!(fmt, "Unexpected token {}", t)
+            }
+            ErrorCause::UnexpectedReservedWord => {
+                write!(fmt, "Unexpected reserved word")
             }
         }
     }

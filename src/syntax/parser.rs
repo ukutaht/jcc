@@ -568,6 +568,13 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn is_future_reserved_word(&self, word: &str) -> bool {
+        match word {
+            "enum" | "import" | "export" | "super" => true,
+            _ => false
+        }
+    }
+
     fn parse_variable_declarator(&mut self) -> Result<VariableDeclarator> {
         match self.scanner.lookahead.clone() {
             Token::Ident(name) => {
@@ -1086,6 +1093,12 @@ impl<'a> Parser<'a> {
     }
 
     fn unexpected_token(&self, token: Token) -> CompileError {
+        if let Token::Ident(ref s) = token {
+            if self.is_future_reserved_word(s) {
+                return CompileError::new(self.scanner.lookahead_start, ErrorCause::UnexpectedReservedWord)
+
+            }
+        }
         CompileError::new(self.scanner.lookahead_start, ErrorCause::UnexpectedToken(token))
     }
 
