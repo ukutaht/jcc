@@ -144,7 +144,7 @@ fn transpile_variable_declaration<W: Write>(out: &mut W, dec: &VariableDeclarati
 
 fn transpile_function_parameter<W: Write>(out: &mut W, pat: &Pattern) -> Result<()> {
     match *pat {
-        Pattern::Identifier(ref n) => {
+        Pattern::Identifier(_, ref n) => {
             try!(write!(out, "{}", n.to_string()))
         }
     }

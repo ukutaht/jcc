@@ -325,7 +325,7 @@ fn function(node: &Value) -> Result<Function> {
 
 fn pattern(node: &Value) -> Result<Pattern> {
     match expect_string(node, "type") {
-        "Identifier" => Ok(Pattern::Identifier(expect_string(node, "name").to_owned())),
+        "Identifier" => Ok(Pattern::Identifier(span(node)?, expect_string(node, "name").to_owned())),
         _ => Err(())
     }
 }

@@ -141,7 +141,7 @@ pub enum Expression {
 
 #[derive(Debug, PartialEq)]
 pub enum Pattern {
-    Identifier(String),
+    Identifier(Span, String),
 }
 
 #[derive(Debug, PartialEq)]

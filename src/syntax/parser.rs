@@ -520,9 +520,12 @@ impl<'a> Parser<'a> {
         if token == Token::Ident("get".to_string()) {
             self.scanner.next_token()?;
             if let Some(key) = self.match_object_property_key()? {
+                let previous_strict = self.context.strict;
                 let parameters = self.parse_function_parameters()?;
+                self.validate_params(&parameters)?;
                 let block = self.parse_function_source_elements()?;
                 let value = Function { id: None, body: block, parameters: parameters };
+                self.context.strict = previous_strict;
                 Ok(Prop::Get(self.finalize(start), key, value))
             } else {
                 let span = self.finalize(start);
@@ -531,9 +534,12 @@ impl<'a> Parser<'a> {
         } else if token == Token::Ident("set".to_string()) {
             self.scanner.next_token()?;
             if let Some(key) = self.match_object_property_key()? {
+                let previous_strict = self.context.strict;
                 let parameters = self.parse_function_parameters()?;
+                self.validate_params(&parameters)?;
                 let block = self.parse_function_source_elements()?;
                 let value = Function { id: None, body: block, parameters: parameters };
+                self.context.strict = previous_strict;
                 Ok(Prop::Set(self.finalize(start), key, value))
             } else {
                 let span = self.finalize(start);
@@ -626,9 +632,9 @@ impl<'a> Parser<'a> {
 
     fn parse_function_parameter(&mut self) -> Result<Pattern> {
         if let Token::Ident(name) = self.scanner.lookahead.clone() {
-            self.check_reserved_at(&name, self.scanner.lookahead_start, ErrorCause::StrictParamName)?;
+            let start = self.scanner.lookahead_start;
             self.scanner.next_token()?;
-            Ok(Pattern::Identifier(name))
+            Ok(Pattern::Identifier(self.finalize(start), name))
         } else {
             Err(self.unexpected_token(self.scanner.lookahead.clone()))
         }
@@ -654,6 +660,14 @@ impl<'a> Parser<'a> {
         Ok(parameters)
     }
 
+    fn validate_params(&self, params: &Vec<Pattern>) -> Result<()> {
+        for param in params {
+            let &Pattern::Identifier(ref sp, ref id) = param;
+            self.check_reserved_at(&id, sp.start, ErrorCause::StrictParamName)?;
+        };
+        return Ok(())
+    }
+
     fn parse_function(&mut self) -> Result<Function> {
         self.expect(Token::FunctionKeyword)?;
 
@@ -676,6 +690,8 @@ impl<'a> Parser<'a> {
 
         let parameters = self.parse_function_parameters()?;
         let block = self.parse_function_source_elements()?;
+
+        self.validate_params(&parameters)?;
 
         if let Some(ref name) = id {
             self.check_reserved_at(&name, id_loc, ErrorCause::RestrictedVarNameInFunction)?;
