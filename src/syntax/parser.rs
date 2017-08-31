@@ -639,6 +639,7 @@ impl<'a> Parser<'a> {
     fn parse_function(&mut self) -> Result<Function> {
         self.expect(Token::FunctionKeyword)?;
 
+        let id_loc = self.scanner.lookahead_start;
         let id = match self.scanner.lookahead.clone() {
             Token::Ident(name) => {
                 self.check_reserved_at(&name, self.scanner.lookahead_start, ErrorCause::RestrictedVarNameInFunction)?;
@@ -653,8 +654,18 @@ impl<'a> Parser<'a> {
             }
         };
 
+        let previous_strict = self.context.strict;
+
         let parameters = self.parse_function_parameters()?;
         let block = self.parse_function_source_elements()?;
+
+        if let Some(ref name) = id {
+            if self.context.strict {
+                self.check_reserved_at(&name, id_loc, ErrorCause::RestrictedVarNameInFunction)?;
+            }
+        }
+
+        self.context.strict = previous_strict;
 
         Ok(Function { id: id, body: block, parameters: parameters })
     }
