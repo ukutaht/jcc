@@ -43,7 +43,7 @@ fn parse_benches(target: &mut Vec<TestDescAndFn>) {
 
     for path in files {
          let name = path.strip_prefix(&root).unwrap().to_str().unwrap().to_string();
-        add_bench(target, name, move |mut bench| {
+        add_bench(target, name, move |bench| {
             let mut source = String::new();
             File::open(&path).unwrap().read_to_string(&mut source).unwrap();
 
