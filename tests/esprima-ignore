@@ -190,15 +190,6 @@ invalid-syntax/migrated_0275
 invalid-syntax/migrated_0276
 invalid-syntax/migrated_0277
 invalid-syntax/migrated_0278
-invalid-syntax/strict_assignment_implements
-invalid-syntax/strict_assignment_interface
-invalid-syntax/strict_assignment_let
-invalid-syntax/strict_assignment_package
-invalid-syntax/strict_assignment_private
-invalid-syntax/strict_assignment_protected
-invalid-syntax/strict_assignment_public
-invalid-syntax/strict_assignment_static
-invalid-syntax/strict_assignment_yield
 
 JSX/**
 whitespace/**

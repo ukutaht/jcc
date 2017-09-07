@@ -298,13 +298,9 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn check_reserved_expr(&self, expr: &Expression, cause: ErrorCause) -> Result<()> {
-        if self.context.strict {
-            if let &Expression::Identifier(_, ref s) = expr {
-                if self.is_restricted_word(&s) {
-                    return Err(self.error(cause))
-                }
-            }
+    fn check_reserved_expr_at(&self, expr: &Expression, pos: Position, cause: ErrorCause) -> Result<()> {
+        if let &Expression::Identifier(_, ref s) = expr {
+            self.check_reserved_at(&s, pos, cause)?;
         }
         return Ok(())
     }
@@ -326,7 +322,7 @@ impl<'a> Parser<'a> {
         if let Some(op) = self.scanner.lookahead.as_update_op() {
             self.scanner.next_token()?;
             let expr = self.parse_unary_expression()?;
-            self.check_reserved_expr(&expr, ErrorCause::RestrictedVarNameInPrefix)?;
+            self.check_reserved_expr_at(&expr, self.scanner.last_pos, ErrorCause::RestrictedVarNameInPrefix)?;
             Ok(Expression::Update(self.finalize(start), op, Box::new(expr), true))
         } else {
             let expr = self.allow_in(true, Parser::parse_lhs_expression_allow_call)?;
@@ -336,7 +332,7 @@ impl<'a> Parser<'a> {
             };
 
             if let Some(op) = self.scanner.lookahead.as_update_op() {
-                self.check_reserved_expr(&expr, ErrorCause::RestrictedVarNameInPostfix)?;
+                self.check_reserved_expr_at(&expr, self.scanner.last_pos, ErrorCause::RestrictedVarNameInPostfix)?;
                 self.scanner.next_token()?;
                 Ok(Expression::Update(self.finalize(start), op, Box::new(expr), false))
             } else {
@@ -417,11 +413,7 @@ impl<'a> Parser<'a> {
         let left = self.parse_conditional_expression()?;
         match self.scanner.lookahead.as_assign_op() {
             Some(op) => {
-                if let &Expression::Identifier(_, ref s) = &left {
-                    if self.context.strict && self.is_restricted_word(&s) {
-                        return Err(CompileError::new(start, ErrorCause::RestrictedVarNameInAssignment))
-                    }
-                }
+                self.check_reserved_expr_at(&left, start, ErrorCause::RestrictedVarNameInAssignment)?;
                 match left {
                     Expression::Identifier(_, _) => {
                         self.scanner.next_token()?;
@@ -586,7 +578,7 @@ impl<'a> Parser<'a> {
 
     fn is_strict_mode_reserved_word(&self, word: &str) -> bool {
         match word {
-            "implements" | "package" | "private" | "protected" | "public" | "static" | "yield" | "let" => true,
+            "implements" | "interface" | "package" | "private" | "protected" | "public" | "static" | "yield" | "let" => true,
             _ => false
         }
     }
