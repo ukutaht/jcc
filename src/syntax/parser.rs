@@ -13,6 +13,7 @@ struct ParseContext {
     in_switch: bool,
     in_function_body: bool,
     strict: bool,
+    is_assignment_target: bool,
     labels: HashSet<String>
 }
 
@@ -31,6 +32,7 @@ impl<'a> Parser<'a> {
                 in_switch: false,
                 in_function_body: false,
                 strict: false,
+                is_assignment_target: false,
                 labels: HashSet::new()
             }
         }
@@ -106,6 +108,24 @@ impl<'a> Parser<'a> {
         result
     }
 
+    fn isolate_cover_grammar<F, T>(&mut self, parse_fn: F) -> Result<T>
+      where F: FnOnce(&mut Self) -> Result<T> {
+        let is_assignment_target = std::mem::replace(&mut self.context.is_assignment_target, true);
+        let result = parse_fn(self);
+        std::mem::replace(&mut self.context.is_assignment_target, is_assignment_target);
+        result
+    }
+
+    fn inherit_cover_grammar<F, T>(&mut self, parse_fn: F) -> Result<T>
+      where F: FnOnce(&mut Self) -> Result<T> {
+        let is_assignment_target = std::mem::replace(&mut self.context.is_assignment_target, true);
+        let result = parse_fn(self);
+        if self.context.is_assignment_target && is_assignment_target {
+            std::mem::replace(&mut self.context.is_assignment_target, true);
+        }
+        result
+    }
+
     fn matches(&self, tok: Token) -> bool {
         self.scanner.lookahead == tok
     }
@@ -132,18 +152,22 @@ impl<'a> Parser<'a> {
         match token {
             Token::Number(n) => {
                 self.scanner.next_token()?;
+                self.context.is_assignment_target = false;
                 Ok(Expression::Literal(self.finalize(start), Literal::Number(n)))
             }
             Token::BoolTrue => {
                 self.scanner.next_token()?;
+                self.context.is_assignment_target = false;
                 Ok(Expression::Literal(self.finalize(start), Literal::True))
             }
             Token::BoolFalse => {
                 self.scanner.next_token()?;
+                self.context.is_assignment_target = false;
                 Ok(Expression::Literal(self.finalize(start), Literal::False))
             }
             Token::String(ref s) => {
                 self.scanner.next_token()?;
+                self.context.is_assignment_target = false;
                 Ok(Expression::Literal(self.finalize(start), Literal::String(s.clone())))
             }
             Token::Ident(n) => {
@@ -155,14 +179,17 @@ impl<'a> Parser<'a> {
             Token::OpenParen => self.parse_group_expression(),
             Token::FunctionKeyword => {
                 let fun = self.parse_function()?;
+                self.context.is_assignment_target = false;
                 Ok(Expression::Function(self.finalize(start), fun))
             },
             Token::ThisKeyword => {
                 self.scanner.next_token()?;
+                self.context.is_assignment_target = false;
                 Ok(Expression::This(self.finalize(start)))
             },
             Token::Null => {
                 self.scanner.next_token()?;
+                self.context.is_assignment_target = false;
                 Ok(Expression::Literal(self.finalize(start), Literal::Null))
             },
             t => {
@@ -239,7 +266,10 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_lhs_expression_allow_call(&mut self) -> Result<Expression> {
-        self.parse_lhs_expression_opt(true)
+        let allow_in = std::mem::replace(&mut self.context.allow_in, true);
+        let result = self.parse_lhs_expression_opt(true);
+        std::mem::replace(&mut self.context.allow_in, allow_in);
+        result
     }
 
     fn parse_lhs_expression_opt(&mut self, allow_call: bool) -> Result<Expression> {
@@ -317,15 +347,23 @@ impl<'a> Parser<'a> {
         return Ok(())
     }
 
+    fn check_assignment_allowed(&mut self) -> Result<()> {
+        if !self.context.is_assignment_target {
+            return Err(self.error(ErrorCause::InvalidLHSAssignment));
+        }
+        return Ok(())
+    }
+
     fn parse_update_expression(&mut self) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
         if let Some(op) = self.scanner.lookahead.as_update_op() {
             self.scanner.next_token()?;
-            let expr = self.parse_unary_expression()?;
+            let expr = self.inherit_cover_grammar(Parser::parse_unary_expression)?;
             self.check_reserved_expr_at(&expr, self.scanner.last_pos, ErrorCause::RestrictedVarNameInPrefix)?;
+            self.check_assignment_allowed()?;
             Ok(Expression::Update(self.finalize(start), op, Box::new(expr), true))
         } else {
-            let expr = self.allow_in(true, Parser::parse_lhs_expression_allow_call)?;
+            let expr = self.inherit_cover_grammar(Parser::parse_lhs_expression_allow_call)?;
 
             if self.scanner.at_newline() {
                 return Ok(expr);
@@ -333,6 +371,7 @@ impl<'a> Parser<'a> {
 
             if let Some(op) = self.scanner.lookahead.as_update_op() {
                 self.check_reserved_expr_at(&expr, self.scanner.last_pos, ErrorCause::RestrictedVarNameInPostfix)?;
+                self.check_assignment_allowed()?;
                 self.scanner.next_token()?;
                 Ok(Expression::Update(self.finalize(start), op, Box::new(expr), false))
             } else {
@@ -398,9 +437,9 @@ impl<'a> Parser<'a> {
         let expr = self.parse_binary_expression()?;
 
         if self.eat(Token::QuestionMark)? {
-            let consequent = self.parse_assignment_expression()?;
+            let consequent = self.isolate_cover_grammar(Parser::parse_assignment_expression)?;
             self.expect(Token::Colon)?;
-            let alternate = self.parse_assignment_expression()?;
+            let alternate = self.isolate_cover_grammar(Parser::parse_assignment_expression)?;
             let span = self.finalize(start);
             Ok(Expression::Conditional(span, Box::new(expr), Box::new(consequent), Box::new(alternate)))
         } else {
@@ -1090,6 +1129,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_statement_list_item(&mut self) -> Result<StatementListItem> {
+        self.context.is_assignment_target = true;
         self.parse_statement().map(StatementListItem::Statement)
     }
 

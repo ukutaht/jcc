@@ -82,10 +82,6 @@ invalid-syntax/migrated_0050.source
 invalid-syntax/migrated_0051.source
 
 # Cover grammar support
-invalid-syntax/migrated_0052
-invalid-syntax/migrated_0053
-invalid-syntax/migrated_0054
-invalid-syntax/migrated_0055
 invalid-syntax/migrated_0056
 
 # Regex
