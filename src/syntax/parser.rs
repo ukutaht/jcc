@@ -316,12 +316,13 @@ impl<'a> Parser<'a> {
         if let Some(prefix) = self.scanner.lookahead.as_unary_op() {
             let start = self.scanner.lookahead_start;
             self.scanner.next_token()?;
-            let expr = self.parse_unary_expression()?;
+            let expr = self.inherit_cover_grammar(Parser::parse_unary_expression)?;
             if self.context.strict && prefix == UnOp::Delete {
                 if let Expression::Identifier(_, _) = expr {
                     return Err(self.error(ErrorCause::UnqualifiedDelete))
                 }
             }
+            self.context.is_assignment_target = false;
             Ok(Expression::Unary(self.finalize(start), prefix, Box::new(expr)))
         } else {
             self.parse_update_expression()
@@ -434,7 +435,7 @@ impl<'a> Parser<'a> {
 
     fn parse_conditional_expression(&mut self) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
-        let expr = self.parse_binary_expression()?;
+        let expr = self.inherit_cover_grammar(Parser::parse_binary_expression)?;
 
         if self.eat(Token::QuestionMark)? {
             let consequent = self.isolate_cover_grammar(Parser::parse_assignment_expression)?;

@@ -107,10 +107,6 @@ invalid-syntax/migrated_0099
 invalid-syntax/migrated_0100
 invalid-syntax/migrated_0101
 
-# isAssignmentTarget
-invalid-syntax/migrated_0125
-invalid-syntax/migrated_0126
-
 # ES6: Let, const
 invalid-syntax/migrated_0137.source
 invalid-syntax/migrated_0138
@@ -205,7 +201,6 @@ statement/iteration/pattern-in-for-in
 statement/iteration/unterminated-do-while
 
 
-statement/iteration/invalid-assign-for-in
 statement/iteration/invalid-strict-for-in-let
 statement/variable/complex-pattern-requires-init
 
