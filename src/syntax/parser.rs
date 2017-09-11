@@ -732,16 +732,23 @@ impl<'a> Parser<'a> {
         Ok(Statement::Expression(self.consume_semicolon(start)?, expr))
     }
 
+    fn parse_if_clause(&mut self) -> Result<Statement> {
+        if self.context.strict && self.scanner.lookahead == Token::FunctionKeyword {
+            return Err(self.error(ErrorCause::StrictFunction))
+        }
+        self.parse_statement()
+    }
+
     fn parse_if_statement(&mut self) -> Result<Statement> {
         self.expect(Token::If)?;
         self.expect(Token::OpenParen)?;
         let test = self.parse_expression()?;
         self.expect(Token::CloseParen)?;
-        let then = self.parse_statement()?;
+        let then = self.parse_if_clause()?;
         let alternate = match self.scanner.lookahead {
             Token::Else => {
                 self.scanner.next_token()?;
-                Some(Box::new(self.parse_statement()?))
+                Some(Box::new(self.parse_if_clause()?))
             },
             _ => None
         };

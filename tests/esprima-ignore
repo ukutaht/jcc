@@ -212,10 +212,6 @@ statement/iteration/pattern-in-for-in
 statement/iteration/unterminated-do-while
 
 
-statement/if/invalid-function-declaration1
-statement/if/invalid-function-declaration2
-statement/if/invalid-function-declaration3
-statement/if/invalid-function-declaration4
 statement/iteration/invalid-assign-for-in
 statement/iteration/invalid-strict-for-in-let
 statement/variable/complex-pattern-requires-init

@@ -21,6 +21,7 @@ pub enum ErrorCause {
     StrictModeWith,
     StrictReservedWord,
     StrictParamName,
+    StrictFunction,
     RestrictedVarName,
     RestrictedVarNameInAssignment,
     RestrictedVarNameInCatch,
@@ -55,6 +56,9 @@ impl fmt::Display for CompileError {
             },
             ErrorCause::StrictParamName => {
                 write!(fmt, "Parameter name eval or arguments is not allowed in strict mode")
+            },
+            ErrorCause::StrictFunction => {
+                write!(fmt, "In strict mode code, functions can only be declared at top level or inside a block")
             },
             ErrorCause::MissingCatchOrFinally => {
                 write!(fmt, "Missing catch or finally after try")
