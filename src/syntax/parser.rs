@@ -285,6 +285,7 @@ impl<'a> Parser<'a> {
             match self.scanner.lookahead {
                 Token::OpenParen => {
                     if allow_call {
+                        self.context.is_assignment_target = false;
                         let args = self.parse_arguments()?;
                         let span = self.finalize(start);
                         result = Expression::Call(span, Box::new(result), args);
@@ -293,6 +294,7 @@ impl<'a> Parser<'a> {
                     }
                 },
                 Token::OpenSquare => {
+                    self.context.is_assignment_target = true;
                     self.expect(Token::OpenSquare)?;
                     let expr = self.isolate_cover_grammar(Parser::parse_expression)?;
                     self.expect(Token::CloseSquare)?;
@@ -300,6 +302,7 @@ impl<'a> Parser<'a> {
                     result = Expression::ComputedMember(span, Box::new(result), Box::new(expr));
                 },
                 Token::Dot => {
+                    self.context.is_assignment_target = true;
                     self.scanner.next_token()?;
                     let identifier_name = self.expect_identifier_name()?;
                     result = Expression::StaticMember(self.finalize(start), Box::new(result), identifier_name)
@@ -454,15 +457,11 @@ impl<'a> Parser<'a> {
         match self.scanner.lookahead.as_assign_op() {
             Some(op) => {
                 self.check_reserved_expr_at(&left, start, ErrorCause::RestrictedVarNameInAssignment)?;
-                match left {
-                    Expression::Identifier(_, _) => {
-                        self.scanner.next_token()?;
-                        let right = self.parse_assignment_expression()?;
-                        let span = self.finalize(start);
-                        Ok(Expression::Assignment(span, op, Box::new(left), Box::new(right)))
-                    }
-                    _ => Err(self.error(ErrorCause::InvalidLHSAssignment))
-                }
+                self.check_assignment_allowed()?;
+                self.scanner.next_token()?;
+                let right = self.parse_assignment_expression()?;
+                let span = self.finalize(start);
+                Ok(Expression::Assignment(span, op, Box::new(left), Box::new(right)))
             }
             None => Ok(left)
         }
