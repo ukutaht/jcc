@@ -11,6 +11,7 @@ pub enum ErrorCause {
     MissingCatchOrFinally,
     MultipleDefaultsInSwitch,
     InvalidLHSAssignment,
+    InvalidLHSForIn,
     IllegalBreak,
     IllegalContinue,
     IllegalReturn,
@@ -110,6 +111,9 @@ impl fmt::Display for CompileError {
             },
             ErrorCause::IllegalContinue => {
                 write!(fmt, "Illegal continue statement")
+            },
+            ErrorCause::InvalidLHSForIn => {
+                write!(fmt, "Invalid left-hand side in for-in")
             },
             ErrorCause::InvalidLHSAssignment => {
                 write!(fmt, "Invalid left-hand side in assignment")

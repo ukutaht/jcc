@@ -213,7 +213,7 @@ impl<'a> Parser<'a> {
             if let Token::CloseParen = self.scanner.lookahead {
                 break;
             } else {
-                let argument = ArgumentListElement::Expression(self.parse_assignment_expression()?);
+                let argument = ArgumentListElement::Expression(self.isolate_cover_grammar(Parser::parse_assignment_expression)?);
                 arguments.push(argument);
 
                 if self.scanner.lookahead != Token::CloseParen {
@@ -294,7 +294,7 @@ impl<'a> Parser<'a> {
                 },
                 Token::OpenSquare => {
                     self.expect(Token::OpenSquare)?;
-                    let expr = self.parse_expression()?;
+                    let expr = self.isolate_cover_grammar(Parser::parse_expression)?;
                     self.expect(Token::CloseSquare)?;
                     let span = self.finalize(start);
                     result = Expression::ComputedMember(span, Box::new(result), Box::new(expr));
@@ -993,8 +993,14 @@ impl<'a> Parser<'a> {
                 self.parse_for_iter_statement(start, Some(ForInit::VarDecl(decl)))
             }
         } else {
-            let init = ForInit::Expression(self.allow_in(false, Parser::parse_expression)?);
-            if self.eat(Token::In)? {
+            let previous_allow_in = std::mem::replace(&mut self.context.allow_in, false);
+            let init = ForInit::Expression(self.inherit_cover_grammar(Parser::parse_expression)?);
+            self.context.allow_in = previous_allow_in;
+            if self.scanner.lookahead == Token::In {
+                if !self.context.is_assignment_target {
+                    return Err(self.error(ErrorCause::InvalidLHSForIn))
+                };
+                self.scanner.next_token()?;
                 self.parse_for_in_statement(start, init)
             } else {
                 self.expect(Token::Semi)?;
