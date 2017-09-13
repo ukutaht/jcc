@@ -711,9 +711,14 @@ impl<'a> Parser<'a> {
     }
 
     fn validate_params(&self, params: &Vec<Pattern>) -> Result<()> {
+        let mut param_names = HashSet::new();
         for param in params {
             let &Pattern::Identifier(ref sp, ref id) = param;
             self.check_reserved_at(&id, sp.start, ErrorCause::StrictParamName)?;
+            if self.context.strict && param_names.contains(&id) {
+                return Err(CompileError::new(sp.start, ErrorCause::StrictDupeParam))
+            }
+            param_names.insert(id);
         };
         return Ok(())
     }

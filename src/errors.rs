@@ -30,6 +30,7 @@ pub enum ErrorCause {
     StrictModeWith,
     StrictParamName,
     StrictReservedWord,
+    StrictDupeParam,
     UndefinedLabel(String),
     UnexpectedReservedWord,
     UnexpectedToken(Token),
@@ -55,6 +56,9 @@ impl fmt::Display for CompileError {
          match self.cause {
             ErrorCause::StrictReservedWord => {
                 write!(fmt, "Use of future reserved word in strict mode")
+            },
+            ErrorCause::StrictDupeParam => {
+                write!(fmt, "Strict mode function may not have duplicate parameter names")
             },
             ErrorCause::StrictParamName => {
                 write!(fmt, "Parameter name eval or arguments is not allowed in strict mode")
