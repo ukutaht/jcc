@@ -8,31 +8,32 @@ pub type Result<T> = std::result::Result<T, CompileError>;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ErrorCause {
-    MissingCatchOrFinally,
-    MultipleDefaultsInSwitch,
-    InvalidLHSAssignment,
-    InvalidLHSForIn,
+    DuplicateLabel(String),
+    DuplicateProto,
     IllegalBreak,
     IllegalContinue,
     IllegalReturn,
     IllegalToken,
     InvalidHexEscape,
+    InvalidLHSAssignment,
+    InvalidLHSForIn,
+    MissingCatchOrFinally,
+    MultipleDefaultsInSwitch,
     NewLineAfterThrow,
-    UnqualifiedDelete,
-    StrictModeWith,
-    StrictReservedWord,
-    StrictParamName,
-    StrictFunction,
     RestrictedVarName,
     RestrictedVarNameInAssignment,
     RestrictedVarNameInCatch,
-    RestrictedVarNameInPrefix,
-    RestrictedVarNameInPostfix,
     RestrictedVarNameInFunction,
+    RestrictedVarNameInPostfix,
+    RestrictedVarNameInPrefix,
+    StrictFunction,
+    StrictModeWith,
+    StrictParamName,
+    StrictReservedWord,
     UndefinedLabel(String),
-    DuplicateLabel(String),
-    UnexpectedToken(Token),
     UnexpectedReservedWord,
+    UnexpectedToken(Token),
+    UnqualifiedDelete,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -93,6 +94,9 @@ impl fmt::Display for CompileError {
             },
             ErrorCause::DuplicateLabel(ref s) => {
                 write!(fmt, "Label '{}' has already been declared", s)
+            },
+            ErrorCause::DuplicateProto => {
+                write!(fmt, "Duplicate __proto__ fields are not allowed in object literals")
             },
             ErrorCause::IllegalToken => {
                 write!(fmt, "Unexpected token ILLEGAL")

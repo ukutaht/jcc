@@ -583,14 +583,33 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn check_duplicate_proto(&self, has_proto: bool, prop: &Prop) -> Result<bool> {
+        if let &Prop::Init(_, ref key, _) = prop {
+            if let &PropKey::Identifier(ref span, ref s) = key {
+                if s == "__proto__" {
+                    if has_proto {
+                        return Err(CompileError::new(span.end, ErrorCause::DuplicateProto))
+                    } else {
+                        return Ok(true);
+                    }
+                }
+            }
+        }
+        return Ok(has_proto);
+    }
+
     fn parse_object_initializer(&mut self) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::OpenCurly)?;
 
         let mut properties = Vec::new();
+        let mut has_proto = false;
 
         while self.scanner.lookahead != Token::CloseCurly {
-            properties.push(self.parse_object_property()?);
+            let prop = self.parse_object_property()?;
+            has_proto = self.check_duplicate_proto(has_proto, &prop)?;
+
+            properties.push(prop);
 
             if self.scanner.lookahead != Token::CloseCurly {
                 self.expect(Token::Comma)?;
