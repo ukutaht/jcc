@@ -24,7 +24,7 @@ comment/migrated_0053
 comment/migrated_0054
 
 # Tolerant mode
-declaration/function/dupe-param.js
+declaration/function/dupe-param
 # ES6
 declaration/const/**
 declaration/let/**

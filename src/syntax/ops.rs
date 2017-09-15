@@ -31,7 +31,7 @@ impl AsOperator for Token {
     }
 
     fn as_infix_op(&self, allow_in: bool) -> Option<InfixOp> {
-        let op = match *self {
+        match *self {
             Token::Plus => Some(InfixOp::BinOp(BinOp::Plus)),
             Token::BitXor => Some(InfixOp::BinOp(BinOp::BitXor)),
             Token::BitAnd => Some(InfixOp::BinOp(BinOp::BitAnd)),
@@ -51,17 +51,11 @@ impl AsOperator for Token {
             Token::Lte => Some(InfixOp::BinOp(BinOp::Lte)),
             Token::Gt => Some(InfixOp::BinOp(BinOp::Gt)),
             Token::Gte => Some(InfixOp::BinOp(BinOp::Gte)),
-            Token::In => Some(InfixOp::BinOp(BinOp::In)),
+            Token::In if allow_in => Some(InfixOp::BinOp(BinOp::In)),
             Token::Instanceof => Some(InfixOp::BinOp(BinOp::Instanceof)),
             Token::LogicalAnd => Some(InfixOp::LogOp(LogOp::AndAnd)),
             Token::LogicalOr => Some(InfixOp::LogOp(LogOp::OrOr)),
             _ => None
-        };
-
-        if op == Some(InfixOp::BinOp(BinOp::In)) && !allow_in {
-            None
-        } else {
-            op
         }
     }
 
