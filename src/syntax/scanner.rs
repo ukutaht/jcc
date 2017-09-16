@@ -387,10 +387,12 @@ impl<'a> Scanner<'a> {
 
     fn scan_string(&mut self, quote: u8) -> Result<Token> {
         let start = self.index;
+        let mut terminated = false;
         self.eat_byte(quote);
 
         while let Some(ch) = self.next_char() {
             if ch == (quote as char) {
+                terminated = true;
                 break;
             } else if ch == '\\' {
                 match self.next_char() {
@@ -434,13 +436,17 @@ impl<'a> Scanner<'a> {
                     Some('8') | Some('9') => {
                         return Err(self.invalid_token());
                     }
-                    _ => return Err(self.invalid_token_at(self.lookahead_start))
+                    _ => continue
                 }
             } else if ch.is_es_newline() {
                 return Err(self.invalid_token_at(self.lookahead_start));
             } else {
                 continue;
             }
+        }
+
+        if !terminated {
+            return Err(self.invalid_token_at(self.lookahead_start));
         }
 
         let string = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]).to_string() };
