@@ -1,6 +1,7 @@
 use syntax::char::ESCharExt;
 use syntax::span::Position;
 use syntax::token::Token;
+use syntax::ast::Literal;
 use errors::{CompileError, ErrorCause, Result};
 use std::str;
 use std::mem;
@@ -74,6 +75,18 @@ impl<'a> Scanner<'a> {
         Ok(mem::replace(&mut self.lookahead, tok))
     }
 
+    pub fn regex_token(&mut self) -> Result<Literal> {
+        debug_assert!(
+            self.lookahead == Token::Div || self.lookahead == Token::DivEq,
+            "Regex must start with a forward slash"
+        );
+        let regex_token = self.scan_regex()?;
+        self.last_pos = self.pos();
+        let next_token = self.lex()?;
+        mem::replace(&mut self.lookahead, next_token);
+        Ok(regex_token)
+    }
+
     pub fn pos(&self) -> Position {
         Position { column: self.column, line: self.line }
     }
@@ -140,13 +153,9 @@ impl<'a> Scanner<'a> {
                     match self.peek_byte() {
                         Some(b'/') => self.skip_single_line_comment(),
                         Some(b'*') => self.skip_multi_line_comment()?,
-                        Some(c) => {
-                            character = c;
+                        _ => {
+                            character = b'/';
                             break;
-                        },
-                        None => {
-                            self.lookahead_start = self.pos();
-                            return Ok(Token::Eof)
                         }
                     }
                 }
@@ -446,6 +455,61 @@ impl<'a> Scanner<'a> {
             },
             _ => Err(CompileError::new(self.pos(), ErrorCause::InvalidHexEscape))
         }
+    }
+
+    fn scan_regex_pattern(&mut self) -> Result<String> {
+        let start = match self.lookahead {
+            Token::Div => self.index,
+            Token::DivEq => self.index - 1,
+            _ => panic!("Unreachable")
+        };
+
+        let mut class_marker = false;
+        let mut terminated = false;
+
+        while let Some(ch) = self.next_char() {
+            if ch == '\\' {
+                self.next_char();
+            } else if ch.is_es_newline() {
+                return Err(CompileError::new(self.pos(), ErrorCause::UnterminatedRegex))
+            } else if class_marker {
+                if ch == ']' {
+                    class_marker = false;
+                }
+            } else if ch == '/' {
+                terminated = true;
+                break;
+            } else if ch == '[' {
+                class_marker = true;
+            }
+        }
+
+        if !terminated {
+            return Err(CompileError::new(self.pos(), ErrorCause::UnterminatedRegex))
+        }
+
+        let string = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index - 1]).to_string() };
+        Ok(string)
+    }
+
+    fn scan_regex_flags(&mut self) -> Result<Vec<char>> {
+        let mut flags = Vec::new();
+        while let Some(ch) = self.current_char() {
+            if !ch.is_es_identifier_continue() {
+                break;
+            }
+
+            flags.push(ch);
+            self.next_char();
+        };
+
+        Ok(flags)
+    }
+
+    fn scan_regex(&mut self) -> Result<Literal> {
+        let pattern = self.scan_regex_pattern()?;
+        let flags = self.scan_regex_flags()?;
+        Ok(Literal::Regex(pattern, flags))
     }
 
     fn scan_identifier(&mut self) -> Token {

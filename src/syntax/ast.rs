@@ -4,6 +4,7 @@ use syntax::span::Span;
 pub enum Literal {
     Number(f64),
     String(String),
+    Regex(String, Vec<char>),
     Null,
     True,
     False

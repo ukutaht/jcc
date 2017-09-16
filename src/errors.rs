@@ -33,6 +33,7 @@ pub enum ErrorCause {
     StrictDupeParam,
     UndefinedLabel(String),
     UnexpectedReservedWord,
+    UnterminatedRegex,
     UnexpectedToken(Token),
     UnqualifiedDelete,
 }
@@ -56,6 +57,9 @@ impl fmt::Display for CompileError {
          match self.cause {
             ErrorCause::StrictReservedWord => {
                 write!(fmt, "Use of future reserved word in strict mode")
+            },
+            ErrorCause::UnterminatedRegex => {
+                write!(fmt, "Invalid regular expression: missing /")
             },
             ErrorCause::StrictDupeParam => {
                 write!(fmt, "Strict mode function may not have duplicate parameter names")

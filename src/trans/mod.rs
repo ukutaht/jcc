@@ -218,6 +218,7 @@ fn transpile_literal<W: Write>(out: &mut W, lit: &Literal) -> Result<()> {
         Literal::Null => write!(out, "null"),
         Literal::True => write!(out, "true"),
         Literal::False => write!(out, "false"),
+        _ => unimplemented!()
     }
 }
 

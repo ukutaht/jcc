@@ -192,6 +192,11 @@ impl<'a> Parser<'a> {
                 self.context.is_assignment_target = false;
                 Ok(Expression::Literal(self.finalize(start), Literal::Null))
             },
+            Token::Div | Token::DivEq => {
+                let regex = self.scanner.regex_token()?;
+                self.context.is_assignment_target = false;
+                Ok(Expression::Literal(self.finalize(start), regex))
+            },
             t => {
                 Err(self.unexpected_token(t.clone()))
             }

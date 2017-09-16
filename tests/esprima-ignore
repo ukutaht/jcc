@@ -69,9 +69,6 @@ invalid-syntax/migrated_0034.source
 invalid-syntax/migrated_0035
 invalid-syntax/migrated_0036.source
 invalid-syntax/migrated_0037.source
-invalid-syntax/migrated_0038
-invalid-syntax/migrated_0039
-invalid-syntax/migrated_0040
 invalid-syntax/migrated_0041.source
 invalid-syntax/migrated_0042.source
 invalid-syntax/migrated_0043.source
@@ -81,9 +78,6 @@ invalid-syntax/migrated_0048.source
 invalid-syntax/migrated_0049.source
 invalid-syntax/migrated_0050.source
 invalid-syntax/migrated_0051.source
-
-# Regex
-invalid-syntax/migrated_0062
 
 # Computed property keys
 invalid-syntax/migrated_0080
@@ -208,8 +202,12 @@ expression/primary/keyword/**
 
 # No span
 expression/primary/literal/numeric/migrated_0002
+expression/primary/literal/regular-expression/migrated_0007
 
-expression/primary/literal/regular-expression/**
+expression/primary/literal/regular-expression/u-flag-invalid-range-4-hex
+expression/primary/literal/regular-expression/u-flag-invalid-range-var-hex
+expression/primary/literal/regular-expression/u-flag-surrogate-pair
+expression/primary/literal/regular-expression/u-flag-valid-range
 
 # ES6
 expression/primary/object/migrated_0034

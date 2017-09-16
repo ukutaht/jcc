@@ -65,6 +65,7 @@ pub enum Token {
     RShift,
     RShiftEq,
     Return,
+    Regex(String, Vec<char>),
     Semi,
     String(String),
     SwitchKeyword,
