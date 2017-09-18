@@ -134,10 +134,9 @@ impl<'a> Scanner<'a> {
     }
 
     fn lex(&mut self) -> Result<Token> {
-        let character;
         let start = self.column == 0;
 
-        loop {
+        let character = loop {
             match self.current_byte() {
                 Some(b'\n') => {
                     self.next_byte();
@@ -161,8 +160,7 @@ impl<'a> Scanner<'a> {
                         Some(b'/') => self.skip_single_line_comment(2),
                         Some(b'*') => self.skip_multi_line_comment()?,
                         _ => {
-                            character = b'/';
-                            break;
+                            break b'/';
                         }
                     }
                 }
@@ -172,8 +170,7 @@ impl<'a> Scanner<'a> {
                             self.skip_single_line_comment(4);
                         }
                         _ => {
-                            character = b'<';
-                            break;
+                            break b'<';
                         }
                     }
                 },
@@ -183,21 +180,19 @@ impl<'a> Scanner<'a> {
                             self.skip_single_line_comment(3);
                         }
                         _ => {
-                            character = b'-';
-                            break;
+                            break b'-';
                         }
                     }
                 },
                 Some(c) => {
-                    character = c;
-                    break;
+                    break c;
                 }
                 None => {
                     self.lookahead_start = self.pos();
                     return Ok(Token::Eof)
                 }
             };
-        }
+        };
 
         self.lookahead_start = self.pos();
         if character == b'\'' || character == b'"' {
