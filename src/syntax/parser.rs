@@ -649,14 +649,18 @@ impl<'a> Parser<'a> {
     fn parse_variable_declarator(&mut self) -> Result<VariableDeclarator> {
         match self.scanner.lookahead.clone() {
             Token::Ident(name) => {
+                let start = self.scanner.lookahead_start;
                 self.scanner.next_token()?;
-                self.check_reserved_at(&name, self.scanner.last_pos, ErrorCause::RestrictedVarName)?;
                 let init = match self.scanner.lookahead {
                     Token::Eq => {
+                        self.check_reserved_at(&name, self.scanner.last_pos, ErrorCause::RestrictedVarName)?;
                         self.scanner.next_token()?;
                         Some(self.parse_assignment_expression()?)
                     }
-                    _ => None
+                    _ => {
+                        self.check_reserved_at(&name, start, ErrorCause::RestrictedVarName)?;
+                        None
+                    }
                 };
                 Ok(VariableDeclarator { id: name, init: init })
             }
