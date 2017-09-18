@@ -3,6 +3,7 @@ pub mod token;
 pub mod span;
 mod parser;
 mod char;
+mod word;
 mod scanner;
 mod ops;
 use errors;

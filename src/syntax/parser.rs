@@ -4,6 +4,8 @@ use syntax::span::{Span, Position};
 use syntax::token::Token;
 use syntax::scanner::Scanner;
 use syntax::ops::AsOperator;
+use syntax::word::EsWord;
+
 use std::collections::HashSet;
 use std;
 
@@ -346,10 +348,10 @@ impl<'a> Parser<'a> {
 
     fn check_reserved_at(&self, word: &str, pos: Position, cause: ErrorCause) -> Result<()> {
         if self.context.strict {
-            if self.is_strict_mode_reserved_word(word) {
+            if word.is_strict_mode_reserved_word() {
                 return Err(CompileError::new(pos, ErrorCause::StrictReservedWord))
             }
-            if self.is_restricted_word(word) {
+            if word.is_restricted_word() {
                 return Err(CompileError::new(pos, cause))
             }
         }
@@ -623,27 +625,6 @@ impl<'a> Parser<'a> {
 
         self.expect(Token::CloseCurly)?;
         Ok(Expression::Object(self.finalize(start), properties))
-    }
-
-    fn is_restricted_word(&self, word: &str) -> bool {
-        match word {
-            "eval" | "arguments" => true,
-            _ => false
-        }
-    }
-
-    fn is_future_reserved_word(&self, word: &str) -> bool {
-        match word {
-            "enum" | "import" | "export" | "super" => true,
-            _ => false
-        }
-    }
-
-    fn is_strict_mode_reserved_word(&self, word: &str) -> bool {
-        match word {
-            "implements" | "interface" | "package" | "private" | "protected" | "public" | "static" | "yield" | "let" => true,
-            _ => false
-        }
     }
 
     fn parse_variable_declarator(&mut self) -> Result<VariableDeclarator> {
@@ -1197,8 +1178,12 @@ impl<'a> Parser<'a> {
 
     fn unexpected_token(&self, token: Token) -> CompileError {
         if let Token::Ident(ref s) = token {
-            if self.is_future_reserved_word(s) {
+            if s.is_future_reserved_word() {
                 return CompileError::new(self.scanner.lookahead_start, ErrorCause::UnexpectedReservedWord)
+
+            }
+            if self.context.strict && s.is_strict_mode_reserved_word() {
+                return CompileError::new(self.scanner.lookahead_start, ErrorCause::StrictReservedWord)
 
             }
         }
