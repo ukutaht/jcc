@@ -35,7 +35,7 @@ fn add_bench<F: Fn(&mut Bencher) + Send + 'static>(tests: &mut Vec<TestDescAndFn
 
 fn parse_benches(target: &mut Vec<TestDescAndFn>) {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let base = root.join(Path::new("benches/fixtures"));
+    let base = root.join(Path::new("tests/3rdparty"));
 
     let files = glob(&format!("{}/**/*.js", base.to_str().unwrap())).unwrap().filter_map(|f| {
         f.ok()
