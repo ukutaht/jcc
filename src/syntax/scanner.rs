@@ -467,7 +467,7 @@ impl<'a> Scanner<'a> {
         let start = match self.lookahead {
             Token::Div => self.index,
             Token::DivEq => self.index - 1,
-            _ => panic!("Unreachable")
+            _ => unreachable!()
         };
 
         let mut class_marker = false;
@@ -475,7 +475,11 @@ impl<'a> Scanner<'a> {
 
         while let Some(ch) = self.next_char() {
             if ch == '\\' {
-                self.next_char();
+                let next = self.next_char();
+                match next {
+                    Some(c) if !c.is_es_newline() => continue,
+                    _ => return Err(CompileError::new(self.pos(), ErrorCause::UnterminatedRegex))
+                }
             } else if ch.is_es_newline() {
                 return Err(CompileError::new(self.pos(), ErrorCause::UnterminatedRegex))
             } else if class_marker {
