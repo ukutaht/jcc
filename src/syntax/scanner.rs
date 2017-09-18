@@ -547,75 +547,71 @@ impl<'a> Scanner<'a> {
     }
 
     fn scan_identifier(&mut self) -> Token {
-        let value = self.get_identifier();
-
-        if value == *KEYWORD_VAR {
-            Token::Var
-        } else if value == *KEYWORD_FUNCTION {
-            Token::FunctionKeyword
-        } else if value == *KEYWORD_THIS {
-            Token::ThisKeyword
-        } else if value == *KEYWORD_NULL {
-            Token::Null
-        } else if value == *KEYWORD_IF {
-            Token::If
-        } else if value == *KEYWORD_ELSE {
-            Token::Else
-        } else if value == *KEYWORD_NEW {
-            Token::New
-        } else if value == *KEYWORD_VOID {
-            Token::Void
-        } else if value == *KEYWORD_DELETE {
-            Token::Delete
-        } else if value == *KEYWORD_TYPEOF {
-            Token::Typeof
-        } else if value == *KEYWORD_IN {
-            Token::In
-        } else if value == *KEYWORD_INSTANCEOF {
-            Token::Instanceof
-        } else if value == *KEYWORD_RETURN {
-            Token::Return
-        } else if value == *KEYWORD_DEBUGGER {
-            Token::DebuggerKeyword
-        } else if value == *KEYWORD_THROW {
-            Token::ThrowKeyword
-        } else if value == *KEYWORD_TRY {
-            Token::TryKeyword
-        } else if value == *KEYWORD_CATCH {
-            Token::CatchKeyword
-        } else if value == *KEYWORD_FINALLY {
-            Token::FinallyKeyword
-        } else if value == *KEYWORD_SWITCH {
-            Token::SwitchKeyword
-        } else if value == *KEYWORD_CASE {
-            Token::CaseKeyword
-        } else if value == *KEYWORD_DEFAULT {
-            Token::DefaultKeyword
-        } else if value == *KEYWORD_BREAK {
-            Token::BreakKeyword
-        } else if value == *KEYWORD_DO {
-            Token::DoKeyword
-        } else if value == *KEYWORD_WHILE {
-            Token::WhileKeyword
-        } else if value == *KEYWORD_FOR {
-            Token::ForKeyword
-        } else if value == *KEYWORD_WITH {
-            Token::WithKeyword
-        } else if value == *KEYWORD_CONTINUE {
-            Token::ContinueKeyword
-        } else if value == *BOOL_TRUE {
-            Token::BoolTrue
-        } else if value == *BOOL_FALSE {
-            Token::BoolFalse
-        } else {
-            Token::Ident(value)
-        }
-    }
-
-    fn get_identifier(&mut self) -> String {
         let start = self.index;
         self.take_chars_while(|c| (c as char).is_es_identifier_continue());
-        unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]).to_string() }
+        let value = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]) };
+
+        if value == KEYWORD_VAR {
+            Token::Var
+        } else if value == KEYWORD_FUNCTION {
+            Token::FunctionKeyword
+        } else if value == KEYWORD_THIS {
+            Token::ThisKeyword
+        } else if value == KEYWORD_NULL {
+            Token::Null
+        } else if value == KEYWORD_IF {
+            Token::If
+        } else if value == KEYWORD_ELSE {
+            Token::Else
+        } else if value == KEYWORD_NEW {
+            Token::New
+        } else if value == KEYWORD_VOID {
+            Token::Void
+        } else if value == KEYWORD_DELETE {
+            Token::Delete
+        } else if value == KEYWORD_TYPEOF {
+            Token::Typeof
+        } else if value == KEYWORD_IN {
+            Token::In
+        } else if value == KEYWORD_INSTANCEOF {
+            Token::Instanceof
+        } else if value == KEYWORD_RETURN {
+            Token::Return
+        } else if value == KEYWORD_DEBUGGER {
+            Token::DebuggerKeyword
+        } else if value == KEYWORD_THROW {
+            Token::ThrowKeyword
+        } else if value == KEYWORD_TRY {
+            Token::TryKeyword
+        } else if value == KEYWORD_CATCH {
+            Token::CatchKeyword
+        } else if value == KEYWORD_FINALLY {
+            Token::FinallyKeyword
+        } else if value == KEYWORD_SWITCH {
+            Token::SwitchKeyword
+        } else if value == KEYWORD_CASE {
+            Token::CaseKeyword
+        } else if value == KEYWORD_DEFAULT {
+            Token::DefaultKeyword
+        } else if value == KEYWORD_BREAK {
+            Token::BreakKeyword
+        } else if value == KEYWORD_DO {
+            Token::DoKeyword
+        } else if value == KEYWORD_WHILE {
+            Token::WhileKeyword
+        } else if value == KEYWORD_FOR {
+            Token::ForKeyword
+        } else if value == KEYWORD_WITH {
+            Token::WithKeyword
+        } else if value == KEYWORD_CONTINUE {
+            Token::ContinueKeyword
+        } else if value == BOOL_TRUE {
+            Token::BoolTrue
+        } else if value == BOOL_FALSE {
+            Token::BoolFalse
+        } else {
+            Token::Ident(value.to_string())
+        }
     }
 
     fn take_while<F>(&mut self, mut predicate: F) where F: FnMut(u8) -> bool {
