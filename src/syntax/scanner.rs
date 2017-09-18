@@ -91,8 +91,11 @@ impl<'a> Scanner<'a> {
         Position { column: self.column, line: self.line }
     }
 
-    fn skip_single_line_comment(&mut self) {
-        self.next_byte(); self.next_byte();
+    fn skip_single_line_comment(&mut self, offset: u8) {
+        for _x in 0..offset {
+            self.next_byte();
+        };
+
         while let Some(ch) = self.next_char() {
             if ch.is_es_newline() {
                 if ch == '\r' && self.current_byte() == Some(b'\n') {
@@ -132,6 +135,7 @@ impl<'a> Scanner<'a> {
 
     fn lex(&mut self) -> Result<Token> {
         let character;
+        let start = self.column == 0;
 
         loop {
             match self.current_byte() {
@@ -149,9 +153,12 @@ impl<'a> Scanner<'a> {
                 Some(b' ') => {
                     self.next_byte();
                 },
+                Some(b'\t') => {
+                    self.next_byte();
+                },
                 Some(b'/') => {
                     match self.peek_byte() {
-                        Some(b'/') => self.skip_single_line_comment(),
+                        Some(b'/') => self.skip_single_line_comment(2),
                         Some(b'*') => self.skip_multi_line_comment()?,
                         _ => {
                             character = b'/';
@@ -159,6 +166,28 @@ impl<'a> Scanner<'a> {
                         }
                     }
                 }
+                Some(b'<') => {
+                    match self.peek_3() {
+                        (Some(b'!'), Some(b'-'), Some(b'-')) => {
+                            self.skip_single_line_comment(4);
+                        }
+                        _ => {
+                            character = b'<';
+                            break;
+                        }
+                    }
+                },
+                Some(b'-') => {
+                    match self.peek_2() {
+                        (Some(b'-'), Some(b'>')) if start => {
+                            self.skip_single_line_comment(3);
+                        }
+                        _ => {
+                            character = b'-';
+                            break;
+                        }
+                    }
+                },
                 Some(c) => {
                     character = c;
                     break;
@@ -620,6 +649,21 @@ impl<'a> Scanner<'a> {
 
     fn peek_byte(&self) -> Option<u8> {
         self.get_byte(self.index + 1)
+    }
+
+    fn peek_3(&self) -> (Option<u8>, Option<u8>, Option<u8>) {
+        (
+            self.get_byte(self.index + 1),
+            self.get_byte(self.index + 2),
+            self.get_byte(self.index + 3)
+        )
+    }
+
+    fn peek_2(&self) -> (Option<u8>, Option<u8>) {
+        (
+            self.get_byte(self.index + 1),
+            self.get_byte(self.index + 2)
+        )
     }
 
     fn get_byte(&self, index: usize) -> Option<u8> {
