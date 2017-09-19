@@ -156,7 +156,7 @@ fn member_expression(node: &Value) -> Result<Expression> {
 fn literal(node: &Value) -> Result<Expression> {
     if node.get("regex").is_some() {
         let regex = expect_value(node, "regex");
-        let pattern = expect_string(regex, "pattern").to_owned();
+        let pattern = interner::intern(expect_string(regex, "pattern"));
         let flags = expect_string(regex, "flags").chars().collect();
         return Ok(Expression::Literal(span(node)?, Literal::Regex(pattern, flags)));
     };

@@ -5,7 +5,7 @@ use interner::Symbol;
 pub enum Literal {
     Number(f64),
     String(Symbol),
-    Regex(String, Vec<char>),
+    Regex(Symbol, Vec<char>),
     Null,
     True,
     False

@@ -203,8 +203,8 @@ impl<'a> Parser<'a> {
                 self.context.is_assignment_target = false;
                 Ok(Expression::Literal(self.finalize(start), regex))
             },
-            ref t => {
-                Err(self.unexpected_token(t.clone()))
+            t => {
+                Err(self.unexpected_token(t))
             }
         }
     }
@@ -255,7 +255,7 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token()?;
                 Ok(ident)
             }
-            None => Err(self.error(ErrorCause::UnexpectedToken(self.scanner.lookahead.clone())))
+            None => Err(self.error(ErrorCause::UnexpectedToken(self.scanner.lookahead)))
         }
     }
 
@@ -588,7 +588,7 @@ impl<'a> Parser<'a> {
         } else if let Some(key) = self.match_object_property_key()? {
             self.parse_prop_init(start, key)
         } else {
-            Err(self.unexpected_token(self.scanner.lookahead.clone()))
+            Err(self.unexpected_token(self.scanner.lookahead))
         }
     }
 
@@ -647,8 +647,8 @@ impl<'a> Parser<'a> {
                 };
                 Ok(VariableDeclarator { id: name, init: init })
             }
-            ref t => {
-                Err(self.unexpected_token(t.clone()))
+            t => {
+                Err(self.unexpected_token(t))
             }
         }
     }
@@ -678,7 +678,7 @@ impl<'a> Parser<'a> {
             self.scanner.next_token()?;
             Ok(Pattern::Identifier(self.finalize(start), name))
         } else {
-            Err(self.unexpected_token(self.scanner.lookahead.clone()))
+            Err(self.unexpected_token(self.scanner.lookahead))
         }
     }
 
@@ -728,8 +728,8 @@ impl<'a> Parser<'a> {
             Token::OpenParen => {
                 None
             }
-            ref t => {
-                return Err(self.unexpected_token(t.clone()));
+            t => {
+                return Err(self.unexpected_token(t));
             }
         };
 
@@ -777,7 +777,7 @@ impl<'a> Parser<'a> {
                 end: self.scanner.lookahead_start
             })
         } else {
-            Err(self.unexpected_token(self.scanner.lookahead.clone()))
+            Err(self.unexpected_token(self.scanner.lookahead))
         }
     }
 
@@ -854,7 +854,7 @@ impl<'a> Parser<'a> {
                 self.check_reserved_at(s, self.scanner.lookahead_start, ErrorCause::RestrictedVarNameInCatch)?;
                 s
             },
-            ref t => return Err(self.unexpected_token(t.clone()))
+            t => return Err(self.unexpected_token(t))
         };
         self.expect(Token::CloseParen)?;
         let body = self.parse_block()?;
@@ -1171,7 +1171,7 @@ impl<'a> Parser<'a> {
         if self.scanner.lookahead == expected {
             self.scanner.next_token()
         } else {
-            Err(self.unexpected_token(self.scanner.lookahead.clone()))
+            Err(self.unexpected_token(self.scanner.lookahead))
         }
     }
 

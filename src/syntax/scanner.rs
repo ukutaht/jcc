@@ -458,7 +458,7 @@ impl<'a> Scanner<'a> {
         }
     }
 
-    fn scan_regex_pattern(&mut self) -> Result<String> {
+    fn scan_regex_pattern(&mut self) -> Result<interner::Symbol> {
         let start = match self.lookahead {
             Token::Div => self.index,
             Token::DivEq => self.index - 1,
@@ -493,8 +493,8 @@ impl<'a> Scanner<'a> {
             return Err(CompileError::new(self.pos(), ErrorCause::UnterminatedRegex))
         }
 
-        let string = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index - 1]).to_string() };
-        Ok(string)
+        let string = unsafe { str::from_utf8_unchecked(&self.bytes.get_unchecked(start..self.index - 1)) };
+        Ok(interner::intern(string))
     }
 
     fn scan_regex_flags(&mut self) -> Result<Vec<char>> {

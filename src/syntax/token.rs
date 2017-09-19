@@ -1,6 +1,6 @@
 use interner::Symbol;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Token {
     Bang,
     BitAnd,
@@ -67,7 +67,6 @@ pub enum Token {
     RShift,
     RShiftEq,
     Return,
-    Regex(String, Vec<char>),
     Semi,
     String(Symbol),
     SwitchKeyword,
