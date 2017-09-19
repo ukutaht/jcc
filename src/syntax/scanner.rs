@@ -548,8 +548,8 @@ impl<'a> Scanner<'a> {
 
     fn scan_identifier(&mut self) -> Token {
         let start = self.index;
-        self.take_chars_while(|c| (c as char).is_es_identifier_continue());
-        let value = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]) };
+        self.take_chars_while(char::is_es_identifier_continue);
+        let value = unsafe { str::from_utf8_unchecked(&self.bytes.get_unchecked(start..self.index)) };
 
         if value == KEYWORD_VAR {
             Token::Var
@@ -659,14 +659,10 @@ impl<'a> Scanner<'a> {
 
     fn get_byte(&self, index: usize) -> Option<u8> {
         if index < self.bytes.len() {
-            Some(self.bytes[index])
+            unsafe { Some(*self.bytes.get_unchecked(index)) }
         } else {
             None
         }
-    }
-
-    fn current_char(&mut self) -> Option<char> {
-      unsafe { str::from_utf8_unchecked(&self.bytes[self.index..]) }.chars().next()
     }
 
     fn next_byte(&mut self) -> Option<u8> {
@@ -679,15 +675,19 @@ impl<'a> Scanner<'a> {
     }
 
     fn eat_byte(&mut self, byte: u8) -> bool {
-        if let Some(b) = self.current_byte() {
-            if b == byte {
+        match self.current_byte() {
+            Some(b) if b == byte => {
                 self.next_byte();
-                return true
+                true
             }
-            return false;
+            _ => false
         }
-        false
     }
+
+    fn current_char(&mut self) -> Option<char> {
+      unsafe { str::from_utf8_unchecked(&self.bytes[self.index..]) }.chars().next()
+    }
+
 
     fn next_char(&mut self) -> Option<char> {
         unsafe { str::from_utf8_unchecked(&self.bytes[self.index..]) }.chars().next().map(|c| {

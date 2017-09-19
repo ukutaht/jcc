@@ -53,7 +53,6 @@ impl ESCharExt for char {
                 '$' | '_' | 'a'...'z' | 'A'...'Z' => true,
                 _ => false,
             }
-
         } else {
             match self {
                 ch if ch.is_es_nonascii_identifier_start() => true,
