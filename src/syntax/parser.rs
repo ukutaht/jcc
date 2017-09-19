@@ -5,6 +5,7 @@ use syntax::token::Token;
 use syntax::scanner::Scanner;
 use syntax::ops::AsOperator;
 use syntax::word::EsWord;
+use interner::{self, Symbol};
 
 use std::collections::HashSet;
 use std;
@@ -16,7 +17,7 @@ struct ParseContext {
     in_function_body: bool,
     strict: bool,
     is_assignment_target: bool,
-    labels: HashSet<String>
+    labels: HashSet<Symbol>
 }
 
 pub struct Parser<'a> {
@@ -25,7 +26,7 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(source: &'a str) -> Parser {
+    pub fn new(source: &'a str) -> Parser<'a> {
         Parser {
             scanner: Scanner::new(source),
             context: ParseContext {
@@ -41,9 +42,13 @@ impl<'a> Parser<'a> {
     }
 
     fn directive_opt(&mut self, expr: &Expression) -> Option<String> {
-        if let Expression::Literal(_, Literal::String(ref val)) = *expr {
-            let len = val.len();
-            Some(val.as_str()[1..len - 1].to_owned())
+        if let Expression::Literal(_, Literal::String(val)) = *expr {
+            unsafe {
+                let guard = interner::read();
+                let string = guard.resolve_unchecked(val);
+                let len = string.len();
+                Some(string[1..len - 1].to_owned())
+            }
         } else {
             None
         }
@@ -150,8 +155,7 @@ impl<'a> Parser<'a> {
 
     fn parse_primary_expression(&mut self) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
-        let token = self.scanner.lookahead.clone();
-        match token {
+        match self.scanner.lookahead {
             Token::Number(n) => {
                 self.scanner.next_token()?;
                 self.context.is_assignment_target = false;
@@ -167,10 +171,10 @@ impl<'a> Parser<'a> {
                 self.context.is_assignment_target = false;
                 Ok(Expression::Literal(self.finalize(start), Literal::False))
             }
-            Token::String(ref s) => {
+            Token::String(s) => {
                 self.scanner.next_token()?;
                 self.context.is_assignment_target = false;
-                Ok(Expression::Literal(self.finalize(start), Literal::String(s.clone())))
+                Ok(Expression::Literal(self.finalize(start), Literal::String(s)))
             }
             Token::Ident(n) => {
                 self.scanner.next_token()?;
@@ -199,7 +203,7 @@ impl<'a> Parser<'a> {
                 self.context.is_assignment_target = false;
                 Ok(Expression::Literal(self.finalize(start), regex))
             },
-            t => {
+            ref t => {
                 Err(self.unexpected_token(t.clone()))
             }
         }
@@ -245,7 +249,7 @@ impl<'a> Parser<'a> {
         Ok(Expression::New(self.finalize(start), Box::new(base), args))
     }
 
-    fn expect_identifier_name(&mut self) -> Result<String> {
+    fn expect_identifier_name(&mut self) -> Result<Symbol> {
         match self.match_identifier_name() {
             Some(ident) => {
                 self.scanner.next_token()?;
@@ -255,15 +259,15 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn match_identifier_name(&mut self) -> Option<String> {
-        match self.scanner.lookahead.clone() {
+    fn match_identifier_name(&mut self) -> Option<Symbol> {
+        match self.scanner.lookahead {
             Token::Ident(name) => Some(name),
-            Token::If => Some("if".to_string()),
-            Token::Else => Some("else".to_string()),
-            Token::Null => Some("null".to_string()),
-            Token::BoolTrue => Some("true".to_string()),
-            Token::BoolFalse => Some("false".to_string()),
-            Token::In => Some("in".to_string()),
+            Token::If => Some(*interner::KEYWORD_IF),
+            Token::Else => Some(*interner::KEYWORD_ELSE),
+            Token::Null => Some(*interner::KEYWORD_NULL),
+            Token::BoolTrue => Some(*interner::KEYWORD_TRUE),
+            Token::BoolFalse => Some(*interner::KEYWORD_FALSE),
+            Token::In => Some(*interner::KEYWORD_IN),
             _ => None
         }
     }
@@ -340,13 +344,13 @@ impl<'a> Parser<'a> {
     }
 
     fn check_reserved_expr_at(&self, expr: &Expression, pos: Position, cause: ErrorCause) -> Result<()> {
-        if let &Expression::Identifier(_, ref s) = expr {
-            self.check_reserved_at(&s, pos, cause)?;
+        if let &Expression::Identifier(_, s) = expr {
+            self.check_reserved_at(s, pos, cause)?;
         }
         return Ok(())
     }
 
-    fn check_reserved_at(&self, word: &str, pos: Position, cause: ErrorCause) -> Result<()> {
+    fn check_reserved_at(&self, word: Symbol, pos: Position, cause: ErrorCause) -> Result<()> {
         if self.context.strict {
             if word.is_strict_mode_reserved_word() {
                 return Err(CompileError::new(pos, ErrorCause::StrictReservedWord))
@@ -503,11 +507,10 @@ impl<'a> Parser<'a> {
     fn match_object_property_key(&mut self) -> Result<Option<PropKey>> {
         let start = self.scanner.lookahead_start;
 
-        let token = self.scanner.lookahead.clone();
-        match token {
-            Token::String(ref s) => {
+        match self.scanner.lookahead {
+            Token::String(s) => {
                 self.scanner.next_token()?;
-                Ok(Some(PropKey::String(self.finalize(start), s.to_string())))
+                Ok(Some(PropKey::String(self.finalize(start), s)))
             }
             Token::Number(n) => {
                 self.scanner.next_token()?;
@@ -553,9 +556,8 @@ impl<'a> Parser<'a> {
 
     fn parse_object_property(&mut self) -> Result<Prop> {
         let start = self.scanner.lookahead_start;
-        let token = self.scanner.lookahead.clone();
 
-        if token == Token::Ident("get".to_string()) {
+        if self.scanner.lookahead == Token::Ident(*interner::KEYWORD_GET) {
             self.scanner.next_token()?;
             if let Some(key) = self.match_object_property_key()? {
                 let previous_strict = self.context.strict;
@@ -567,9 +569,9 @@ impl<'a> Parser<'a> {
                 Ok(Prop::Get(self.finalize(start), key, value))
             } else {
                 let span = self.finalize(start);
-                self.parse_prop_init(start, PropKey::Identifier(span, "get".to_string()))
+                self.parse_prop_init(start, PropKey::Identifier(span, *interner::KEYWORD_GET))
             }
-        } else if token == Token::Ident("set".to_string()) {
+        } else if self.scanner.lookahead == Token::Ident(*interner::KEYWORD_SET) {
             self.scanner.next_token()?;
             if let Some(key) = self.match_object_property_key()? {
                 let previous_strict = self.context.strict;
@@ -581,19 +583,19 @@ impl<'a> Parser<'a> {
                 Ok(Prop::Set(self.finalize(start), key, value))
             } else {
                 let span = self.finalize(start);
-                self.parse_prop_init(start, PropKey::Identifier(span, "set".to_string()))
+                self.parse_prop_init(start, PropKey::Identifier(span, *interner::KEYWORD_SET))
             }
         } else if let Some(key) = self.match_object_property_key()? {
             self.parse_prop_init(start, key)
         } else {
-            Err(self.unexpected_token(token))
+            Err(self.unexpected_token(self.scanner.lookahead.clone()))
         }
     }
 
     fn check_duplicate_proto(&self, has_proto: bool, prop: &Prop) -> Result<bool> {
         if let &Prop::Init(_, ref key, _) = prop {
-            if let &PropKey::Identifier(ref span, ref s) = key {
-                if s == "__proto__" {
+            if let &PropKey::Identifier(ref span, s) = key {
+                if s == *interner::KEYWORD_PROTO {
                     if has_proto {
                         return Err(CompileError::new(span.end, ErrorCause::DuplicateProto))
                     } else {
@@ -628,25 +630,25 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_variable_declarator(&mut self) -> Result<VariableDeclarator> {
-        match self.scanner.lookahead.clone() {
+        match self.scanner.lookahead {
             Token::Ident(name) => {
                 let start = self.scanner.lookahead_start;
                 self.scanner.next_token()?;
                 let init = match self.scanner.lookahead {
                     Token::Eq => {
-                        self.check_reserved_at(&name, self.scanner.last_pos, ErrorCause::RestrictedVarName)?;
+                        self.check_reserved_at(name, self.scanner.last_pos, ErrorCause::RestrictedVarName)?;
                         self.scanner.next_token()?;
                         Some(self.parse_assignment_expression()?)
                     }
                     _ => {
-                        self.check_reserved_at(&name, start, ErrorCause::RestrictedVarName)?;
+                        self.check_reserved_at(name, start, ErrorCause::RestrictedVarName)?;
                         None
                     }
                 };
                 Ok(VariableDeclarator { id: name, init: init })
             }
-            t => {
-                Err(self.unexpected_token(t))
+            ref t => {
+                Err(self.unexpected_token(t.clone()))
             }
         }
     }
@@ -671,7 +673,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_function_parameter(&mut self) -> Result<Pattern> {
-        if let Token::Ident(name) = self.scanner.lookahead.clone() {
+        if let Token::Ident(name) = self.scanner.lookahead {
             let start = self.scanner.lookahead_start;
             self.scanner.next_token()?;
             Ok(Pattern::Identifier(self.finalize(start), name))
@@ -703,8 +705,8 @@ impl<'a> Parser<'a> {
     fn validate_params(&self, params: &Vec<Pattern>) -> Result<()> {
         let mut param_names = HashSet::new();
         for param in params {
-            let &Pattern::Identifier(ref sp, ref id) = param;
-            self.check_reserved_at(&id, sp.start, ErrorCause::StrictParamName)?;
+            let &Pattern::Identifier(ref sp, id) = param;
+            self.check_reserved_at(id, sp.start, ErrorCause::StrictParamName)?;
             if self.context.strict && param_names.contains(&id) {
                 return Err(CompileError::new(sp.start, ErrorCause::StrictDupeParam))
             }
@@ -717,17 +719,17 @@ impl<'a> Parser<'a> {
         self.expect(Token::FunctionKeyword)?;
 
         let id_loc = self.scanner.lookahead_start;
-        let id = match self.scanner.lookahead.clone() {
+        let id = match self.scanner.lookahead {
             Token::Ident(name) => {
-                self.check_reserved_at(&name, self.scanner.lookahead_start, ErrorCause::RestrictedVarNameInFunction)?;
+                self.check_reserved_at(name, self.scanner.lookahead_start, ErrorCause::RestrictedVarNameInFunction)?;
                 self.scanner.next_token()?;
                 Some(name)
             }
             Token::OpenParen => {
                 None
             }
-            t => {
-                return Err(self.unexpected_token(t));
+            ref t => {
+                return Err(self.unexpected_token(t.clone()));
             }
         };
 
@@ -738,8 +740,8 @@ impl<'a> Parser<'a> {
 
         self.validate_params(&parameters)?;
 
-        if let Some(ref name) = id {
-            self.check_reserved_at(&name, id_loc, ErrorCause::RestrictedVarNameInFunction)?;
+        if let Some(name) = id {
+            self.check_reserved_at(name, id_loc, ErrorCause::RestrictedVarNameInFunction)?;
         }
 
         self.context.strict = previous_strict;
@@ -846,13 +848,13 @@ impl<'a> Parser<'a> {
     fn parse_catch_clause(&mut self) -> Result<CatchClause> {
         self.expect(Token::CatchKeyword)?;
         self.expect(Token::OpenParen)?;
-        let param = match self.scanner.lookahead.clone() {
+        let param = match self.scanner.lookahead {
             Token::Ident(s) => {
                 self.scanner.next_token()?;
-                self.check_reserved_at(&s, self.scanner.lookahead_start, ErrorCause::RestrictedVarNameInCatch)?;
+                self.check_reserved_at(s, self.scanner.lookahead_start, ErrorCause::RestrictedVarNameInCatch)?;
                 s
             },
-            t => return Err(self.unexpected_token(t))
+            ref t => return Err(self.unexpected_token(t.clone()))
         };
         self.expect(Token::CloseParen)?;
         let body = self.parse_block()?;
@@ -1043,9 +1045,9 @@ impl<'a> Parser<'a> {
         if id_opt.is_some() && self.eat(Token::Colon)? {
             let id = id_opt.unwrap();
             if self.context.labels.contains(&id.1) {
-                return Err(self.error(ErrorCause::DuplicateLabel(id.1.clone())))
+                return unsafe {Err(self.error(ErrorCause::DuplicateLabel(interner::read().resolve_unchecked(id.1).to_owned())))}
             }
-            self.context.labels.insert(id.1.clone());
+            self.context.labels.insert(id.1);
             let body = self.parse_statement()?;
             self.context.labels.remove(&id.1);
             Ok(Statement::Labeled(self.finalize(start), id, Box::new(body)))
@@ -1060,7 +1062,7 @@ impl<'a> Parser<'a> {
         if self.match_ident() && !self.scanner.at_newline() {
             let id = self.parse_id()?;
             if !self.context.labels.contains(&id.1) {
-                return Err(self.error(ErrorCause::UndefinedLabel(id.1.clone())))
+                return unsafe {Err(self.error(ErrorCause::UndefinedLabel(interner::read().resolve_unchecked(id.1).to_owned())))}
             };
             Ok(Statement::Break(self.consume_semicolon(start)?, Some(id)))
         } else if self.context.in_switch || self.context.in_iteration {
@@ -1077,7 +1079,7 @@ impl<'a> Parser<'a> {
         if self.match_ident() && !self.scanner.at_newline() {
             let id = self.parse_id()?;
             if !self.context.labels.contains(&id.1) {
-                return Err(self.error(ErrorCause::UndefinedLabel(id.1.clone())))
+                return unsafe {Err(self.error(ErrorCause::UndefinedLabel(interner::read().resolve_unchecked(id.1).to_owned())))}
             };
             Ok(Statement::Continue(self.consume_semicolon(start)?, Some(id)))
         } else if self.context.in_iteration {
@@ -1107,7 +1109,7 @@ impl<'a> Parser<'a> {
 
     fn as_id(&self, expr: &Expression) -> Option<Id> {
         match *expr {
-            Expression::Identifier(ref sp, ref id) => Some(Id(sp.clone(), id.clone())),
+            Expression::Identifier(ref sp, id) => Some(Id(sp.clone(), id)),
             _ => None
         }
     }
@@ -1166,18 +1168,15 @@ impl<'a> Parser<'a> {
     }
 
     fn expect(&mut self, expected: Token) -> Result<Token> {
-        let next = self.scanner.lookahead.clone();
-
-        if next == expected {
-            self.scanner.next_token()?;
-            Ok(next)
+        if self.scanner.lookahead == expected {
+            self.scanner.next_token()
         } else {
-            Err(self.unexpected_token(next))
+            Err(self.unexpected_token(self.scanner.lookahead.clone()))
         }
     }
 
     fn unexpected_token(&self, token: Token) -> CompileError {
-        if let Token::Ident(ref s) = token {
+        if let Token::Ident(s) = token {
             if s.is_future_reserved_word() {
                 return CompileError::new(self.scanner.lookahead_start, ErrorCause::UnexpectedReservedWord)
 

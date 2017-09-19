@@ -1,6 +1,11 @@
+#[macro_use]
+extern crate lazy_static;
+extern crate string_interner;
+
 pub mod syntax;
 pub mod trans;
 pub mod errors;
+pub mod interner;
 
 use errors::CompileError;
 use syntax::ast::Program;
