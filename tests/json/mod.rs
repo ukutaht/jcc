@@ -1,6 +1,7 @@
 use std;
 use jcc::syntax::ast::*;
 use jcc::syntax::span::{Span, Position};
+use jcc::interner;
 use serde_json::value::Value;
 
 pub type Result<T> = std::result::Result<T, ()>;
@@ -144,8 +145,8 @@ fn member_expression(node: &Value) -> Result<Expression> {
         Ok(Expression::ComputedMember(span, Box::new(object), Box::new(prop)))
     } else {
         match prop {
-            Expression::Identifier(_, ref s) => {
-                Ok(Expression::StaticMember(span, Box::new(object), s.clone()))
+            Expression::Identifier(_, s) => {
+                Ok(Expression::StaticMember(span, Box::new(object), s))
             }
             _ => Err(())
         }
@@ -167,8 +168,9 @@ fn literal(node: &Value) -> Result<Expression> {
     } else if val.is_null() {
         Ok(Expression::Literal(span(node)?, Literal::Null))
     } else if val.is_string() {
-        let string = expect_string(node, "raw").to_owned();
-        Ok(Expression::Literal(span(node)?, Literal::String(string)))
+        let string = expect_string(node, "raw");
+        let sym = interner::intern(string);
+        Ok(Expression::Literal(span(node)?, Literal::String(sym)))
     } else if val.is_boolean() {
         if val.as_bool().unwrap() {
             Ok(Expression::Literal(span(node)?, Literal::True))
@@ -240,13 +242,13 @@ fn update_expression(node: &Value) -> Result<Expression> {
 
 fn prop_key(node: &Value) -> Result<PropKey> {
     match expect_string(node, "type") {
-        "Identifier" => Ok(PropKey::Identifier(span(node)?, expect_string(node, "name").to_owned())),
+        "Identifier" => Ok(PropKey::Identifier(span(node)?, interner::intern(expect_string(node, "name")))),
         "Literal" => {
             let val = expect_value(node, "value");
 
             if val.is_string() {
-                let string = expect_string(node, "raw").to_owned();
-                Ok(PropKey::String(span(node)?, string))
+                let string = expect_string(node, "raw");
+                Ok(PropKey::String(span(node)?, interner::intern(string)))
             } else if val.is_number() {
                 Ok(PropKey::Number(span(node)?, val.as_f64().unwrap()))
             } else {
@@ -320,7 +322,8 @@ fn function(node: &Value) -> Result<Function> {
     let id = if expect_value(node, "id").is_null() {
         None
     } else {
-        Some(expect_string(expect_value(node, "id"), "name").to_owned())
+        let name = expect_string(expect_value(node, "id"), "name");
+        Some(interner::intern(name))
 
     };
     let mut parameters = Vec::new();
@@ -332,7 +335,10 @@ fn function(node: &Value) -> Result<Function> {
 
 fn pattern(node: &Value) -> Result<Pattern> {
     match expect_string(node, "type") {
-        "Identifier" => Ok(Pattern::Identifier(span(node)?, expect_string(node, "name").to_owned())),
+        "Identifier" => {
+            let id = interner::intern(expect_string(node, "name"));
+            Ok(Pattern::Identifier(span(node)?, id))
+        }
         _ => Err(())
     }
 }
@@ -347,7 +353,10 @@ fn expression(node: &Value) -> Result<Expression> {
         "UnaryExpression" => unary_expression(node),
         "UpdateExpression" => update_expression(node),
         "CallExpression" => call_expression(node),
-        "Identifier" => Ok(Expression::Identifier(span, expect_string(node, "name").to_owned())),
+        "Identifier" => {
+            let sym = interner::intern(expect_string(node, "name"));
+            Ok(Expression::Identifier(span, sym))
+        }
         "Literal" => literal(node),
         "LogicalExpression" => logical_expression(node),
         "MemberExpression" => member_expression(node),
@@ -382,7 +391,7 @@ fn variable_declarator(node: &Value) -> Result<VariableDeclarator> {
     let init = maybe_key(node, "init", &expression)?;
 
     Ok(VariableDeclarator {
-        id: expect_string(expect_value(node, "id"), "name").to_owned(),
+        id: interner::intern(expect_string(expect_value(node, "id"), "name")),
         init: init
     })
 }
@@ -411,7 +420,7 @@ fn throw_statement(node: &Value) -> Result<Statement> {
 }
 
 fn catch_clause(node: &Value) -> Result<CatchClause> {
-    let param = expect_string(expect_value(node, "param"), "name").to_owned();
+    let param = interner::intern(expect_string(expect_value(node, "param"), "name"));
     let body = block(expect_value(node, "body"))?;
     Ok(CatchClause { param: param, body: body })
 }
@@ -508,8 +517,8 @@ fn labeled_statement(node: &Value) -> Result<Statement> {
 }
 
 fn identifier(node: &Value) -> Result<Id> {
-    let name = expect_string(node, "name").to_owned();
-    Ok(Id(span(node)?, name))
+    let name = expect_string(node, "name");
+    Ok(Id(span(node)?, interner::intern(name)))
 }
 
 fn statement(node: &Value) -> Result<Statement> {

@@ -1,3 +1,4 @@
+use interner;
 use syntax::char::ESCharExt;
 use syntax::span::Position;
 use syntax::token::Token;
@@ -6,36 +7,6 @@ use errors::{CompileError, ErrorCause, Result};
 use std::str;
 use std::mem;
 use std::char;
-
-static KEYWORD_VAR: &'static str = "var";
-static KEYWORD_FUNCTION: &'static str = "function";
-static KEYWORD_THIS: &'static str = "this";
-static KEYWORD_NULL: &'static str = "null";
-static KEYWORD_IF: &'static str = "if";
-static KEYWORD_ELSE: &'static str = "else";
-static KEYWORD_NEW: &'static str = "new";
-static KEYWORD_VOID: &'static str = "void";
-static KEYWORD_DELETE: &'static str = "delete";
-static KEYWORD_TYPEOF: &'static str = "typeof";
-static KEYWORD_IN: &'static str = "in";
-static KEYWORD_INSTANCEOF: &'static str = "instanceof";
-static KEYWORD_RETURN: &'static str = "return";
-static KEYWORD_DEBUGGER: &'static str = "debugger";
-static KEYWORD_THROW: &'static str = "throw";
-static KEYWORD_TRY: &'static str = "try";
-static KEYWORD_CATCH: &'static str = "catch";
-static KEYWORD_FINALLY: &'static str = "finally";
-static KEYWORD_SWITCH: &'static str = "switch";
-static KEYWORD_CASE: &'static str = "case";
-static KEYWORD_DEFAULT: &'static str = "default";
-static KEYWORD_BREAK: &'static str = "break";
-static KEYWORD_DO: &'static str = "do";
-static KEYWORD_WHILE: &'static str = "while";
-static KEYWORD_FOR: &'static str = "for";
-static KEYWORD_WITH: &'static str = "with";
-static KEYWORD_CONTINUE: &'static str = "continue";
-static BOOL_TRUE: &'static str = "true";
-static BOOL_FALSE: &'static str = "false";
 
 pub struct Scanner<'a> {
     bytes: &'a [u8],
@@ -48,7 +19,7 @@ pub struct Scanner<'a> {
 }
 
 impl<'a> Scanner<'a> {
-    pub fn new(source: &'a str) -> Scanner {
+    pub fn new(source: &'a str) -> Scanner<'a> {
         Scanner {
             bytes: source.as_bytes(),
             index: 0,
@@ -473,8 +444,8 @@ impl<'a> Scanner<'a> {
             return Err(self.invalid_token_at(self.lookahead_start));
         }
 
-        let string = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]).to_string() };
-        Ok(Token::String(string))
+        let string = unsafe { str::from_utf8_unchecked(&self.bytes.get_unchecked(start..self.index)) };
+        Ok(Token::String(interner::intern(string)))
     }
 
     fn scan_hex_digit(&mut self) -> Result<u32> {
@@ -551,66 +522,39 @@ impl<'a> Scanner<'a> {
         self.take_chars_while(char::is_es_identifier_continue);
         let value = unsafe { str::from_utf8_unchecked(&self.bytes.get_unchecked(start..self.index)) };
 
-        if value == KEYWORD_VAR {
-            Token::Var
-        } else if value == KEYWORD_FUNCTION {
-            Token::FunctionKeyword
-        } else if value == KEYWORD_THIS {
-            Token::ThisKeyword
-        } else if value == KEYWORD_NULL {
-            Token::Null
-        } else if value == KEYWORD_IF {
-            Token::If
-        } else if value == KEYWORD_ELSE {
-            Token::Else
-        } else if value == KEYWORD_NEW {
-            Token::New
-        } else if value == KEYWORD_VOID {
-            Token::Void
-        } else if value == KEYWORD_DELETE {
-            Token::Delete
-        } else if value == KEYWORD_TYPEOF {
-            Token::Typeof
-        } else if value == KEYWORD_IN {
-            Token::In
-        } else if value == KEYWORD_INSTANCEOF {
-            Token::Instanceof
-        } else if value == KEYWORD_RETURN {
-            Token::Return
-        } else if value == KEYWORD_DEBUGGER {
-            Token::DebuggerKeyword
-        } else if value == KEYWORD_THROW {
-            Token::ThrowKeyword
-        } else if value == KEYWORD_TRY {
-            Token::TryKeyword
-        } else if value == KEYWORD_CATCH {
-            Token::CatchKeyword
-        } else if value == KEYWORD_FINALLY {
-            Token::FinallyKeyword
-        } else if value == KEYWORD_SWITCH {
-            Token::SwitchKeyword
-        } else if value == KEYWORD_CASE {
-            Token::CaseKeyword
-        } else if value == KEYWORD_DEFAULT {
-            Token::DefaultKeyword
-        } else if value == KEYWORD_BREAK {
-            Token::BreakKeyword
-        } else if value == KEYWORD_DO {
-            Token::DoKeyword
-        } else if value == KEYWORD_WHILE {
-            Token::WhileKeyword
-        } else if value == KEYWORD_FOR {
-            Token::ForKeyword
-        } else if value == KEYWORD_WITH {
-            Token::WithKeyword
-        } else if value == KEYWORD_CONTINUE {
-            Token::ContinueKeyword
-        } else if value == BOOL_TRUE {
-            Token::BoolTrue
-        } else if value == BOOL_FALSE {
-            Token::BoolFalse
-        } else {
-            Token::Ident(value.to_string())
+        match value {
+            "var" => Token::Var,
+            "function" => Token::FunctionKeyword,
+            "this" => Token::ThisKeyword,
+            "null" => Token::Null,
+            "if" => Token::If,
+            "else" => Token::Else,
+            "new" => Token::New,
+            "void" => Token::Void,
+            "delete" => Token::Delete,
+            "typeof" => Token::Typeof,
+            "in" => Token::In,
+            "instanceof" => Token::Instanceof,
+            "return" => Token::Return,
+            "debugger" => Token::DebuggerKeyword,
+            "throw" => Token::ThrowKeyword,
+            "try" => Token::TryKeyword,
+            "catch" => Token::CatchKeyword,
+            "finally" => Token::FinallyKeyword,
+            "switch" => Token::SwitchKeyword,
+            "case" => Token::CaseKeyword,
+            "default" => Token::DefaultKeyword,
+            "break" => Token::BreakKeyword,
+            "do" => Token::DoKeyword,
+            "while" => Token::WhileKeyword,
+            "for" => Token::ForKeyword,
+            "with" => Token::WithKeyword,
+            "continue" => Token::ContinueKeyword,
+            "true" => Token::BoolTrue,
+            "false" => Token::BoolFalse,
+            _ => {
+                Token::Ident(interner::intern(value))
+            }
         }
     }
 

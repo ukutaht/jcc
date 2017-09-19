@@ -1,3 +1,5 @@
+use interner::Symbol;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     Bang,
@@ -35,7 +37,7 @@ pub enum Token {
     ForKeyword,
     Gt,
     Gte,
-    Ident(String),
+    Ident(Symbol),
     If,
     In,
     Instanceof,
@@ -67,7 +69,7 @@ pub enum Token {
     Return,
     Regex(String, Vec<char>),
     Semi,
-    String(String),
+    String(Symbol),
     SwitchKeyword,
     ThisKeyword,
     ThrowKeyword,

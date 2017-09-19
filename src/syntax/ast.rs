@@ -1,9 +1,10 @@
 use syntax::span::Span;
+use interner::Symbol;
 
 #[derive(Debug, PartialEq)]
 pub enum Literal {
     Number(f64),
-    String(String),
+    String(Symbol),
     Regex(String, Vec<char>),
     Null,
     True,
@@ -11,7 +12,7 @@ pub enum Literal {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Id(pub Span, pub String);
+pub struct Id(pub Span, pub Symbol);
 
 #[derive(Debug, PartialEq)]
 pub enum ArgumentListElement {
@@ -107,8 +108,8 @@ pub enum AssignOp {
 
 #[derive(Debug, PartialEq)]
 pub enum PropKey {
-    Identifier(Span, String),
-    String(Span, String),
+    Identifier(Span, Symbol),
+    String(Span, Symbol),
     Number(Span, f64)
 }
 
@@ -129,11 +130,11 @@ pub enum Expression {
     Call(Span, Box<Expression>, Vec<ArgumentListElement>),
     ComputedMember(Span, Box<Expression>, Box<Expression>),
     Function(Span, Function),
-    Identifier(Span, String),
+    Identifier(Span, Symbol),
     Literal(Span, Literal),
     Logical(Span, LogOp, Box<Expression>, Box<Expression>),
     New(Span, Box<Expression>, Vec<ArgumentListElement>),
-    StaticMember(Span, Box<Expression>, String),
+    StaticMember(Span, Box<Expression>, Symbol),
     Unary(Span, UnOp, Box<Expression>),
     Update(Span, UpdateOp, Box<Expression>, bool),
     Sequence(Span, Vec<Expression>),
@@ -142,19 +143,19 @@ pub enum Expression {
 
 #[derive(Debug, PartialEq)]
 pub enum Pattern {
-    Identifier(Span, String),
+    Identifier(Span, Symbol),
 }
 
 #[derive(Debug, PartialEq)]
 pub struct Function {
-    pub id: Option<String>,
+    pub id: Option<Symbol>,
     pub body: Block,
     pub parameters: Vec<Pattern>,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct CatchClause {
-    pub param: String,
+    pub param: Symbol,
     pub body: Block,
 }
 
@@ -224,7 +225,7 @@ pub enum VariableDeclarationKind {
 
 #[derive(Debug, PartialEq)]
 pub struct VariableDeclarator {
-    pub id: String,
+    pub id: Symbol,
     pub init: Option<Expression>,
 }
 
