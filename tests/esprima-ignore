@@ -15,7 +15,7 @@ comment/migrated_0054
 declaration/function/dupe-param
 # ES6
 declaration/const/**
-declaration/let/**
+
 
 ES2016/**
 es2017/**
@@ -95,7 +95,6 @@ invalid-syntax/migrated_0137.source
 invalid-syntax/migrated_0138
 invalid-syntax/migrated_0139
 invalid-syntax/migrated_0140
-invalid-syntax/migrated_0141
 invalid-syntax/migrated_0142
 
 # Backslash

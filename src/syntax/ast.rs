@@ -217,11 +217,7 @@ pub enum StatementListItem {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum VariableDeclarationKind {
-    Var,
-    Let,
-    Const,
-}
+pub enum VariableDeclarationKind { Var, Let, Const }
 
 #[derive(Debug, PartialEq)]
 pub struct VariableDeclarator {

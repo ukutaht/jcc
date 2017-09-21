@@ -650,14 +650,14 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_variable_declaration(&mut self) -> Result<VariableDeclaration> {
+    fn parse_variable_declaration(&mut self, kind: VariableDeclarationKind) -> Result<VariableDeclaration> {
         let mut declarators = Vec::new();
         declarators.push(self.parse_variable_declarator()?);
         while self.eat(Token::Comma)? {
             declarators.push(self.parse_variable_declarator()?)
         }
         Ok(VariableDeclaration {
-            kind: VariableDeclarationKind::Var,
+            kind: kind,
             declarations: declarators
         })
     }
@@ -665,7 +665,7 @@ impl<'a> Parser<'a> {
     fn parse_variable_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::Var)?;
-        let declaration = self.parse_variable_declaration()?;
+        let declaration = self.parse_variable_declaration(VariableDeclarationKind::Var)?;
         Ok(Statement::VariableDeclaration(self.consume_semicolon(start)?, declaration))
     }
 
@@ -788,7 +788,7 @@ impl<'a> Parser<'a> {
         if self.context.strict && self.scanner.lookahead == Token::FunctionKeyword {
             return Err(self.error(ErrorCause::StrictFunction))
         }
-        self.parse_statement()
+        self.parse_statement(false)
     }
 
     fn parse_if_statement(&mut self) -> Result<Statement> {
@@ -936,7 +936,7 @@ impl<'a> Parser<'a> {
     fn parse_do_while_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::DoKeyword)?;
-        let body = self.in_iteration(true, Parser::parse_statement)?;
+        let body = self.in_iteration(true, |c| Parser::parse_statement(c, true))?;
         self.expect(Token::WhileKeyword)?;
         self.expect(Token::OpenParen)?;
         let test = self.parse_expression()?;
@@ -951,14 +951,14 @@ impl<'a> Parser<'a> {
         self.expect(Token::OpenParen)?;
         let test = self.parse_expression()?;
         self.expect(Token::CloseParen)?;
-        let body = self.in_iteration(true, Parser::parse_statement)?;
+        let body = self.in_iteration(true, |c| Parser::parse_statement(c, true))?;
         Ok(Statement::While(self.finalize(start), test, Box::new(body)))
     }
 
     fn parse_for_in_statement(&mut self, start: Position, left: ForInit) -> Result<Statement> {
         let right = self.parse_expression()?;
         self.expect(Token::CloseParen)?;
-        let body = self.in_iteration(true, Parser::parse_statement)?;
+        let body = self.in_iteration(true, |c| Parser::parse_statement(c, true))?;
         Ok(Statement::ForIn(self.finalize(start), Box::new(ForInStatement {
             left: left,
             right: right,
@@ -981,7 +981,7 @@ impl<'a> Parser<'a> {
         };
         self.expect(Token::CloseParen)?;
 
-        let body = self.in_iteration(true, Parser::parse_statement)?;
+        let body = self.in_iteration(true, |c| Parser::parse_statement(c, true))?;
         Ok(Statement::For(self.finalize(start), Box::new(ForStatement {
             init: init,
             test: test,
@@ -997,7 +997,7 @@ impl<'a> Parser<'a> {
         if self.eat(Token::Semi)? {
             self.parse_for_iter_statement(start, None)
         } else if self.eat(Token::Var)? {
-            let decl = self.allow_in(false, Parser::parse_variable_declaration)?;
+            let decl = self.allow_in(false, |context| Parser::parse_variable_declaration(context, VariableDeclarationKind::Var))?;
             if decl.declarations.len() == 1 && self.eat(Token::In)? {
                 self.parse_for_in_statement(start, ForInit::VarDecl(decl))
 
@@ -1031,26 +1031,18 @@ impl<'a> Parser<'a> {
         self.expect(Token::OpenParen)?;
         let object = self.parse_expression()?;
         self.expect(Token::CloseParen)?;
-        let body = self.parse_statement()?;
+        let body = self.parse_statement(true)?;
         Ok(Statement::With(self.finalize(start), object, Box::new(body)))
     }
 
-    fn parse_labeled_statement(&mut self) -> Result<Statement> {
-        let start = self.scanner.lookahead_start;
-        let expr = self.parse_expression()?;
-        let id_opt = self.as_id(&expr);
-        if id_opt.is_some() && self.eat(Token::Colon)? {
-            let id = id_opt.unwrap();
-            if self.context.labels.contains(&id.1) {
-                return Err(self.error(ErrorCause::DuplicateLabel(interner::resolve(id.1).to_owned())))
-            }
-            self.context.labels.insert(id.1);
-            let body = self.parse_statement()?;
-            self.context.labels.remove(&id.1);
-            Ok(Statement::Labeled(self.finalize(start), id, Box::new(body)))
-        } else {
-            Ok(Statement::Expression(self.consume_semicolon(start)?, expr))
+    fn parse_labeled_statement(&mut self, start: Position, id: Id) -> Result<Statement> {
+        if self.context.labels.contains(&id.1) {
+            return Err(self.error(ErrorCause::DuplicateLabel(interner::resolve(id.1).to_owned())))
         }
+        self.context.labels.insert(id.1);
+        let body = self.parse_statement(true)?;
+        self.context.labels.remove(&id.1);
+        Ok(Statement::Labeled(self.finalize(start), id, Box::new(body)))
     }
 
     fn parse_break_statement(&mut self) -> Result<Statement> {
@@ -1111,7 +1103,12 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_statement(&mut self) -> Result<Statement> {
+    fn parse_let_declaration(&mut self, start: Position) -> Result<Statement> {
+        let declaration = self.parse_variable_declaration(VariableDeclarationKind::Let)?;
+        Ok(Statement::VariableDeclaration(self.consume_semicolon(start)?, declaration))
+    }
+
+    fn parse_statement(&mut self, allow_decl: bool) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
 
         match self.scanner.lookahead {
@@ -1142,14 +1139,30 @@ impl<'a> Parser<'a> {
             Token::WhileKeyword => self.parse_while_statement(),
             Token::ForKeyword => self.parse_for_statement(),
             Token::WithKeyword => self.parse_with_statement(),
-            Token::Ident(_) => self.parse_labeled_statement(),
+            Token::Ident(_) => {
+                let start = self.scanner.lookahead_start;
+                let expr = self.parse_expression()?;
+                match expr {
+                    Expression::Identifier(_, name) if name == *interner::RESERVED_LET && allow_decl => {
+                        self.parse_let_declaration(start)
+                    },
+                    expr => {
+                        let id_opt = self.as_id(&expr);
+                        if id_opt.is_some() && self.eat(Token::Colon)? {
+                            self.parse_labeled_statement(start, id_opt.unwrap())
+                        } else {
+                            Ok(Statement::Expression(self.consume_semicolon(start)?, expr))
+                        }
+                    }
+                }
+            }
             _ => self.parse_expression_statement(),
         }
     }
 
     fn parse_statement_list_item(&mut self) -> Result<StatementListItem> {
         self.context.is_assignment_target = true;
-        self.parse_statement().map(StatementListItem::Statement)
+        self.parse_statement(true).map(StatementListItem::Statement)
     }
 
     fn parse_block(&mut self) -> Result<Block> {
