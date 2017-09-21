@@ -36,6 +36,7 @@ pub enum ErrorCause {
     UnterminatedRegex,
     UnexpectedToken(Token),
     UnqualifiedDelete,
+    MissingInitializerInConst,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -55,6 +56,9 @@ impl fmt::Display for CompileError {
         write!(fmt, "Error: Line {}: ", self.pos.line)?;
 
          match self.cause {
+            ErrorCause::MissingInitializerInConst => {
+                write!(fmt, "Missing initializer in const declaration")
+            },
             ErrorCause::StrictReservedWord => {
                 write!(fmt, "Use of future reserved word in strict mode")
             },
@@ -144,6 +148,9 @@ impl fmt::Display for CompileError {
             }
             ErrorCause::UnexpectedToken(Token::String(_)) => {
                 write!(fmt, "Unexpected string")
+            }
+            ErrorCause::UnexpectedToken(Token::Const) => {
+                write!(fmt, "Unexpected token const")
             }
             ErrorCause::UnexpectedToken(ref t) => {
                 write!(fmt, "Unexpected token {}", t)

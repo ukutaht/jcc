@@ -552,6 +552,7 @@ impl<'a> Scanner<'a> {
             "continue" => Token::ContinueKeyword,
             "true" => Token::BoolTrue,
             "false" => Token::BoolFalse,
+            "const" => Token::Const,
             _ => {
                 Token::Ident(interner::intern(value))
             }

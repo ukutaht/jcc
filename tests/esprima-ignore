@@ -13,8 +13,6 @@ comment/migrated_0054
 
 # Tolerant mode
 declaration/function/dupe-param
-# ES6
-declaration/const/**
 
 
 ES2016/**
@@ -90,12 +88,8 @@ invalid-syntax/migrated_0099
 invalid-syntax/migrated_0100
 invalid-syntax/migrated_0101
 
-# ES6: Let, const
+
 invalid-syntax/migrated_0137.source
-invalid-syntax/migrated_0138
-invalid-syntax/migrated_0139
-invalid-syntax/migrated_0140
-invalid-syntax/migrated_0142
 
 # Backslash
 invalid-syntax/migrated_0162

@@ -626,7 +626,7 @@ impl<'a> Parser<'a> {
         Ok(Expression::Object(self.finalize(start), properties))
     }
 
-    fn parse_variable_declarator(&mut self) -> Result<VariableDeclarator> {
+    fn parse_variable_declarator(&mut self, kind: VariableDeclarationKind) -> Result<VariableDeclarator> {
         match self.scanner.lookahead {
             Token::Ident(name) => {
                 let start = self.scanner.lookahead_start;
@@ -636,6 +636,9 @@ impl<'a> Parser<'a> {
                         self.check_reserved_at(name, self.scanner.last_pos, ErrorCause::RestrictedVarName)?;
                         self.scanner.next_token()?;
                         Some(self.parse_assignment_expression()?)
+                    }
+                    _ if kind == VariableDeclarationKind::Const => {
+                        return Err(self.error(ErrorCause::MissingInitializerInConst))
                     }
                     _ => {
                         self.check_reserved_at(name, start, ErrorCause::RestrictedVarName)?;
@@ -652,9 +655,9 @@ impl<'a> Parser<'a> {
 
     fn parse_variable_declaration(&mut self, kind: VariableDeclarationKind) -> Result<VariableDeclaration> {
         let mut declarators = Vec::new();
-        declarators.push(self.parse_variable_declarator()?);
+        declarators.push(self.parse_variable_declarator(kind)?);
         while self.eat(Token::Comma)? {
-            declarators.push(self.parse_variable_declarator()?)
+            declarators.push(self.parse_variable_declarator(kind)?)
         }
         Ok(VariableDeclaration {
             kind: kind,
@@ -1103,6 +1106,13 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn parse_const_declaration(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::Const)?;
+        let declaration = self.parse_variable_declaration(VariableDeclarationKind::Const)?;
+        Ok(Statement::VariableDeclaration(self.consume_semicolon(start)?, declaration))
+    }
+
     fn parse_let_declaration(&mut self, start: Position) -> Result<Statement> {
         let declaration = self.parse_variable_declaration(VariableDeclarationKind::Let)?;
         Ok(Statement::VariableDeclaration(self.consume_semicolon(start)?, declaration))
@@ -1139,6 +1149,13 @@ impl<'a> Parser<'a> {
             Token::WhileKeyword => self.parse_while_statement(),
             Token::ForKeyword => self.parse_for_statement(),
             Token::WithKeyword => self.parse_with_statement(),
+            Token::Const => {
+                if allow_decl {
+                    self.parse_const_declaration()
+                } else {
+                    Err(self.unexpected_token(Token::Const))
+                }
+            }
             Token::Ident(_) => {
                 let start = self.scanner.lookahead_start;
                 let expr = self.parse_expression()?;
