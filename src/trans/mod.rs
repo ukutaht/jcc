@@ -13,13 +13,13 @@ pub fn transpile<W: Write>(out: &mut W, program: &Program) -> Result<()> {
 pub fn transpile_expression<W: Write>(out: &mut W, expr: &Expression) -> Result<()> {
     match *expr {
         Expression::Literal(_, ref lit) => transpile_literal(out, lit),
-        Expression::Identifier(_, name) => unsafe { transpile_ident(out, interner::read().resolve_unchecked(name)) },
+        Expression::Identifier(_, name) => transpile_ident(out, &*interner::resolve(name)),
         Expression::Array(_, ref elements) => transpile_array(out, elements),
         Expression::Call(_, ref callee, ref arguments) => transpile_call(out, &*callee, arguments),
         Expression::New(_, ref callee, ref arguments) => transpile_new(out, &*callee, arguments),
         Expression::Binary(_, ref op, ref left, ref right) => transpile_binop(out, op, &*left, &*right),
         Expression::Logical(_, ref op, ref left, ref right) => transpile_logop(out, op, &*left, &*right),
-        Expression::StaticMember(_, ref object, property) => unsafe { transpile_static_member(out, &*object, interner::read().resolve_unchecked(property))},
+        Expression::StaticMember(_, ref object, property) => transpile_static_member(out, &*object, &*interner::resolve(property)),
         Expression::Unary(_, ref op, ref expr) => transpile_unary_operator(out, op, &*expr),
         Expression::Function(_, ref func) => transpile_function(out, func),
         ref e => panic!("Cannot trans: {:?}", e)
@@ -129,10 +129,8 @@ fn transpile_array<W: Write>(out: &mut W, elements: &[Option<Expression>]) -> Re
 fn transpile_declarator<W: Write>(out: &mut W, dec: &VariableDeclarator) -> Result<()> {
     match dec.init {
         Some(ref initializer) => {
-            unsafe {
-                try!(write!(out, "var {} = ", interner::read().resolve_unchecked(dec.id)));
-                transpile_expression(out, initializer)
-            }
+            write!(out, "var {} = ", &*interner::resolve(dec.id))?;
+            transpile_expression(out, initializer)
         }
         None => write!(out, "var {}", dec.id),
     }
@@ -148,11 +146,7 @@ fn transpile_variable_declaration<W: Write>(out: &mut W, dec: &VariableDeclarati
 fn transpile_function_parameter<W: Write>(out: &mut W, pat: &Pattern) -> Result<()> {
     match *pat {
         Pattern::Identifier(_, n) => {
-            unsafe {
-                let read_guard = interner::read();
-                let name = read_guard.resolve_unchecked(n);
-                try!(write!(out, "{}", name))
-            }
+            write!(out, "{}", &*interner::resolve(n))?
         }
     }
     Ok(())
@@ -161,7 +155,7 @@ fn transpile_function_parameter<W: Write>(out: &mut W, pat: &Pattern) -> Result<
 fn transpile_function<W: Write>(out: &mut W, fun: &Function) -> Result<()> {
     match fun.id {
         Some(id) => {
-            unsafe { write!(out, "function {}(", interner::read().resolve_unchecked(id))?  }
+            write!(out, "function {}(", &*interner::resolve(id))?
         }
         None => write!(out, "function(")?,
     }
@@ -223,11 +217,7 @@ fn transpile_block<W: Write>(out: &mut W, block: &Block) -> Result<()> {
 fn transpile_literal<W: Write>(out: &mut W, lit: &Literal) -> Result<()> {
     match *lit {
         Literal::Number(num) => write!(out, "{}", num),
-        Literal::String(s) => {
-            unsafe {
-                write!(out, "{}", interner::read().resolve_unchecked(s))
-            }
-        }
+        Literal::String(s) => write!(out, "{}", &*interner::resolve(s)),
         Literal::Null => write!(out, "null"),
         Literal::True => write!(out, "true"),
         Literal::False => write!(out, "false"),

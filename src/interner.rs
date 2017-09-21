@@ -1,9 +1,19 @@
 use string_interner::StringInterner;
 use std::sync::{RwLock, RwLockReadGuard};
+use std::ops::Deref;
 use fnv::FnvBuildHasher;
 
 pub type Symbol = usize;
 pub type Interner = StringInterner<Symbol, FnvBuildHasher>;
+
+pub struct LookupRef<'a>(RwLockReadGuard<'a, Interner>, Symbol);
+
+impl<'a> Deref for LookupRef<'a> {
+    type Target = str;
+    fn deref(&self) -> &Self::Target {
+        unsafe { self.0.resolve_unchecked(self.1) }
+    }
+}
 
 lazy_static! {
     static ref INTERNER: RwLock<Interner> = {
@@ -41,6 +51,6 @@ pub fn intern(val: &str) -> Symbol {
     INTERNER.write().expect("RwLock failed").get_or_intern(val)
 }
 
-pub fn read<'a>() -> RwLockReadGuard<'a, Interner> {
-    INTERNER.read().expect("RwLock failed")
+pub fn resolve<'a>(key: Symbol) -> LookupRef<'a> {
+    LookupRef(INTERNER.read().expect("RwLock failed"), key)
 }

@@ -43,12 +43,9 @@ impl<'a> Parser<'a> {
 
     fn directive_opt(&mut self, expr: &Expression) -> Option<String> {
         if let Expression::Literal(_, Literal::String(val)) = *expr {
-            unsafe {
-                let guard = interner::read();
-                let string = guard.resolve_unchecked(val);
-                let len = string.len();
-                Some(string[1..len - 1].to_owned())
-            }
+            let string = interner::resolve(val);
+            let len = string.len();
+            Some(string[1..len - 1].to_owned())
         } else {
             None
         }
@@ -1045,7 +1042,7 @@ impl<'a> Parser<'a> {
         if id_opt.is_some() && self.eat(Token::Colon)? {
             let id = id_opt.unwrap();
             if self.context.labels.contains(&id.1) {
-                return unsafe {Err(self.error(ErrorCause::DuplicateLabel(interner::read().resolve_unchecked(id.1).to_owned())))}
+                return Err(self.error(ErrorCause::DuplicateLabel(interner::resolve(id.1).to_owned())))
             }
             self.context.labels.insert(id.1);
             let body = self.parse_statement()?;
@@ -1062,7 +1059,7 @@ impl<'a> Parser<'a> {
         if self.match_ident() && !self.scanner.at_newline() {
             let id = self.parse_id()?;
             if !self.context.labels.contains(&id.1) {
-                return unsafe {Err(self.error(ErrorCause::UndefinedLabel(interner::read().resolve_unchecked(id.1).to_owned())))}
+                return Err(self.error(ErrorCause::UndefinedLabel(interner::resolve(id.1).to_owned())))
             };
             Ok(Statement::Break(self.consume_semicolon(start)?, Some(id)))
         } else if self.context.in_switch || self.context.in_iteration {
@@ -1079,7 +1076,7 @@ impl<'a> Parser<'a> {
         if self.match_ident() && !self.scanner.at_newline() {
             let id = self.parse_id()?;
             if !self.context.labels.contains(&id.1) {
-                return unsafe {Err(self.error(ErrorCause::UndefinedLabel(interner::read().resolve_unchecked(id.1).to_owned())))}
+                return Err(self.error(ErrorCause::UndefinedLabel(interner::resolve(id.1).to_owned())))
             };
             Ok(Statement::Continue(self.consume_semicolon(start)?, Some(id)))
         } else if self.context.in_iteration {
