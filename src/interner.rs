@@ -1,11 +1,13 @@
-use string_interner::DefaultStringInterner;
+use string_interner::StringInterner;
 use std::sync::{RwLock, RwLockReadGuard};
+use fnv::FnvBuildHasher;
 
 pub type Symbol = usize;
+pub type Interner = StringInterner<Symbol, FnvBuildHasher>;
 
 lazy_static! {
-    static ref INTERNER: RwLock<DefaultStringInterner> = {
-        RwLock::new(DefaultStringInterner::default())
+    static ref INTERNER: RwLock<Interner> = {
+        RwLock::new(StringInterner::with_hasher(FnvBuildHasher::default()))
     };
 
     pub static ref KEYWORD_NULL: Symbol = { intern("null") };
@@ -39,6 +41,6 @@ pub fn intern(val: &str) -> Symbol {
     INTERNER.write().expect("RwLock failed").get_or_intern(val)
 }
 
-pub fn read<'a>() -> RwLockReadGuard<'a, DefaultStringInterner> {
+pub fn read<'a>() -> RwLockReadGuard<'a, Interner> {
     INTERNER.read().expect("RwLock failed")
 }
