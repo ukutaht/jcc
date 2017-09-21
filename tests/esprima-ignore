@@ -32,17 +32,7 @@ ES6/identifier/**
 ES6/import-declaration/**
 
 ES6/lexical-declaration/invalid_complex_binding_without_init
-ES6/lexical-declaration/invalid_const_forin
-ES6/lexical-declaration/invalid_const_let
-ES6/lexical-declaration/invalid_for_const_declarations
-ES6/lexical-declaration/invalid_for_const_let
-ES6/lexical-declaration/invalid_for_let_declarations
-ES6/lexical-declaration/invalid_for_let_init
-ES6/lexical-declaration/invalid_for_let_let
-ES6/lexical-declaration/invalid_for_let_pattern
-ES6/lexical-declaration/invalid_forin_const_let
-ES6/lexical-declaration/invalid_forin_let_let
-ES6/lexical-declaration/invalid_let_for_in
+ES6/lexical-declaration/invalid_for_let_pattern.
 
 ES6/meta-property/**
 ES6/method-definition/**
