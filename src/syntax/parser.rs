@@ -1159,21 +1159,30 @@ impl<'a> Parser<'a> {
             Token::Ident(_) => {
                 let start = self.scanner.lookahead_start;
                 let expr = self.parse_expression()?;
-                match expr {
-                    Expression::Identifier(_, name) if name == *interner::RESERVED_LET && allow_decl => {
-                        self.parse_let_declaration(start)
-                    },
-                    expr => {
-                        let id_opt = self.as_id(&expr);
-                        if id_opt.is_some() && self.eat(Token::Colon)? {
-                            self.parse_labeled_statement(start, id_opt.unwrap())
-                        } else {
-                            Ok(Statement::Expression(self.consume_semicolon(start)?, expr))
-                        }
+                if allow_decl && self.is_let_decl(&expr) {
+                    self.parse_let_declaration(start)
+                } else {
+                    let id_opt = self.as_id(&expr);
+                    if id_opt.is_some() && self.eat(Token::Colon)? {
+                        self.parse_labeled_statement(start, id_opt.unwrap())
+                    } else {
+                        Ok(Statement::Expression(self.consume_semicolon(start)?, expr))
                     }
                 }
             }
             _ => self.parse_expression_statement(),
+        }
+    }
+
+    fn is_let_decl(&self, expr: &Expression) -> bool {
+        match expr {
+            &Expression::Identifier(_, name) if name == *interner::RESERVED_LET => {
+                match self.scanner.lookahead {
+                    Token::Ident(_) | Token::OpenParen | Token::OpenSquare => true,
+                    _ => false
+                }
+            }
+            _ => false
         }
     }
 
