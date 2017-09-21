@@ -391,7 +391,7 @@ fn variable_declarator(node: &Value) -> Result<VariableDeclarator> {
     let init = maybe_key(node, "init", &expression)?;
 
     Ok(VariableDeclarator {
-        id: interner::intern(expect_string(expect_value(node, "id"), "name")),
+        id: pattern(expect_value(node, "id"))?,
         init: init
     })
 }

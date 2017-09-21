@@ -37,6 +37,7 @@ pub enum ErrorCause {
     UnexpectedToken(Token),
     UnqualifiedDelete,
     MissingInitializerInConst,
+    LetInLexicalBinding,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -58,6 +59,9 @@ impl fmt::Display for CompileError {
          match self.cause {
             ErrorCause::MissingInitializerInConst => {
                 write!(fmt, "Missing initializer in const declaration")
+            },
+            ErrorCause::LetInLexicalBinding => {
+                write!(fmt, "let is disallowed as a lexically bound name")
             },
             ErrorCause::StrictReservedWord => {
                 write!(fmt, "Use of future reserved word in strict mode")

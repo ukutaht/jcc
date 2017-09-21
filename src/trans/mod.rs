@@ -129,10 +129,15 @@ fn transpile_array<W: Write>(out: &mut W, elements: &[Option<Expression>]) -> Re
 fn transpile_declarator<W: Write>(out: &mut W, dec: &VariableDeclarator) -> Result<()> {
     match dec.init {
         Some(ref initializer) => {
-            write!(out, "var {} = ", &*interner::resolve(dec.id))?;
+            write!(out, "var ")?;
+            transpile_pattern(out, &dec.id)?;
+            write!(out, " = ")?;
             transpile_expression(out, initializer)
         }
-        None => write!(out, "var {}", dec.id),
+        None => {
+            write!(out, "var ")?;
+            transpile_pattern(out, &dec.id)
+        }
     }
 }
 
@@ -143,7 +148,7 @@ fn transpile_variable_declaration<W: Write>(out: &mut W, dec: &VariableDeclarati
     Ok(())
 }
 
-fn transpile_function_parameter<W: Write>(out: &mut W, pat: &Pattern) -> Result<()> {
+fn transpile_pattern<W: Write>(out: &mut W, pat: &Pattern) -> Result<()> {
     match *pat {
         Pattern::Identifier(_, n) => {
             write!(out, "{}", &*interner::resolve(n))?
@@ -161,7 +166,7 @@ fn transpile_function<W: Write>(out: &mut W, fun: &Function) -> Result<()> {
     }
 
     for (idx, parameter) in fun.parameters.iter().enumerate() {
-        try!(transpile_function_parameter(out, parameter));
+        transpile_pattern(out, parameter)?;
         if idx != fun.parameters.len() - 1 {
             try!(write!(out, ", "))
         }

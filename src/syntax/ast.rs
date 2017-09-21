@@ -221,7 +221,7 @@ pub enum VariableDeclarationKind { Var, Let, Const }
 
 #[derive(Debug, PartialEq)]
 pub struct VariableDeclarator {
-    pub id: Symbol,
+    pub id: Pattern,
     pub init: Option<Expression>,
 }
 

@@ -347,6 +347,11 @@ impl<'a> Parser<'a> {
         return Ok(())
     }
 
+    fn check_reserved_pat_at(&self, pat: &Pattern, pos: Position, cause: ErrorCause) -> Result<()> {
+        let &Pattern::Identifier(_, s) = pat;
+        self.check_reserved_at(s, pos, cause)
+    }
+
     fn check_reserved_at(&self, word: Symbol, pos: Position, cause: ErrorCause) -> Result<()> {
         if self.context.strict {
             if word.is_strict_mode_reserved_word() {
@@ -626,31 +631,42 @@ impl<'a> Parser<'a> {
         Ok(Expression::Object(self.finalize(start), properties))
     }
 
-    fn parse_variable_declarator(&mut self, kind: VariableDeclarationKind) -> Result<VariableDeclarator> {
+    fn parse_pattern(&mut self, kind: VariableDeclarationKind) -> Result<Pattern> {
         match self.scanner.lookahead {
             Token::Ident(name) => {
+                if name == *interner::RESERVED_LET {
+                    if kind == VariableDeclarationKind::Let || kind == VariableDeclarationKind::Const {
+                        return Err(CompileError::new(self.scanner.lookahead_start, ErrorCause::LetInLexicalBinding))
+                    }
+                }
                 let start = self.scanner.lookahead_start;
                 self.scanner.next_token()?;
-                let init = match self.scanner.lookahead {
-                    Token::Eq => {
-                        self.check_reserved_at(name, self.scanner.last_pos, ErrorCause::RestrictedVarName)?;
-                        self.scanner.next_token()?;
-                        Some(self.parse_assignment_expression()?)
-                    }
-                    _ if kind == VariableDeclarationKind::Const => {
-                        return Err(self.error(ErrorCause::MissingInitializerInConst))
-                    }
-                    _ => {
-                        self.check_reserved_at(name, start, ErrorCause::RestrictedVarName)?;
-                        None
-                    }
-                };
-                Ok(VariableDeclarator { id: name, init: init })
-            }
-            t => {
-                Err(self.unexpected_token(t))
-            }
+                Ok(Pattern::Identifier(self.finalize(start), name))
+            },
+            t => Err(self.unexpected_token(t))
         }
+    }
+
+    fn parse_variable_declarator(&mut self, kind: VariableDeclarationKind) -> Result<VariableDeclarator> {
+        let start = self.scanner.lookahead_start;
+        let id = self.parse_pattern(kind)?;
+
+        let init = match self.scanner.lookahead {
+            Token::Eq => {
+                self.check_reserved_pat_at(&id, self.scanner.last_pos, ErrorCause::RestrictedVarName)?;
+                self.scanner.next_token()?;
+                Some(self.parse_assignment_expression()?)
+            }
+            _ if kind == VariableDeclarationKind::Const => {
+                return Err(self.error(ErrorCause::MissingInitializerInConst))
+            }
+            _ => {
+                self.check_reserved_pat_at(&id, start, ErrorCause::RestrictedVarName)?;
+                None
+            }
+        };
+
+        Ok(VariableDeclarator {id, init})
     }
 
     fn parse_variable_declaration(&mut self, kind: VariableDeclarationKind) -> Result<VariableDeclaration> {
@@ -672,16 +688,6 @@ impl<'a> Parser<'a> {
         Ok(Statement::VariableDeclaration(self.consume_semicolon(start)?, declaration))
     }
 
-    fn parse_function_parameter(&mut self) -> Result<Pattern> {
-        if let Token::Ident(name) = self.scanner.lookahead {
-            let start = self.scanner.lookahead_start;
-            self.scanner.next_token()?;
-            Ok(Pattern::Identifier(self.finalize(start), name))
-        } else {
-            Err(self.unexpected_token(self.scanner.lookahead))
-        }
-    }
-
     fn parse_function_parameters(&mut self) -> Result<Vec<Pattern>> {
         self.expect(Token::OpenParen)?;
         let mut parameters = Vec::new();
@@ -690,7 +696,7 @@ impl<'a> Parser<'a> {
             if let Token::CloseParen = self.scanner.lookahead {
                 break;
             }
-            parameters.push(self.parse_function_parameter()?);
+            parameters.push(self.parse_pattern(VariableDeclarationKind::Var)?);
             if let Token::CloseParen = self.scanner.lookahead {
                 break;
             }

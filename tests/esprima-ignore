@@ -47,7 +47,6 @@ ES6/lexical-declaration/invalid_let_for_in
 ES6/lexical-declaration/invalid_let_forin
 ES6/lexical-declaration/invalid_let_init
 ES6/lexical-declaration/invalid_let_let
-ES6/lexical-declaration/invalid_strict_const_let
 
 ES6/meta-property/**
 ES6/method-definition/**
