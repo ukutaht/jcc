@@ -999,6 +999,22 @@ impl<'a> Parser<'a> {
         })))
     }
 
+    fn match_lexical_kind(&self) -> Option<VariableDeclarationKind> {
+        match self.scanner.lookahead {
+            Token::Const => Some(VariableDeclarationKind::Const),
+            Token::Ident(n) if n == *interner::RESERVED_LET => Some(VariableDeclarationKind::Let),
+            _ => None
+        }
+    }
+
+    fn lexical_kind_as_ident(&self, kind: &VariableDeclarationKind) -> Symbol {
+        match *kind {
+            VariableDeclarationKind::Let => *interner::RESERVED_LET,
+            VariableDeclarationKind::Const => *interner::RESERVED_CONST,
+            _ => unreachable!()
+        }
+    }
+
     fn parse_for_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::ForKeyword)?;
@@ -1010,6 +1026,21 @@ impl<'a> Parser<'a> {
             if decl.declarations.len() == 1 && self.eat(Token::In)? {
                 self.parse_for_in_statement(start, ForInit::VarDecl(decl))
 
+            } else {
+                self.expect(Token::Semi)?;
+                self.parse_for_iter_statement(start, Some(ForInit::VarDecl(decl)))
+            }
+        } else if let Some(kind) = self.match_lexical_kind() {
+            let init_start = self.scanner.lookahead_start;
+            self.scanner.next_token()?;
+            if !self.context.strict && self.scanner.lookahead == Token::In {
+                let init = ForInit::Expression(Expression::Identifier(self.finalize(init_start), self.lexical_kind_as_ident(&kind)));
+                self.scanner.next_token()?;
+                return self.parse_for_in_statement(start, init)
+            }
+            let decl = self.allow_in(false, |context| Parser::parse_variable_declaration(context, kind))?;
+            if decl.declarations.len() == 1 && decl.declarations[0].init.is_none() && self.eat(Token::In)? {
+                self.parse_for_in_statement(start, ForInit::VarDecl(decl))
             } else {
                 self.expect(Token::Semi)?;
                 self.parse_for_iter_statement(start, Some(ForInit::VarDecl(decl)))
