@@ -518,6 +518,8 @@ impl<'a> Parser<'a> {
             ArrowFunctionBody::Expression(Box::new(self.isolate_cover_grammar(Parser::parse_assignment_expression)?))
         };
 
+        self.validate_params(&params, Some(self.scanner.last_pos))?;
+
         return Ok(Expression::ArrowFunction(self.finalize(start), ArrowFunction {
             body: body,
             parameters: params
@@ -634,7 +636,7 @@ impl<'a> Parser<'a> {
             if let Some(key) = self.match_object_property_key()? {
                 let previous_strict = self.context.strict;
                 let parameters = self.parse_function_parameters()?;
-                self.validate_params(&parameters)?;
+                self.validate_params(&parameters, None)?;
                 let block = self.parse_function_source_elements()?;
                 let value = Function { id: None, body: block, parameters: parameters };
                 self.context.strict = previous_strict;
@@ -648,7 +650,7 @@ impl<'a> Parser<'a> {
             if let Some(key) = self.match_object_property_key()? {
                 let previous_strict = self.context.strict;
                 let parameters = self.parse_function_parameters()?;
-                self.validate_params(&parameters)?;
+                self.validate_params(&parameters, None)?;
                 let block = self.parse_function_source_elements()?;
                 let value = Function { id: None, body: block, parameters: parameters };
                 self.context.strict = previous_strict;
@@ -778,13 +780,13 @@ impl<'a> Parser<'a> {
         Ok(parameters)
     }
 
-    fn validate_params(&self, params: &Vec<Pattern>) -> Result<()> {
+    fn validate_params(&self, params: &Vec<Pattern>, override_pos: Option<Position>) -> Result<()> {
         let mut param_names = HashSet::new();
         for param in params {
             let &Pattern::Identifier(ref sp, id) = param;
-            self.check_reserved_at(id, sp.start, ErrorCause::StrictParamName)?;
+            self.check_reserved_at(id, override_pos.unwrap_or(sp.start), ErrorCause::StrictParamName)?;
             if self.context.strict && param_names.contains(&id) {
-                return Err(CompileError::new(sp.start, ErrorCause::StrictDupeParam))
+                return Err(CompileError::new(override_pos.unwrap_or(sp.start), ErrorCause::StrictDupeParam))
             }
             param_names.insert(id);
         };
@@ -814,7 +816,7 @@ impl<'a> Parser<'a> {
         let parameters = self.parse_function_parameters()?;
         let block = self.parse_function_source_elements()?;
 
-        self.validate_params(&parameters)?;
+        self.validate_params(&parameters, None)?;
 
         if let Some(name) = id {
             self.check_reserved_at(name, id_loc, ErrorCause::RestrictedVarNameInFunction)?;

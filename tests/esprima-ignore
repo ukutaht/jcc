@@ -28,7 +28,6 @@ ES6/arrow-function/arrow-with-only-rest
 ES6/arrow-function/invalid-duplicated-names-rest-parameter
 ES6/arrow-function/invalid-duplicated-params
 ES6/arrow-function/invalid-line-terminator-arrow
-ES6/arrow-function/invalid-param-strict-mode
 
 ES6/arrow-function/migrated_0008
 ES6/arrow-function/migrated_0013
@@ -117,18 +116,11 @@ invalid-syntax/migrated_0081
 # Arrows
 invalid-syntax/migrated_0085
 invalid-syntax/migrated_0086
-invalid-syntax/migrated_0087
-invalid-syntax/migrated_0088
-invalid-syntax/migrated_0089
-invalid-syntax/migrated_0090
-invalid-syntax/migrated_0091
 invalid-syntax/migrated_0092
 invalid-syntax/migrated_0093
 invalid-syntax/migrated_0094
 invalid-syntax/migrated_0098
 invalid-syntax/migrated_0099
-invalid-syntax/migrated_0100
-invalid-syntax/migrated_0101
 
 
 invalid-syntax/migrated_0137.source
