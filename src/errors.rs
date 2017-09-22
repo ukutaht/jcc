@@ -166,6 +166,9 @@ impl fmt::Display for CompileError {
             ErrorCause::UnexpectedToken(Token::Lte) => {
                 write!(fmt, "Unexpected token <=")
             }
+            ErrorCause::UnexpectedToken(Token::Arrow) => {
+                write!(fmt, "Unexpected token =>")
+            }
             ErrorCause::UnexpectedToken(ref t) => {
                 write!(fmt, "Unexpected token {}", t)
             }

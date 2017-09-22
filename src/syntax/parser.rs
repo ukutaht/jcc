@@ -509,6 +509,10 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_arrow_function(&mut self, start: Position, params: Vec<Pattern>) -> Result<Expression> {
+        if self.scanner.at_newline() {
+            self.scanner.next_token()?;
+            return Err(CompileError::new(self.scanner.lookahead_start, ErrorCause::UnexpectedToken(Token::Arrow)));
+        }
         self.expect(Token::Arrow)?;
         self.context.is_assignment_target = false;
 

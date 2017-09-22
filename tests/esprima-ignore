@@ -27,7 +27,6 @@ ES6/arrow-function/arrow-with-multiple-rest
 ES6/arrow-function/arrow-with-only-rest
 ES6/arrow-function/invalid-duplicated-names-rest-parameter
 ES6/arrow-function/invalid-duplicated-params
-ES6/arrow-function/invalid-line-terminator-arrow
 
 ES6/arrow-function/migrated_0008
 ES6/arrow-function/migrated_0013
