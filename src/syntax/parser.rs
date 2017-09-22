@@ -1152,7 +1152,7 @@ impl<'a> Parser<'a> {
         self.context.labels.insert(id.1);
         let body = self.parse_statement(true)?;
         self.context.labels.remove(&id.1);
-        Ok(Statement::Labeled(self.finalize(start), id, Box::new(body)))
+        Ok(Statement::Labeled(self.consume_semicolon(start)?, id, Box::new(body)))
     }
 
     fn parse_break_statement(&mut self) -> Result<Statement> {
