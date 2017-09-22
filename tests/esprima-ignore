@@ -33,11 +33,6 @@ ES6/arrow-function/invalid-param-strict-mode
 ES6/arrow-function/migrated_0008
 ES6/arrow-function/migrated_0013
 ES6/arrow-function/migrated_0014
-ES6/arrow-function/migrated_0015
-ES6/arrow-function/migrated_0016
-ES6/arrow-function/migrated_0017
-ES6/arrow-function/migrated_0018
-ES6/arrow-function/migrated_0019
 ES6/arrow-function/non-arrow-param-followed-by-arrow
 ES6/arrow-function/non-arrow-param-followed-by-rest
 ES6/arrow-function/param-with-rest-without-arrow

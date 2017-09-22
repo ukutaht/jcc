@@ -207,7 +207,6 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_group_expression(&mut self) -> Result<Expression> {
-        let start = self.scanner.lookahead_start;
         self.expect(Token::OpenParen)?;
 
         if self.scanner.lookahead == Token::CloseParen {
@@ -219,6 +218,7 @@ impl<'a> Parser<'a> {
             return Ok(Expression::ArrowPlaceholder(Vec::new()))
         }
 
+        let start = self.scanner.lookahead_start;
         let mut result = self.parse_assignment_expression()?;
 
         if self.scanner.lookahead == Token::Comma {
