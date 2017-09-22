@@ -177,6 +177,9 @@ impl<'a> Scanner<'a> {
                 } else {
                     Ok(Token::EqEq)
                 }
+
+            } else if self.eat_byte(b'>') {
+                Ok(Token::Arrow)
             } else {
                 Ok(Token::Eq)
             }

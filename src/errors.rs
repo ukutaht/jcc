@@ -153,8 +153,18 @@ impl fmt::Display for CompileError {
             ErrorCause::UnexpectedToken(Token::String(_)) => {
                 write!(fmt, "Unexpected string")
             }
+            // TODO: Just change the tests or impl Display for all Tokens
             ErrorCause::UnexpectedToken(Token::Const) => {
                 write!(fmt, "Unexpected token const")
+            }
+            ErrorCause::UnexpectedToken(Token::QuestionMark) => {
+                write!(fmt, "Unexpected token ?")
+            }
+            ErrorCause::UnexpectedToken(Token::Plus) => {
+                write!(fmt, "Unexpected token +")
+            }
+            ErrorCause::UnexpectedToken(Token::Lte) => {
+                write!(fmt, "Unexpected token <=")
             }
             ErrorCause::UnexpectedToken(ref t) => {
                 write!(fmt, "Unexpected token {}", t)

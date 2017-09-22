@@ -19,7 +19,36 @@ ES2016/**
 es2017/**
 es2018/**
 
-ES6/arrow-function/**
+ES6/arrow-function/array-binding-pattern/**
+ES6/arrow-function/object-binding-pattern/**
+ES6/arrow-function/arrow-rest-forgetting-comma
+ES6/arrow-function/arrow-with-multiple-arg-and-rest
+ES6/arrow-function/arrow-with-multiple-rest
+ES6/arrow-function/arrow-with-only-rest
+ES6/arrow-function/invalid-duplicated-names-rest-parameter
+ES6/arrow-function/invalid-duplicated-params
+ES6/arrow-function/invalid-line-terminator-arrow
+ES6/arrow-function/invalid-param-strict-mode
+
+ES6/arrow-function/migrated_0001
+ES6/arrow-function/migrated_0004
+ES6/arrow-function/migrated_0005
+ES6/arrow-function/migrated_0006
+ES6/arrow-function/migrated_0008
+ES6/arrow-function/migrated_0009
+ES6/arrow-function/migrated_0010
+ES6/arrow-function/migrated_0013
+ES6/arrow-function/migrated_0014
+ES6/arrow-function/migrated_0015
+ES6/arrow-function/migrated_0016
+ES6/arrow-function/migrated_0017
+ES6/arrow-function/migrated_0018
+ES6/arrow-function/migrated_0019
+ES6/arrow-function/non-arrow-param-followed-by-arrow
+ES6/arrow-function/non-arrow-param-followed-by-rest
+ES6/arrow-function/param-with-rest-without-arrow
+ES6/arrow-function/rest-without-arrow
+
 ES6/binary-integer-literal/**
 ES6/binding-pattern/**
 ES6/class/**
@@ -32,7 +61,7 @@ ES6/identifier/**
 ES6/import-declaration/**
 
 ES6/lexical-declaration/invalid_complex_binding_without_init
-ES6/lexical-declaration/invalid_for_let_pattern.
+ES6/lexical-declaration/invalid_for_let_pattern
 
 ES6/meta-property/**
 ES6/method-definition/**
@@ -107,9 +136,6 @@ invalid-syntax/migrated_0091
 invalid-syntax/migrated_0092
 invalid-syntax/migrated_0093
 invalid-syntax/migrated_0094
-invalid-syntax/migrated_0095
-invalid-syntax/migrated_0096
-invalid-syntax/migrated_0097
 invalid-syntax/migrated_0098
 invalid-syntax/migrated_0099
 invalid-syntax/migrated_0100

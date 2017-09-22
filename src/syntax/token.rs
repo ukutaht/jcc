@@ -2,6 +2,7 @@ use interner::Symbol;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Token {
+    Arrow,
     Bang,
     BitAnd,
     BitAndEq,

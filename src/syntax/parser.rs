@@ -207,9 +207,37 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_group_expression(&mut self) -> Result<Expression> {
+        let start = self.scanner.lookahead_start;
         self.expect(Token::OpenParen)?;
-        let result = self.parse_assignment_expression()?;
+
+        if self.scanner.lookahead == Token::CloseParen {
+            self.expect(Token::CloseParen)?;
+
+            if self.scanner.lookahead != Token::Arrow {
+                self.expect(Token::Arrow)?;
+            }
+            return Ok(Expression::ArrowPlaceholder(Vec::new()))
+        }
+
+        let mut result = self.parse_assignment_expression()?;
+
+        if self.scanner.lookahead == Token::Comma {
+            let mut sequence = vec![result];
+
+            while self.scanner.lookahead != Token::Eof {
+                if self.scanner.lookahead != Token::Comma {
+                    break;
+                }
+                self.scanner.next_token()?;
+
+                sequence.push(self.inherit_cover_grammar(Parser::parse_assignment_expression)?)
+            }
+
+            result = Expression::Sequence(self.finalize(start), sequence);
+        }
+
         self.expect(Token::CloseParen)?;
+
         Ok(result)
     }
 
@@ -464,19 +492,61 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn reinterpret_as_pattern(&self, expr: Expression) -> Pattern {
+        match expr {
+            Expression::Identifier(sp, id) => Pattern::Identifier(sp, id),
+            _ => panic!("Cannot interpret as param: {:?}", expr)
+        }
+    }
+
+    fn reinterpret_as_arguments(&self, expr: Expression) -> Vec<Pattern> {
+        match expr {
+            Expression::Sequence(_, exprs) => {
+                exprs.into_iter().map(|e| self.reinterpret_as_pattern(e)).collect()
+            }
+            e => vec![self.reinterpret_as_pattern(e)]
+        }
+    }
+
+    fn parse_arrow_function(&mut self, start: Position, params: Vec<Pattern>) -> Result<Expression> {
+        self.expect(Token::Arrow)?;
+        self.context.is_assignment_target = false;
+
+        let body = if self.scanner.lookahead == Token::OpenCurly {
+            ArrowFunctionBody::Block(self.parse_function_source_elements()?)
+        } else {
+            ArrowFunctionBody::Expression(Box::new(self.isolate_cover_grammar(Parser::parse_assignment_expression)?))
+        };
+
+        return Ok(Expression::ArrowFunction(self.finalize(start), ArrowFunction {
+            body: body,
+            parameters: params
+        }))
+    }
+
     fn parse_assignment_expression(&mut self) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
         let left = self.parse_conditional_expression()?;
-        match self.scanner.lookahead.as_assign_op() {
-            Some(op) => {
-                self.check_reserved_expr_at(&left, start, ErrorCause::RestrictedVarNameInAssignment)?;
-                self.check_assignment_allowed()?;
-                self.scanner.next_token()?;
-                let right = self.parse_assignment_expression()?;
-                let span = self.finalize(start);
-                Ok(Expression::Assignment(span, op, Box::new(left), Box::new(right)))
+
+        if let &Expression::ArrowPlaceholder(ref param_placeholders) = &left {
+            return self.parse_arrow_function(start, Vec::new())
+        }
+
+        if self.scanner.lookahead == Token::Arrow {
+            let params = self.reinterpret_as_arguments(left);
+            self.parse_arrow_function(start, params)
+        } else {
+            match self.scanner.lookahead.as_assign_op() {
+                Some(op) => {
+                    self.check_reserved_expr_at(&left, start, ErrorCause::RestrictedVarNameInAssignment)?;
+                    self.check_assignment_allowed()?;
+                    self.scanner.next_token()?;
+                    let right = self.parse_assignment_expression()?;
+                    let span = self.finalize(start);
+                    Ok(Expression::Assignment(span, op, Box::new(left), Box::new(right)))
+                }
+                None => Ok(left)
             }
-            None => Ok(left)
         }
     }
 

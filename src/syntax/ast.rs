@@ -139,11 +139,25 @@ pub enum Expression {
     Update(Span, UpdateOp, Box<Expression>, bool),
     Sequence(Span, Vec<Expression>),
     This(Span),
+    ArrowFunction(Span, ArrowFunction),
+    ArrowPlaceholder(Vec<Expression>)
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Pattern {
     Identifier(Span, Symbol),
+}
+
+#[derive(Debug, PartialEq)]
+pub enum ArrowFunctionBody {
+    Expression(Box<Expression>),
+    Block(Block)
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ArrowFunction {
+    pub body: ArrowFunctionBody,
+    pub parameters: Vec<Pattern>,
 }
 
 #[derive(Debug, PartialEq)]

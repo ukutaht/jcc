@@ -343,12 +343,29 @@ fn pattern(node: &Value) -> Result<Pattern> {
     }
 }
 
+fn arrow_function_expression(node: &Value) -> Result<Expression> {
+    let body = if expect_bool(node, "expression") {
+        ArrowFunctionBody::Expression(Box::new(expression(expect_value(node, "body"))?))
+    } else {
+        ArrowFunctionBody::Block(block(expect_value(node, "body"))?)
+    };
+
+    let mut parameters = Vec::new();
+    for param in expect_array(node, "params") {
+        parameters.push(pattern(param)?)
+    }
+
+    let fun = ArrowFunction { body, parameters };
+    Ok(Expression::ArrowFunction(span(node)?, fun))
+}
+
 fn expression(node: &Value) -> Result<Expression> {
     let span = span(node)?;
 
     match expect_string(node, "type") {
         "AssignmentExpression" => assignment_expression(node),
         "ArrayExpression" => array_expression(node),
+        "ArrowFunctionExpression" => arrow_function_expression(node),
         "BinaryExpression" => binary_expression(node),
         "UnaryExpression" => unary_expression(node),
         "UpdateExpression" => update_expression(node),
