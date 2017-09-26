@@ -146,6 +146,7 @@ pub enum Expression {
 #[derive(Debug, PartialEq)]
 pub enum Pattern {
     Identifier(Span, Symbol),
+    Assignment(Span, Box<Pattern>, Expression),
 }
 
 #[derive(Debug, PartialEq)]

@@ -376,8 +376,10 @@ impl<'a> Parser<'a> {
     }
 
     fn check_reserved_pat_at(&self, pat: &Pattern, pos: Position, cause: ErrorCause) -> Result<()> {
-        let &Pattern::Identifier(_, s) = pat;
-        self.check_reserved_at(s, pos, cause)
+        match pat {
+            &Pattern::Identifier(_, s) => self.check_reserved_at(s, pos, cause),
+            &Pattern::Assignment(_, ref left, _) => self.check_reserved_pat_at(&*left, pos, cause)
+        }
     }
 
     fn check_reserved_at(&self, word: Symbol, pos: Position, cause: ErrorCause) -> Result<()> {
@@ -707,7 +709,7 @@ impl<'a> Parser<'a> {
         Ok(Expression::Object(self.finalize(start), properties))
     }
 
-    fn parse_pattern(&mut self, kind: VariableDeclarationKind) -> Result<Pattern> {
+    fn parse_pattern(&mut self, allow_default: bool, kind: VariableDeclarationKind) -> Result<Pattern> {
         match self.scanner.lookahead {
             Token::Ident(name) => {
                 if name == *interner::RESERVED_LET {
@@ -717,15 +719,27 @@ impl<'a> Parser<'a> {
                 }
                 let start = self.scanner.lookahead_start;
                 self.scanner.next_token()?;
-                Ok(Pattern::Identifier(self.finalize(start), name))
+                let left = Pattern::Identifier(self.finalize(start), name);
+                if allow_default { self.more_pattern(start, left) } else { Ok(left) }
             },
             t => Err(self.unexpected_token(t))
         }
     }
 
+    fn more_pattern(&mut self, start: Position, left: Pattern) -> Result<Pattern> {
+        match self.scanner.lookahead {
+            Token::Eq => {
+                self.scanner.next_token()?;
+                let right = self.parse_assignment_expression()?;
+                Ok(Pattern::Assignment(self.finalize(start), Box::new(left), right))
+            }
+            _ => Ok(left)
+        }
+    }
+
     fn parse_variable_declarator(&mut self, kind: VariableDeclarationKind) -> Result<VariableDeclarator> {
         let start = self.scanner.lookahead_start;
-        let id = self.parse_pattern(kind)?;
+        let id = self.parse_pattern(false, kind)?;
 
         let init = match self.scanner.lookahead {
             Token::Eq => {
@@ -772,7 +786,7 @@ impl<'a> Parser<'a> {
             if let Token::CloseParen = self.scanner.lookahead {
                 break;
             }
-            parameters.push(self.parse_pattern(VariableDeclarationKind::Var)?);
+            parameters.push(self.parse_pattern(true, VariableDeclarationKind::Var)?);
             if let Token::CloseParen = self.scanner.lookahead {
                 break;
             }
@@ -784,15 +798,26 @@ impl<'a> Parser<'a> {
         Ok(parameters)
     }
 
+    fn validate_pattern(&self, override_pos: &Option<Position>, param_names: &mut HashSet<Symbol>, pat: &Pattern) -> Result<()> {
+        match pat {
+            &Pattern::Identifier(ref sp, id) => {
+                self.check_reserved_at(id, override_pos.unwrap_or(sp.start), ErrorCause::StrictParamName)?;
+                if self.context.strict && param_names.contains(&id) {
+                    return Err(CompileError::new(override_pos.unwrap_or(sp.start), ErrorCause::StrictDupeParam))
+                }
+                param_names.insert(id);
+                Ok(())
+            },
+            &Pattern::Assignment(_, ref left, _) => {
+                self.validate_pattern(override_pos, param_names, &*left)
+            }
+        }
+    }
+
     fn validate_params(&self, params: &Vec<Pattern>, override_pos: Option<Position>) -> Result<()> {
         let mut param_names = HashSet::new();
         for param in params {
-            let &Pattern::Identifier(ref sp, id) = param;
-            self.check_reserved_at(id, override_pos.unwrap_or(sp.start), ErrorCause::StrictParamName)?;
-            if self.context.strict && param_names.contains(&id) {
-                return Err(CompileError::new(override_pos.unwrap_or(sp.start), ErrorCause::StrictDupeParam))
-            }
-            param_names.insert(id);
+            self.validate_pattern(&override_pos, &mut param_names, param)?;
         };
         return Ok(())
     }

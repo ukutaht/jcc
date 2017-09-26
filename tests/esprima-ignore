@@ -39,7 +39,10 @@ ES6/arrow-function/rest-without-arrow
 ES6/binary-integer-literal/**
 ES6/binding-pattern/**
 ES6/class/**
-ES6/default-parameter-value/**
+
+ES6/default-parameter-value/migrated_0001
+ES6/default-parameter-value/migrated_0002
+
 ES6/destructuring-assignment/**
 ES6/export-declaration/**
 ES6/for-of/**

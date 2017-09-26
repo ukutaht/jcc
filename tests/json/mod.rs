@@ -339,6 +339,11 @@ fn pattern(node: &Value) -> Result<Pattern> {
             let id = interner::intern(expect_string(node, "name"));
             Ok(Pattern::Identifier(span(node)?, id))
         }
+        "AssignmentPattern" => {
+            let left = pattern(expect_value(node, "left"))?;
+            let right = expression(expect_value(node, "right"))?;
+            Ok(Pattern::Assignment(span(node)?, Box::new(left), right))
+        }
         _ => Err(())
     }
 }

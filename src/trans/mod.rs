@@ -153,6 +153,7 @@ fn transpile_pattern<W: Write>(out: &mut W, pat: &Pattern) -> Result<()> {
         Pattern::Identifier(_, n) => {
             write!(out, "{}", &*interner::resolve(n))?
         }
+        _ => unimplemented!()
     }
     Ok(())
 }
