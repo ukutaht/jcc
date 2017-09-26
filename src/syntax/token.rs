@@ -29,6 +29,7 @@ pub enum Token {
     DivEq,
     DoKeyword,
     Dot,
+    Ellipsis,
     Else,
     Eof,
     Eq,

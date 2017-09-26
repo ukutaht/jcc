@@ -344,6 +344,10 @@ fn pattern(node: &Value) -> Result<Pattern> {
             let right = expression(expect_value(node, "right"))?;
             Ok(Pattern::Assignment(span(node)?, Box::new(left), right))
         }
+        "RestElement" => {
+            let arg = pattern(expect_value(node, "argument"))?;
+            Ok(Pattern::RestElement(span(node)?, Box::new(arg)))
+        }
         _ => Err(())
     }
 }

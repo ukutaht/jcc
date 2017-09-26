@@ -270,6 +270,17 @@ impl<'a> Scanner<'a> {
                 Some(ch) if (ch as char).is_digit(10) => {
                     self.scan_number()
                 }
+                Some(b'.') => {
+                    self.next_byte();
+                    match self.next_byte() {
+                        Some(b'.') => {
+                            self.next_byte();
+                            Ok(Token::Ellipsis)
+                        }
+                        _ => return Err(self.invalid_token())
+                    }
+
+                }
                 _ => {
                     self.next_byte();
                     Ok(Token::Dot)

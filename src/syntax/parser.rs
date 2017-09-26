@@ -378,7 +378,8 @@ impl<'a> Parser<'a> {
     fn check_reserved_pat_at(&self, pat: &Pattern, pos: Position, cause: ErrorCause) -> Result<()> {
         match pat {
             &Pattern::Identifier(_, s) => self.check_reserved_at(s, pos, cause),
-            &Pattern::Assignment(_, ref left, _) => self.check_reserved_pat_at(&*left, pos, cause)
+            &Pattern::Assignment(_, ref left, _) => self.check_reserved_pat_at(&*left, pos, cause),
+            _ => unimplemented!()
         }
     }
 
@@ -713,6 +714,13 @@ impl<'a> Parser<'a> {
         Ok(Expression::Object(self.finalize(start), properties))
     }
 
+    fn parse_rest_element(&mut self) -> Result<Pattern> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::Ellipsis)?;
+        let arg = self.parse_pattern(false, VariableDeclarationKind::Var)?;
+        Ok(Pattern::RestElement(self.finalize(start), Box::new(arg)))
+    }
+
     fn parse_pattern(&mut self, allow_default: bool, kind: VariableDeclarationKind) -> Result<Pattern> {
         match self.scanner.lookahead {
             Token::Ident(name) => {
@@ -790,7 +798,11 @@ impl<'a> Parser<'a> {
             if let Token::CloseParen = self.scanner.lookahead {
                 break;
             }
-            parameters.push(self.parse_pattern(true, VariableDeclarationKind::Var)?);
+            if self.scanner.lookahead == Token::Ellipsis {
+                parameters.push(self.parse_rest_element()?)
+            } else {
+                parameters.push(self.parse_pattern(true, VariableDeclarationKind::Var)?);
+            }
             if let Token::CloseParen = self.scanner.lookahead {
                 break;
             }
@@ -814,6 +826,9 @@ impl<'a> Parser<'a> {
             },
             &Pattern::Assignment(_, ref left, _) => {
                 self.validate_pattern(override_pos, param_names, &*left)
+            },
+            &Pattern::RestElement(_, ref arg) => {
+                self.validate_pattern(override_pos, param_names, &*arg)
             }
         }
     }

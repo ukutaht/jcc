@@ -53,7 +53,14 @@ ES6/object-initialiser/**
 ES6/object-literal-property-value-shorthand/**
 ES6/octal-integer-literal/**
 ES6/program/**
-ES6/rest-parameter/**
+
+ES6/rest-parameter/arrow-rest-parameter-array
+ES6/rest-parameter/arrow-rest-parameter-object
+ES6/rest-parameter/object-method
+ES6/rest-parameter/object-shorthand-method
+ES6/rest-parameter/rest-parameter-array
+ES6/rest-parameter/rest-parameter-object
+
 ES6/spread-element/**
 ES6/super-property/**
 ES6/template-literals/**
