@@ -26,7 +26,6 @@ ES6/arrow-function/invalid-duplicated-params
 
 ES6/arrow-function/non-arrow-param-followed-by-arrow
 ES6/arrow-function/non-arrow-param-followed-by-rest
-ES6/arrow-function/param-with-rest-without-arrow
 ES6/arrow-function/rest-without-arrow
 
 ES6/binary-integer-literal/**
