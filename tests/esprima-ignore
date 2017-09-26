@@ -21,10 +21,6 @@ es2018/**
 
 ES6/arrow-function/array-binding-pattern/**
 ES6/arrow-function/object-binding-pattern/**
-ES6/arrow-function/arrow-rest-forgetting-comma
-ES6/arrow-function/arrow-with-multiple-arg-and-rest
-ES6/arrow-function/arrow-with-multiple-rest
-ES6/arrow-function/arrow-with-only-rest
 ES6/arrow-function/invalid-duplicated-names-rest-parameter
 ES6/arrow-function/invalid-duplicated-params
 

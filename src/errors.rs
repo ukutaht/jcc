@@ -26,6 +26,7 @@ pub enum ErrorCause {
     RestrictedVarNameInFunction,
     RestrictedVarNameInPostfix,
     RestrictedVarNameInPrefix,
+    RestParamMustBeLast,
     StrictFunction,
     StrictModeWith,
     StrictParamName,
@@ -57,6 +58,9 @@ impl fmt::Display for CompileError {
         write!(fmt, "Error: Line {}: ", self.pos.line)?;
 
          match self.cause {
+            ErrorCause::RestParamMustBeLast => {
+                write!(fmt, "Rest parameter must be last formal parameter")
+            },
             ErrorCause::MissingInitializerInConst => {
                 write!(fmt, "Missing initializer in const declaration")
             },
@@ -168,6 +172,9 @@ impl fmt::Display for CompileError {
             }
             ErrorCause::UnexpectedToken(Token::Arrow) => {
                 write!(fmt, "Unexpected token =>")
+            }
+            ErrorCause::UnexpectedToken(Token::Ellipsis) => {
+                write!(fmt, "Unexpected token ...")
             }
             ErrorCause::UnexpectedToken(ref t) => {
                 write!(fmt, "Unexpected token {}", t)

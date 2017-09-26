@@ -207,6 +207,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_group_expression(&mut self) -> Result<Expression> {
+        let paren_start = self.scanner.lookahead_start;
         self.expect(Token::OpenParen)?;
 
         if self.scanner.lookahead == Token::CloseParen {
@@ -216,6 +217,17 @@ impl<'a> Parser<'a> {
                 self.expect(Token::Arrow)?;
             }
             return Ok(Expression::ArrowPlaceholder(Vec::new()))
+        }
+
+        if self.scanner.lookahead == Token::Ellipsis {
+            let rest = self.parse_rest_element()?;
+            self.expect_because(Token::CloseParen, ErrorCause::RestParamMustBeLast)?;
+
+            if self.scanner.lookahead != Token::Arrow {
+                self.expect(Token::Arrow)?;
+            }
+
+            return self.parse_arrow_function(paren_start, vec![rest])
         }
 
         let start = self.scanner.lookahead_start;
@@ -229,6 +241,14 @@ impl<'a> Parser<'a> {
                     break;
                 }
                 self.scanner.next_token()?;
+
+                if self.scanner.lookahead == Token::Ellipsis {
+                    let rest = self.parse_rest_element()?;
+                    self.expect_because(Token::CloseParen, ErrorCause::RestParamMustBeLast)?;
+                    let mut args = self.reinterpret_as_arguments(Expression::Sequence(self.finalize(start), sequence));
+                    args.push(rest);
+                    return self.parse_arrow_function(paren_start, args)
+                }
 
                 sequence.push(self.inherit_cover_grammar(Parser::parse_assignment_expression)?)
             }
@@ -1358,6 +1378,14 @@ impl<'a> Parser<'a> {
 
         self.expect(Token::CloseCurly)?;
         Ok(Block(statements))
+    }
+
+    fn expect_because(&mut self, expected: Token, cause: ErrorCause) -> Result<Token> {
+        if self.scanner.lookahead == expected {
+            self.scanner.next_token()
+        } else {
+            Err(self.error(cause))
+        }
     }
 
     fn expect(&mut self, expected: Token) -> Result<Token> {
