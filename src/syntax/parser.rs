@@ -497,6 +497,10 @@ impl<'a> Parser<'a> {
     fn reinterpret_as_pattern(&self, expr: Expression) -> Pattern {
         match expr {
             Expression::Identifier(sp, id) => Pattern::Identifier(sp, id),
+            Expression::Assignment(sp, _, left, right) => {
+                let left = self.reinterpret_as_pattern(*left);
+                Pattern::Assignment(sp, Box::new(left), *right)
+            }
             _ => panic!("Cannot interpret as param: {:?}", expr)
         }
     }
@@ -720,17 +724,17 @@ impl<'a> Parser<'a> {
                 let start = self.scanner.lookahead_start;
                 self.scanner.next_token()?;
                 let left = Pattern::Identifier(self.finalize(start), name);
-                if allow_default { self.more_pattern(start, left) } else { Ok(left) }
+                if allow_default { self.parse_pattern_default(start, left) } else { Ok(left) }
             },
             t => Err(self.unexpected_token(t))
         }
     }
 
-    fn more_pattern(&mut self, start: Position, left: Pattern) -> Result<Pattern> {
+    fn parse_pattern_default(&mut self, start: Position, left: Pattern) -> Result<Pattern> {
         match self.scanner.lookahead {
             Token::Eq => {
                 self.scanner.next_token()?;
-                let right = self.parse_assignment_expression()?;
+                let right = self.isolate_cover_grammar(Parser::parse_assignment_expression)?;
                 Ok(Pattern::Assignment(self.finalize(start), Box::new(left), right))
             }
             _ => Ok(left)

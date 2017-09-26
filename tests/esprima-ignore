@@ -28,9 +28,6 @@ ES6/arrow-function/arrow-with-only-rest
 ES6/arrow-function/invalid-duplicated-names-rest-parameter
 ES6/arrow-function/invalid-duplicated-params
 
-ES6/arrow-function/migrated_0008
-ES6/arrow-function/migrated_0013
-ES6/arrow-function/migrated_0014
 ES6/arrow-function/non-arrow-param-followed-by-arrow
 ES6/arrow-function/non-arrow-param-followed-by-rest
 ES6/arrow-function/param-with-rest-without-arrow
@@ -39,9 +36,6 @@ ES6/arrow-function/rest-without-arrow
 ES6/binary-integer-literal/**
 ES6/binding-pattern/**
 ES6/class/**
-
-ES6/default-parameter-value/migrated_0001
-ES6/default-parameter-value/migrated_0002
 
 ES6/destructuring-assignment/**
 ES6/export-declaration/**
