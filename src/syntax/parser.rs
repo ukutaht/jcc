@@ -388,9 +388,9 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn check_reserved_expr_at(&self, expr: &Expression, pos: Position, cause: ErrorCause) -> Result<()> {
-        if let &Expression::Identifier(_, s) = expr {
-            self.check_reserved_at(s, pos, cause)?;
+    fn check_reserved_expr_at(&self, expr: &Expression, pos: Option<Position>, cause: ErrorCause) -> Result<()> {
+        if let &Expression::Identifier(ref sp, s) = expr {
+            self.check_reserved_at(s, pos.unwrap_or(sp.start), cause)?;
         }
         return Ok(())
     }
@@ -398,7 +398,10 @@ impl<'a> Parser<'a> {
     fn check_reserved_pat_at(&self, pat: &Pattern, pos: Position, cause: ErrorCause) -> Result<()> {
         match pat {
             &Pattern::Identifier(_, s) => self.check_reserved_at(s, pos, cause),
-            &Pattern::Assignment(_, ref left, _) => self.check_reserved_pat_at(&*left, pos, cause),
+            &Pattern::Assignment(_, ref left, ref right) => {
+                self.check_reserved_pat_at(&*left, pos, cause.clone())?;
+                self.check_reserved_expr_at(&*right, None, cause)
+            }
             &Pattern::Array(_, ref elements) => {
                 for elem in elements {
                     if let &Some(ref binding_pattern) = elem {
@@ -435,7 +438,7 @@ impl<'a> Parser<'a> {
         if let Some(op) = self.scanner.lookahead.as_update_op() {
             self.scanner.next_token()?;
             let expr = self.inherit_cover_grammar(Parser::parse_unary_expression)?;
-            self.check_reserved_expr_at(&expr, self.scanner.last_pos, ErrorCause::RestrictedVarNameInPrefix)?;
+            self.check_reserved_expr_at(&expr, Some(self.scanner.last_pos), ErrorCause::RestrictedVarNameInPrefix)?;
             self.check_assignment_allowed()?;
             Ok(Expression::Update(self.finalize(start), op, Box::new(expr), true))
         } else {
@@ -446,7 +449,7 @@ impl<'a> Parser<'a> {
             };
 
             if let Some(op) = self.scanner.lookahead.as_update_op() {
-                self.check_reserved_expr_at(&expr, self.scanner.last_pos, ErrorCause::RestrictedVarNameInPostfix)?;
+                self.check_reserved_expr_at(&expr, Some(self.scanner.last_pos), ErrorCause::RestrictedVarNameInPostfix)?;
                 self.check_assignment_allowed()?;
                 self.scanner.next_token()?;
                 Ok(Expression::Update(self.finalize(start), op, Box::new(expr), false))
@@ -597,7 +600,7 @@ impl<'a> Parser<'a> {
         } else {
             match self.scanner.lookahead.as_assign_op() {
                 Some(op) => {
-                    self.check_reserved_expr_at(&left, start, ErrorCause::RestrictedVarNameInAssignment)?;
+                    self.check_reserved_expr_at(&left, Some(start), ErrorCause::RestrictedVarNameInAssignment)?;
                     self.check_assignment_allowed()?;
                     self.scanner.next_token()?;
                     let right = self.parse_assignment_expression()?;

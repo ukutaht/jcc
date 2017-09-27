@@ -32,7 +32,6 @@ ES6/binary-integer-literal/**
 
 
 ES6/binding-pattern/array-pattern/dupe-param
-ES6/binding-pattern/array-pattern/invalid-strict-for-let-let
 ES6/binding-pattern/array-pattern/patterned-catch-dupe
 ES6/binding-pattern/array-pattern/patterned-catch
 ES6/binding-pattern/array-pattern/rest-element-object-pattern
@@ -58,7 +57,6 @@ ES6/identifier/**
 ES6/import-declaration/**
 
 ES6/lexical-declaration/invalid_complex_binding_without_init
-ES6/lexical-declaration/invalid_for_let_pattern
 
 ES6/meta-property/**
 ES6/method-definition/**
