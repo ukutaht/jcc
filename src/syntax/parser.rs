@@ -216,7 +216,7 @@ impl<'a> Parser<'a> {
             if self.scanner.lookahead != Token::Arrow {
                 self.expect(Token::Arrow)?;
             }
-            return Ok(Expression::ArrowPlaceholder(Vec::new()))
+            return self.parse_arrow_function(paren_start, Vec::new())
         }
 
         if self.scanner.lookahead == Token::Ellipsis {
@@ -568,10 +568,6 @@ impl<'a> Parser<'a> {
     fn parse_assignment_expression(&mut self) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
         let left = self.parse_conditional_expression()?;
-
-        if let &Expression::ArrowPlaceholder(ref param_placeholders) = &left {
-            return self.parse_arrow_function(start, Vec::new())
-        }
 
         if self.scanner.lookahead == Token::Arrow {
             let params = self.reinterpret_as_arguments(left);

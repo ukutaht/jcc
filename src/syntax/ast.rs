@@ -139,8 +139,7 @@ pub enum Expression {
     Update(Span, UpdateOp, Box<Expression>, bool),
     Sequence(Span, Vec<Expression>),
     This(Span),
-    ArrowFunction(Span, ArrowFunction),
-    ArrowPlaceholder(Vec<Expression>)
+    ArrowFunction(Span, ArrowFunction)
 }
 
 #[derive(Debug, PartialEq)]
