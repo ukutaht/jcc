@@ -17,6 +17,7 @@ struct ParseContext {
     in_function_body: bool,
     strict: bool,
     is_assignment_target: bool,
+    is_binding_element: bool,
     labels: HashSet<Symbol>
 }
 
@@ -36,6 +37,7 @@ impl<'a> Parser<'a> {
                 in_function_body: false,
                 strict: false,
                 is_assignment_target: false,
+                is_binding_element: false,
                 labels: HashSet::new()
             }
         }
@@ -115,17 +117,25 @@ impl<'a> Parser<'a> {
     fn isolate_cover_grammar<F, T>(&mut self, parse_fn: F) -> Result<T>
       where F: FnOnce(&mut Self) -> Result<T> {
         let is_assignment_target = std::mem::replace(&mut self.context.is_assignment_target, true);
+        let is_binding_element = std::mem::replace(&mut self.context.is_binding_element, true);
         let result = parse_fn(self);
         std::mem::replace(&mut self.context.is_assignment_target, is_assignment_target);
+        std::mem::replace(&mut self.context.is_binding_element, is_binding_element);
         result
     }
 
     fn inherit_cover_grammar<F, T>(&mut self, parse_fn: F) -> Result<T>
       where F: FnOnce(&mut Self) -> Result<T> {
         let is_assignment_target = std::mem::replace(&mut self.context.is_assignment_target, true);
+        let is_binding_element = std::mem::replace(&mut self.context.is_binding_element, true);
+
         let result = parse_fn(self);
+
         if self.context.is_assignment_target && is_assignment_target {
             std::mem::replace(&mut self.context.is_assignment_target, true);
+        }
+        if self.context.is_binding_element && is_binding_element {
+            std::mem::replace(&mut self.context.is_binding_element, true);
         }
         result
     }
@@ -156,21 +166,25 @@ impl<'a> Parser<'a> {
             Token::Number(n) => {
                 self.scanner.next_token()?;
                 self.context.is_assignment_target = false;
+                self.context.is_binding_element = false;
                 Ok(Expression::Literal(self.finalize(start), Literal::Number(n)))
             }
             Token::BoolTrue => {
                 self.scanner.next_token()?;
                 self.context.is_assignment_target = false;
+                self.context.is_binding_element = false;
                 Ok(Expression::Literal(self.finalize(start), Literal::True))
             }
             Token::BoolFalse => {
                 self.scanner.next_token()?;
                 self.context.is_assignment_target = false;
+                self.context.is_binding_element = false;
                 Ok(Expression::Literal(self.finalize(start), Literal::False))
             }
             Token::String(s) => {
                 self.scanner.next_token()?;
                 self.context.is_assignment_target = false;
+                self.context.is_binding_element = false;
                 Ok(Expression::Literal(self.finalize(start), Literal::String(s)))
             }
             Token::Ident(n) => {
@@ -179,25 +193,31 @@ impl<'a> Parser<'a> {
             }
             Token::OpenSquare => self.parse_array_initializer(),
             Token::OpenCurly => self.parse_object_initializer(),
-            Token::OpenParen => self.parse_group_expression(),
+            Token::OpenParen => {
+                self.inherit_cover_grammar(Parser::parse_group_expression)
+            }
             Token::FunctionKeyword => {
                 let fun = self.parse_function()?;
                 self.context.is_assignment_target = false;
+                self.context.is_binding_element = false;
                 Ok(Expression::Function(self.finalize(start), fun))
             },
             Token::ThisKeyword => {
                 self.scanner.next_token()?;
                 self.context.is_assignment_target = false;
+                self.context.is_binding_element = false;
                 Ok(Expression::This(self.finalize(start)))
             },
             Token::Null => {
                 self.scanner.next_token()?;
                 self.context.is_assignment_target = false;
+                self.context.is_binding_element = false;
                 Ok(Expression::Literal(self.finalize(start), Literal::Null))
             },
             Token::Div | Token::DivEq => {
                 let regex = self.scanner.regex_token()?;
                 self.context.is_assignment_target = false;
+                self.context.is_binding_element = false;
                 Ok(Expression::Literal(self.finalize(start), regex))
             },
             t => {
@@ -231,9 +251,11 @@ impl<'a> Parser<'a> {
         }
 
         let start = self.scanner.lookahead_start;
-        let mut result = self.parse_assignment_expression()?;
+        self.context.is_binding_element = true;
+        let mut result = self.inherit_cover_grammar(Parser::parse_assignment_expression)?;
 
         if self.scanner.lookahead == Token::Comma {
+            self.context.is_assignment_target = false;
             let mut sequence = vec![result];
 
             while self.scanner.lookahead != Token::Eof {
@@ -343,9 +365,9 @@ impl<'a> Parser<'a> {
         let start = self.scanner.lookahead_start;
 
         let mut result = if self.matches(Token::New) {
-            self.parse_new_expression()?
+            self.inherit_cover_grammar(Parser::parse_new_expression)?
         } else {
-            self.parse_primary_expression()?
+            self.inherit_cover_grammar(Parser::parse_primary_expression)?
         };
 
         loop {
@@ -393,6 +415,7 @@ impl<'a> Parser<'a> {
                 }
             }
             self.context.is_assignment_target = false;
+            self.context.is_binding_element = false;
             Ok(Expression::Unary(self.finalize(start), prefix, Box::new(expr)))
         } else {
             self.parse_update_expression()
@@ -616,6 +639,9 @@ impl<'a> Parser<'a> {
         let left = self.parse_conditional_expression()?;
 
         if self.scanner.lookahead == Token::Arrow {
+            if !self.context.is_binding_element {
+                return Err(self.unexpected_token(Token::Arrow));
+            };
             let params = self.reinterpret_as_arguments(left);
             self.parse_arrow_function(start, params)
         } else {
@@ -624,7 +650,7 @@ impl<'a> Parser<'a> {
                     self.check_reserved_expr_at(&left, Some(start), ErrorCause::RestrictedVarNameInAssignment)?;
                     self.check_assignment_allowed()?;
                     self.scanner.next_token()?;
-                    let right = self.parse_assignment_expression()?;
+                    let right = self.isolate_cover_grammar(Parser::parse_assignment_expression)?;
                     let span = self.finalize(start);
                     let target = self.reinterpret_as_assign_target(left).unwrap();
                     Ok(Expression::Assignment(span, op, Box::new(target), Box::new(right)))
@@ -643,15 +669,21 @@ impl<'a> Parser<'a> {
             if let Token::CloseSquare = self.scanner.lookahead {
                 break;
             }
+
             if let Token::Comma = self.scanner.lookahead {
                 self.scanner.next_token()?;
                 elements.push(None);
                 continue;
-            } else {
-                elements.push(Some(self.parse_argument_list_item()?));
             }
 
+            let arg = self.parse_argument_list_item()?;
+            elements.push(Some(arg));
+
             if self.scanner.lookahead != Token::CloseSquare {
+                if let &Some(ArgumentListElement::SpreadElement(_, _)) = elements.last().unwrap() {
+                    self.context.is_assignment_target = false;
+                    self.context.is_binding_element = false;
+                };
                 self.expect(Token::Comma)?;
             }
         }
@@ -1275,6 +1307,10 @@ impl<'a> Parser<'a> {
                 if !self.context.is_assignment_target {
                     return Err(self.error(ErrorCause::InvalidLHSForIn))
                 };
+                if let &ForInit::Expression(Expression::Assignment(_, _, _, _)) = &init {
+                    return Err(self.error(ErrorCause::InvalidLHSForIn))
+                };
+
                 self.scanner.next_token()?;
                 self.parse_for_in_statement(start, init)
             } else {
