@@ -32,7 +32,9 @@ ES6/arrow-function/non-arrow-param-followed-by-rest
 ES6/binary-integer-literal/**
 
 
+# This is wrong
 ES6/binding-pattern/array-pattern/dupe-param
+
 ES6/binding-pattern/array-pattern/patterned-catch-dupe
 ES6/binding-pattern/array-pattern/patterned-catch
 ES6/binding-pattern/array-pattern/rest-element-object-pattern

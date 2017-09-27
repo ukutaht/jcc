@@ -265,10 +265,10 @@ impl<'a> Parser<'a> {
         let start = self.scanner.lookahead_start;
 
         if self.eat(Token::Ellipsis)? {
-            let expr = self.isolate_cover_grammar(Parser::parse_assignment_expression)?;
+            let expr = self.inherit_cover_grammar(Parser::parse_assignment_expression)?;
             Ok(ArgumentListElement::SpreadElement(self.finalize(start), expr))
         } else {
-            let expr = self.isolate_cover_grammar(Parser::parse_assignment_expression)?;
+            let expr = self.inherit_cover_grammar(Parser::parse_assignment_expression)?;
             Ok(ArgumentListElement::Expression(expr))
         }
     }
