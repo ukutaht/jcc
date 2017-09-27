@@ -19,7 +19,6 @@ ES2016/**
 es2017/**
 es2018/**
 
-ES6/arrow-function/array-binding-pattern/array-binding-pattern-03
 ES6/arrow-function/array-binding-pattern/invalid-dup-param
 ES6/arrow-function/array-binding-pattern/invalid-elision-after-rest
 
@@ -29,7 +28,6 @@ ES6/arrow-function/invalid-duplicated-params
 
 ES6/arrow-function/non-arrow-param-followed-by-arrow
 ES6/arrow-function/non-arrow-param-followed-by-rest
-ES6/arrow-function/rest-without-arrow
 
 ES6/binary-integer-literal/**
 
@@ -44,7 +42,6 @@ ES6/binding-pattern/object-pattern/**
 
 ES6/class/**
 
-ES6/destructuring-assignment/array-pattern/dup-assignment
 ES6/destructuring-assignment/array-pattern/member-expr-in-rest
 ES6/destructuring-assignment/array-pattern/nested-assignment
 ES6/destructuring-assignment/array-pattern/nested-cover-grammar
@@ -68,11 +65,9 @@ ES6/object-literal-property-value-shorthand/**
 ES6/octal-integer-literal/**
 ES6/program/**
 
-ES6/rest-parameter/arrow-rest-parameter-array
 ES6/rest-parameter/arrow-rest-parameter-object
 ES6/rest-parameter/object-method
 ES6/rest-parameter/object-shorthand-method
-ES6/rest-parameter/rest-parameter-array
 ES6/rest-parameter/rest-parameter-object
 
 ES6/super-property/**

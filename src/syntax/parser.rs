@@ -648,7 +648,7 @@ impl<'a> Parser<'a> {
                 elements.push(None);
                 continue;
             } else {
-                elements.push(Some(ArgumentListElement::Expression(self.parse_assignment_expression()?)));
+                elements.push(Some(self.parse_argument_list_item()?));
             }
 
             if self.scanner.lookahead != Token::CloseSquare {
