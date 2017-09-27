@@ -523,23 +523,45 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn reinterpret_as_pattern(&self, expr: Expression) -> Pattern {
+    fn reinterpret_as_pattern(&self, expr: Expression) -> Option<Pattern> {
         match expr {
-            Expression::Identifier(sp, id) => Pattern::Identifier(sp, id),
+            Expression::Identifier(sp, id) => Some(Pattern::Identifier(sp, id)),
             Expression::Assignment(sp, _, left, right) => {
-                let left = self.reinterpret_as_pattern(*left);
-                Pattern::Assignment(sp, Box::new(left), *right)
+                match *left {
+                    AssignTarget::Pattern(pat) => {
+                        Some(Pattern::Assignment(sp, Box::new(pat), *right))
+                    }
+                    AssignTarget::Expression(expr) => {
+                        let left = self.reinterpret_as_pattern(expr).unwrap();
+                        Some(Pattern::Assignment(sp, Box::new(left), *right))
+                    }
+                }
+            }
+            Expression::Array(sp, exprs) => {
+                let elems = exprs.into_iter().map(|expr| {
+                    expr.map(|e| self.reinterpret_as_pattern(e).unwrap())
+                }).collect();
+
+                Some(Pattern::Array(sp, elems))
             }
             _ => panic!("Cannot interpret as param: {:?}", expr)
+        }
+    }
+
+    fn reinterpret_as_assign_target(&self, expr: Expression) -> Option<AssignTarget> {
+        match expr {
+            Expression::StaticMember(_, _, _) => Some(AssignTarget::Expression(expr)),
+            Expression::ComputedMember(_, _, _) => Some(AssignTarget::Expression(expr)),
+            _ => self.reinterpret_as_pattern(expr).map(AssignTarget::Pattern)
         }
     }
 
     fn reinterpret_as_arguments(&self, expr: Expression) -> Vec<Pattern> {
         match expr {
             Expression::Sequence(_, exprs) => {
-                exprs.into_iter().map(|e| self.reinterpret_as_pattern(e)).collect()
+                exprs.into_iter().map(|e| self.reinterpret_as_pattern(e).unwrap()).collect()
             }
-            e => vec![self.reinterpret_as_pattern(e)]
+            e => vec![self.reinterpret_as_pattern(e).unwrap()]
         }
     }
 
@@ -580,7 +602,8 @@ impl<'a> Parser<'a> {
                     self.scanner.next_token()?;
                     let right = self.parse_assignment_expression()?;
                     let span = self.finalize(start);
-                    Ok(Expression::Assignment(span, op, Box::new(left), Box::new(right)))
+                    let target = self.reinterpret_as_assign_target(left).unwrap();
+                    Ok(Expression::Assignment(span, op, Box::new(target), Box::new(right)))
                 }
                 None => Ok(left)
             }

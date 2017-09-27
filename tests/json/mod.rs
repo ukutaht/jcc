@@ -89,8 +89,14 @@ fn binary_expression(node: &Value) -> Result<Expression> {
     Ok(Expression::Binary(span, op, Box::new(left), Box::new(right)))
 }
 
+fn assign_target(node: &Value) -> Result<AssignTarget> {
+    pattern(&node).map(AssignTarget::Pattern).or_else(|_| {
+        expression(&node).map(AssignTarget::Expression)
+    })
+}
+
 fn assignment_expression(node: &Value) -> Result<Expression> {
-    let left = expression(expect_value(node, "left"))?;
+    let left = assign_target(expect_value(node, "left"))?;
     let right = expression(expect_value(node, "right"))?;
     let span = span(node)?;
 

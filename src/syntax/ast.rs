@@ -121,11 +121,17 @@ pub enum Prop {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum AssignTarget {
+    Expression(Expression),
+    Pattern(Pattern)
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Expression {
     Array(Span, Vec<Option<Expression>>),
     Conditional(Span, Box<Expression>, Box<Expression>, Box<Expression>),
     Object(Span, Vec<Prop>),
-    Assignment(Span, AssignOp, Box<Expression>, Box<Expression>),
+    Assignment(Span, AssignOp, Box<AssignTarget>, Box<Expression>),
     Binary(Span, BinOp, Box<Expression>, Box<Expression>),
     Call(Span, Box<Expression>, Vec<ArgumentListElement>),
     ComputedMember(Span, Box<Expression>, Box<Expression>),
