@@ -453,7 +453,7 @@ fn throw_statement(node: &Value) -> Result<Statement> {
 }
 
 fn catch_clause(node: &Value) -> Result<CatchClause> {
-    let param = interner::intern(expect_string(expect_value(node, "param"), "name"));
+    let param = pattern(expect_value(node, "param"))?;
     let body = block(expect_value(node, "body"))?;
     Ok(CatchClause { param: param, body: body })
 }

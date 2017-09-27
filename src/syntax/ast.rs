@@ -171,7 +171,7 @@ pub struct Function {
 
 #[derive(Debug, PartialEq)]
 pub struct CatchClause {
-    pub param: Symbol,
+    pub param: Pattern,
     pub body: Block,
 }
 

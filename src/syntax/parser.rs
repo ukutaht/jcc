@@ -407,7 +407,7 @@ impl<'a> Parser<'a> {
                 };
                 Ok(())
             }
-            _ => unimplemented!()
+            &Pattern::RestElement(_, ref arg) => self.check_reserved_pat_at(&*arg, pos, cause),
         }
     }
 
@@ -754,7 +754,13 @@ impl<'a> Parser<'a> {
             if self.eat(Token::Comma)? {
                 elements.push(None);
             } else {
-                elements.push(Some(self.parse_pattern(true, kind)?));
+                if self.scanner.lookahead == Token::Ellipsis {
+                    elements.push(Some(self.parse_rest_element()?));
+                    break;
+                } else {
+                    elements.push(Some(self.parse_pattern(true, kind)?));
+                };
+
                 if self.scanner.lookahead != Token::CloseSquare {
                     self.expect(Token::Comma)?;
                 }
@@ -877,7 +883,14 @@ impl<'a> Parser<'a> {
             &Pattern::RestElement(_, ref arg) => {
                 self.validate_pattern(override_pos, param_names, &*arg)
             }
-            _ => unimplemented!()
+            &Pattern::Array(_, ref elements) => {
+                for elem in elements {
+                    if let &Some(ref binding_pattern) = elem {
+                        self.validate_pattern(override_pos, param_names, binding_pattern)?;
+                    }
+                };
+                Ok(())
+            }
         }
     }
 
@@ -1022,14 +1035,8 @@ impl<'a> Parser<'a> {
     fn parse_catch_clause(&mut self) -> Result<CatchClause> {
         self.expect(Token::CatchKeyword)?;
         self.expect(Token::OpenParen)?;
-        let param = match self.scanner.lookahead {
-            Token::Ident(s) => {
-                self.scanner.next_token()?;
-                self.check_reserved_at(s, self.scanner.lookahead_start, ErrorCause::RestrictedVarNameInCatch)?;
-                s
-            },
-            t => return Err(self.unexpected_token(t))
-        };
+        let param = self.parse_pattern(false, VariableDeclarationKind::Var)?;
+        self.check_reserved_pat_at(&param, self.scanner.last_pos, ErrorCause::RestrictedVarNameInCatch)?;
         self.expect(Token::CloseParen)?;
         let body = self.parse_block()?;
         Ok(CatchClause { param: param, body: body })
