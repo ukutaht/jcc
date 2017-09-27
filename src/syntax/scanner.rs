@@ -287,15 +287,18 @@ impl<'a> Scanner<'a> {
                     self.scan_number()
                 }
                 Some(b'.') => {
-                    self.next_byte();
-                    match self.next_byte() {
-                        Some(b'.') => {
+                    match self.peek_2() {
+                        (Some(b'.'), Some(b'.')) => {
+                            self.next_byte();
+                            self.next_byte();
                             self.next_byte();
                             Ok(Token::Ellipsis)
                         }
-                        _ => return Err(self.invalid_token())
+                        _ => {
+                            self.next_byte();
+                            Ok(Token::Dot)
+                        }
                     }
-
                 }
                 _ => {
                     self.next_byte();

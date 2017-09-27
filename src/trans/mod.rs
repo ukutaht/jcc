@@ -103,6 +103,7 @@ fn transpile_arguments<W: Write>(out: &mut W, arguments: &[ArgumentListElement])
     for (idx, arg) in arguments.iter().enumerate() {
         match *arg {
             ArgumentListElement::Expression(ref e) => try!(transpile_expression(out, e)),
+            _ => unimplemented!()
         }
 
         if idx != arguments.len() - 1 {
@@ -112,11 +113,12 @@ fn transpile_arguments<W: Write>(out: &mut W, arguments: &[ArgumentListElement])
     write!(out, ")")
 }
 
-fn transpile_array<W: Write>(out: &mut W, elements: &[Option<Expression>]) -> Result<()> {
+fn transpile_array<W: Write>(out: &mut W, elements: &[Option<ArgumentListElement>]) -> Result<()> {
     try!(write!(out, "["));
     for (idx, element) in elements.iter().enumerate() {
         match *element {
-            Some(ref expr) => transpile_expression(out, expr)?,
+            Some(ArgumentListElement::Expression(ref e)) => transpile_expression(out, e)?,
+            Some(_) => unimplemented!(),
             None => write!(out, "null")?
         }
         if idx != elements.len() - 1 {

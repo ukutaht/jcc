@@ -261,6 +261,18 @@ impl<'a> Parser<'a> {
         Ok(result)
     }
 
+    fn parse_argument_list_item(&mut self) -> Result<ArgumentListElement> {
+        let start = self.scanner.lookahead_start;
+
+        if self.eat(Token::Ellipsis)? {
+            let expr = self.isolate_cover_grammar(Parser::parse_assignment_expression)?;
+            Ok(ArgumentListElement::SpreadElement(self.finalize(start), expr))
+        } else {
+            let expr = self.isolate_cover_grammar(Parser::parse_assignment_expression)?;
+            Ok(ArgumentListElement::Expression(expr))
+        }
+    }
+
     fn parse_arguments(&mut self) -> Result<Vec<ArgumentListElement>> {
         self.expect(Token::OpenParen)?;
         let mut arguments = Vec::new();
@@ -269,8 +281,7 @@ impl<'a> Parser<'a> {
             if let Token::CloseParen = self.scanner.lookahead {
                 break;
             } else {
-                let argument = ArgumentListElement::Expression(self.isolate_cover_grammar(Parser::parse_assignment_expression)?);
-                arguments.push(argument);
+                arguments.push(self.parse_argument_list_item()?);
 
                 if self.scanner.lookahead != Token::CloseParen {
                     self.expect(Token::Comma)?;
@@ -541,11 +552,21 @@ impl<'a> Parser<'a> {
                 }
             }
             Expression::Array(sp, exprs) => {
-                let elems = exprs.into_iter().map(|expr| {
-                    expr.map(|e| self.reinterpret_as_pattern(e).unwrap())
-                }).collect();
+                let mut result = Vec::new();
+                for elem in exprs.into_iter() {
+                    let pat = match elem {
+                        Some(ArgumentListElement::Expression(e)) => {
+                            self.reinterpret_as_pattern(e)
+                        }
+                        Some(ArgumentListElement::SpreadElement(sp, e)) => {
+                            self.reinterpret_as_pattern(e).map(|p| Pattern::RestElement(sp, Box::new(p)))
+                        }
+                        _ => None
+                    };
+                    result.push(pat)
+                }
 
-                Some(Pattern::Array(sp, elems))
+                Some(Pattern::Array(sp, result))
             }
             _ => panic!("Cannot interpret as param: {:?}", expr)
         }
@@ -627,7 +648,7 @@ impl<'a> Parser<'a> {
                 elements.push(None);
                 continue;
             } else {
-                elements.push(Some(self.parse_assignment_expression()?));
+                elements.push(Some(ArgumentListElement::Expression(self.parse_assignment_expression()?)));
             }
 
             if self.scanner.lookahead != Token::CloseSquare {

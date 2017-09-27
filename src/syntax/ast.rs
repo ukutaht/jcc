@@ -17,6 +17,7 @@ pub struct Id(pub Span, pub Symbol);
 #[derive(Debug, PartialEq)]
 pub enum ArgumentListElement {
     Expression(Expression),
+    SpreadElement(Span, Expression),
 }
 
 #[derive(Debug, PartialEq)]
@@ -128,7 +129,7 @@ pub enum AssignTarget {
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
-    Array(Span, Vec<Option<Expression>>),
+    Array(Span, Vec<Option<ArgumentListElement>>),
     Conditional(Span, Box<Expression>, Box<Expression>, Box<Expression>),
     Object(Span, Vec<Prop>),
     Assignment(Span, AssignOp, Box<AssignTarget>, Box<Expression>),

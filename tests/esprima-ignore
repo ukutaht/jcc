@@ -75,7 +75,6 @@ ES6/rest-parameter/object-shorthand-method
 ES6/rest-parameter/rest-parameter-array
 ES6/rest-parameter/rest-parameter-object
 
-ES6/spread-element/**
 ES6/super-property/**
 ES6/template-literals/**
 ES6/unicode-code-point-escape-sequence/**

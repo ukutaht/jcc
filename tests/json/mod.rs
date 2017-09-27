@@ -119,12 +119,24 @@ fn assignment_expression(node: &Value) -> Result<Expression> {
     Ok(Expression::Assignment(span, op, Box::new(left), Box::new(right)))
 }
 
+fn argument_list_item(node: &Value) -> Result<ArgumentListElement> {
+    match expect_string(node, "type") {
+        "SpreadElement" => {
+            let expr = expression(expect_value(node, "argument"))?;
+            Ok(ArgumentListElement::SpreadElement(span(node)?, expr))
+        }
+        _ => {
+            expression(node).map(ArgumentListElement::Expression)
+        }
+    }
+}
+
 fn array_expression(node: &Value) -> Result<Expression> {
     let span = span(node)?;
     let mut elements = Vec::new();
 
     for element in expect_array(node, "elements") {
-        elements.push(maybe(element, &expression)?);
+        elements.push(maybe(element, &argument_list_item)?);
     }
 
     Ok(Expression::Array(span, elements))
@@ -136,7 +148,7 @@ fn new_expression(node: &Value) -> Result<Expression> {
     let mut arguments = Vec::new();
 
     for argument in expect_array(node, "arguments") {
-        arguments.push(ArgumentListElement::Expression(expression(argument)?));
+        arguments.push(argument_list_item(argument)?);
     }
 
     Ok(Expression::New(span, Box::new(callee), arguments))
@@ -208,7 +220,7 @@ fn call_expression(node: &Value) -> Result<Expression> {
     let mut arguments = Vec::new();
 
     for argument in expect_array(node, "arguments") {
-        arguments.push(ArgumentListElement::Expression(expression(argument)?));
+        arguments.push(argument_list_item(argument)?);
     }
 
     Ok(Expression::Call(span, Box::new(callee), arguments))
