@@ -29,7 +29,25 @@ ES6/arrow-function/non-arrow-param-followed-by-rest
 ES6/arrow-function/rest-without-arrow
 
 ES6/binary-integer-literal/**
-ES6/binding-pattern/**
+
+
+ES6/binding-pattern/array-pattern/dupe-param
+ES6/binding-pattern/array-pattern/empty-pattern-catch-param
+ES6/binding-pattern/array-pattern/empty-pattern-fn
+ES6/binding-pattern/array-pattern/invalid-strict-for-let-let
+ES6/binding-pattern/array-pattern/patterned-catch-dupe
+ES6/binding-pattern/array-pattern/patterned-catch
+ES6/binding-pattern/array-pattern/rest-element-array-pattern
+ES6/binding-pattern/array-pattern/rest-element-object-pattern
+ES6/binding-pattern/array-pattern/rest.elision
+ES6/binding-pattern/array-pattern/rest
+ES6/binding-pattern/array-pattern/with-default-catch-param-fail
+ES6/binding-pattern/array-pattern/with-default-catch-param
+ES6/binding-pattern/array-pattern/with-default-fn
+ES6/binding-pattern/array-pattern/with-object-pattern
+
+ES6/binding-pattern/object-pattern/**
+
 ES6/class/**
 
 ES6/destructuring-assignment/**

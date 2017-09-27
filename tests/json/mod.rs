@@ -348,6 +348,13 @@ fn pattern(node: &Value) -> Result<Pattern> {
             let arg = pattern(expect_value(node, "argument"))?;
             Ok(Pattern::RestElement(span(node)?, Box::new(arg)))
         }
+        "ArrayPattern" => {
+            let mut elements = Vec::new();
+            for element in expect_array(node, "elements") {
+                elements.push(maybe(element, &pattern)?);
+            };
+            Ok(Pattern::Array(span(node)?, elements))
+        }
         _ => Err(())
     }
 }

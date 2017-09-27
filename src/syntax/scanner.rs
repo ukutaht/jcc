@@ -18,6 +18,8 @@ pub struct Scanner<'a> {
     pub lookahead: Token,
 }
 
+pub struct ScannerState(usize, u32, u32, Position, Position, Token);
+
 impl<'a> Scanner<'a> {
     pub fn new(source: &'a str) -> Scanner<'a> {
         Scanner {
@@ -29,6 +31,20 @@ impl<'a> Scanner<'a> {
             lookahead_start: Position::origin(),
             lookahead: Token::Eof
         }
+    }
+
+    pub fn save_state(&self) -> ScannerState {
+        ScannerState(self.index, self.line, self.column, self.last_pos, self.lookahead_start, self.lookahead)
+    }
+
+    pub fn restore(&mut self, state: ScannerState) {
+        let ScannerState(index, line, column, last_pos, lookahead_start, lookahead) = state;
+        self.index = index;
+        self.line = line;
+        self.column = column;
+        self.last_pos = last_pos;
+        self.lookahead_start = lookahead_start;
+        self.lookahead = lookahead;
     }
 
     pub fn at_newline(&self) -> bool {

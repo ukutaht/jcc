@@ -399,6 +399,14 @@ impl<'a> Parser<'a> {
         match pat {
             &Pattern::Identifier(_, s) => self.check_reserved_at(s, pos, cause),
             &Pattern::Assignment(_, ref left, _) => self.check_reserved_pat_at(&*left, pos, cause),
+            &Pattern::Array(_, ref elements) => {
+                for elem in elements {
+                    if let &Some(ref binding_pattern) = elem {
+                        self.check_reserved_pat_at(binding_pattern, pos, cause.clone())?;
+                    }
+                };
+                Ok(())
+            }
             _ => unimplemented!()
         }
     }
@@ -741,6 +749,26 @@ impl<'a> Parser<'a> {
         Ok(Pattern::RestElement(self.finalize(start), Box::new(arg)))
     }
 
+    fn parse_array_pattern(&mut self, kind: VariableDeclarationKind) -> Result<Pattern> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::OpenSquare)?;
+        let mut elements = Vec::new();
+
+        while self.scanner.lookahead != Token::CloseSquare {
+            if self.eat(Token::Comma)? {
+                elements.push(None);
+            } else {
+                elements.push(Some(self.parse_pattern(true, kind)?));
+                if self.scanner.lookahead != Token::CloseSquare {
+                    self.expect(Token::Comma)?;
+                }
+            }
+        }
+
+        self.expect(Token::CloseSquare)?;
+        Ok(Pattern::Array(self.finalize(start), elements))
+    }
+
     fn parse_pattern(&mut self, allow_default: bool, kind: VariableDeclarationKind) -> Result<Pattern> {
         match self.scanner.lookahead {
             Token::Ident(name) => {
@@ -754,6 +782,9 @@ impl<'a> Parser<'a> {
                 let left = Pattern::Identifier(self.finalize(start), name);
                 if allow_default { self.parse_pattern_default(start, left) } else { Ok(left) }
             },
+            Token::OpenSquare => {
+                self.parse_array_pattern(kind)
+            }
             t => Err(self.unexpected_token(t))
         }
     }
@@ -850,6 +881,7 @@ impl<'a> Parser<'a> {
             &Pattern::RestElement(_, ref arg) => {
                 self.validate_pattern(override_pos, param_names, &*arg)
             }
+            _ => unimplemented!()
         }
     }
 
@@ -1216,6 +1248,8 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_labeled_statement(&mut self, start: Position, id: Id) -> Result<Statement> {
+        self.expect(Token::Colon)?;
+
         if self.context.labels.contains(&id.1) {
             return Err(self.error(ErrorCause::DuplicateLabel(interner::resolve(id.1).to_owned())))
         }
@@ -1276,13 +1310,6 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn as_id(&self, expr: &Expression) -> Option<Id> {
-        match *expr {
-            Expression::Identifier(ref sp, id) => Some(Id(sp.clone(), id)),
-            _ => None
-        }
-    }
-
     fn parse_const_declaration(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::Const)?;
@@ -1333,33 +1360,38 @@ impl<'a> Parser<'a> {
                     Err(self.unexpected_token(Token::Const))
                 }
             }
+            Token::Ident(name) if name == *interner::RESERVED_LET && allow_decl => {
+                let start = self.scanner.lookahead_start;
+                let state = self.scanner.save_state();
+                self.scanner.next_token()?;
+                match self.scanner.lookahead {
+                    Token::Ident(_) | Token::OpenSquare | Token::OpenCurly => {
+                        self.parse_let_declaration(start)
+                    }
+                    _ => {
+                        self.scanner.restore(state);
+                        self.parse_expression_statement()
+                    }
+                }
+            }
             Token::Ident(_) => {
                 let start = self.scanner.lookahead_start;
                 let expr = self.parse_expression()?;
-                if allow_decl && self.is_let_decl(&expr) {
-                    self.parse_let_declaration(start)
-                } else {
-                    let id_opt = self.as_id(&expr);
-                    if id_opt.is_some() && self.eat(Token::Colon)? {
-                        self.parse_labeled_statement(start, id_opt.unwrap())
-                    } else {
-                        Ok(Statement::Expression(self.consume_semicolon(start)?, expr))
+                if self.scanner.lookahead == Token::Colon {
+                    if let Some(id) = self.as_id(&expr) {
+                        return self.parse_labeled_statement(start, id)
                     }
                 }
+                Ok(Statement::Expression(self.consume_semicolon(start)?, expr))
             }
             _ => self.parse_expression_statement(),
         }
     }
 
-    fn is_let_decl(&self, expr: &Expression) -> bool {
-        match expr {
-            &Expression::Identifier(_, name) if name == *interner::RESERVED_LET => {
-                match self.scanner.lookahead {
-                    Token::Ident(_) | Token::OpenParen | Token::OpenSquare => true,
-                    _ => false
-                }
-            }
-            _ => false
+    fn as_id(&self, expr: &Expression) -> Option<Id> {
+        match *expr {
+            Expression::Identifier(ref sp, id) => Some(Id(sp.clone(), id)),
+            _ => None
         }
     }
 

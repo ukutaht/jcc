@@ -147,6 +147,7 @@ pub enum Expression {
 pub enum Pattern {
     Identifier(Span, Symbol),
     Assignment(Span, Box<Pattern>, Expression),
+    Array(Span, Vec<Option<Pattern>>),
     RestElement(Span, Box<Pattern>),
 }
 
