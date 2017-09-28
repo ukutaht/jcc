@@ -429,9 +429,9 @@ impl<'a> Parser<'a> {
         return Ok(())
     }
 
-    fn check_reserved_pat_at(&self, pat: &Pattern, pos: Position, cause: ErrorCause) -> Result<()> {
+    fn check_reserved_pat_at(&self, pat: &Pattern<Id>, pos: Position, cause: ErrorCause) -> Result<()> {
         match pat {
-            &Pattern::Identifier(_, s) => self.check_reserved_at(s, pos, cause),
+            &Pattern::Simple(ref id) => self.check_reserved_at(id.1, pos, cause),
             &Pattern::Assignment(_, ref left, ref right) => {
                 self.check_reserved_pat_at(&*left, pos, cause.clone())?;
                 self.check_reserved_expr_at(&*right, None, cause)
@@ -560,18 +560,15 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn reinterpret_as_pattern(&self, expr: Expression) -> Option<Pattern> {
+    fn reinterpret_as_pattern(&self, expr: Expression) -> Option<Pattern<Id>> {
         match expr {
-            Expression::Identifier(sp, id) => Some(Pattern::Identifier(sp, id)),
+            Expression::Identifier(sp, id) => Some(Pattern::Simple(Id(sp, id))),
             Expression::Assignment(sp, _, left, right) => {
                 match *left {
-                    AssignTarget::Pattern(pat) => {
-                        Some(Pattern::Assignment(sp, Box::new(pat), *right))
+                    Pattern::Simple(AssignTarget::Id(id)) => {
+                        Some(Pattern::Assignment(sp, Box::new(Pattern::Simple(id)), *right))
                     }
-                    AssignTarget::Expression(expr) => {
-                        let left = self.reinterpret_as_pattern(expr).unwrap();
-                        Some(Pattern::Assignment(sp, Box::new(left), *right))
-                    }
+                    _ => unimplemented!()
                 }
             }
             Expression::Array(sp, exprs) => {
@@ -591,19 +588,38 @@ impl<'a> Parser<'a> {
 
                 Some(Pattern::Array(sp, result))
             }
-            _ => panic!("Cannot interpret as param: {:?}", expr)
+            _ => None
         }
     }
 
-    fn reinterpret_as_assign_target(&self, expr: Expression) -> Option<AssignTarget> {
+    fn reinterpret_as_assign_target(&self, expr: Expression) -> Option<Pattern<AssignTarget>> {
         match expr {
-            Expression::StaticMember(_, _, _) => Some(AssignTarget::Expression(expr)),
-            Expression::ComputedMember(_, _, _) => Some(AssignTarget::Expression(expr)),
-            _ => self.reinterpret_as_pattern(expr).map(AssignTarget::Pattern)
+            Expression::StaticMember(sp, l, r) => Some(Pattern::Simple(AssignTarget::StaticMember(sp, *l, r))),
+            Expression::ComputedMember(sp, l, r) => Some(Pattern::Simple(AssignTarget::ComputedMember(sp, *l, *r))),
+            Expression::Identifier(sp, id) => Some(Pattern::Simple(AssignTarget::Id(Id(sp, id)))),
+            Expression::Assignment(sp, _op, left, right) => Some(Pattern::Assignment(sp, left, *right)),
+            Expression::Array(sp, exprs) => {
+                let mut result = Vec::new();
+                for elem in exprs.into_iter() {
+                    let pat = match elem {
+                        Some(ArgumentListElement::Expression(e)) => {
+                            self.reinterpret_as_assign_target(e)
+                        }
+                        Some(ArgumentListElement::SpreadElement(sp, e)) => {
+                            self.reinterpret_as_assign_target(e).map(|p| Pattern::RestElement(sp, Box::new(p)))
+                        }
+                        _ => None
+                    };
+                    result.push(pat)
+                }
+
+                Some(Pattern::Array(sp, result))
+            }
+            _ => None
         }
     }
 
-    fn reinterpret_as_arguments(&self, expr: Expression) -> Vec<Pattern> {
+    fn reinterpret_as_arguments(&self, expr: Expression) -> Vec<Pattern<Id>> {
         match expr {
             Expression::Sequence(_, exprs) => {
                 exprs.into_iter().map(|e| self.reinterpret_as_pattern(e).unwrap()).collect()
@@ -612,7 +628,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_arrow_function(&mut self, start: Position, params: Vec<Pattern>) -> Result<Expression> {
+    fn parse_arrow_function(&mut self, start: Position, params: Vec<Pattern<Id>>) -> Result<Expression> {
         if self.scanner.at_newline() {
             self.scanner.next_token()?;
             return Err(CompileError::new(self.scanner.lookahead_start, ErrorCause::UnexpectedToken(Token::Arrow)));
@@ -817,14 +833,14 @@ impl<'a> Parser<'a> {
         Ok(Expression::Object(self.finalize(start), properties))
     }
 
-    fn parse_rest_element(&mut self) -> Result<Pattern> {
+    fn parse_rest_element(&mut self) -> Result<Pattern<Id>> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::Ellipsis)?;
         let arg = self.parse_pattern(false, VariableDeclarationKind::Var)?;
         Ok(Pattern::RestElement(self.finalize(start), Box::new(arg)))
     }
 
-    fn parse_array_pattern(&mut self, kind: VariableDeclarationKind) -> Result<Pattern> {
+    fn parse_array_pattern(&mut self, kind: VariableDeclarationKind) -> Result<Pattern<Id>> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::OpenSquare)?;
         let mut elements = Vec::new();
@@ -850,7 +866,7 @@ impl<'a> Parser<'a> {
         Ok(Pattern::Array(self.finalize(start), elements))
     }
 
-    fn parse_pattern(&mut self, allow_default: bool, kind: VariableDeclarationKind) -> Result<Pattern> {
+    fn parse_pattern(&mut self, allow_default: bool, kind: VariableDeclarationKind) -> Result<Pattern<Id>> {
         match self.scanner.lookahead {
             Token::Ident(name) => {
                 if name == *interner::RESERVED_LET {
@@ -860,7 +876,7 @@ impl<'a> Parser<'a> {
                 }
                 let start = self.scanner.lookahead_start;
                 self.scanner.next_token()?;
-                let left = Pattern::Identifier(self.finalize(start), name);
+                let left = Pattern::Simple(Id(self.finalize(start), name));
                 if allow_default { self.parse_pattern_default(start, left) } else { Ok(left) }
             },
             Token::OpenSquare => {
@@ -870,7 +886,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_pattern_default(&mut self, start: Position, left: Pattern) -> Result<Pattern> {
+    fn parse_pattern_default(&mut self, start: Position, left: Pattern<Id>) -> Result<Pattern<Id>> {
         match self.scanner.lookahead {
             Token::Eq => {
                 self.scanner.next_token()?;
@@ -922,7 +938,7 @@ impl<'a> Parser<'a> {
         Ok(Statement::VariableDeclaration(self.consume_semicolon(start)?, declaration))
     }
 
-    fn parse_function_parameters(&mut self) -> Result<Vec<Pattern>> {
+    fn parse_function_parameters(&mut self) -> Result<Vec<Pattern<Id>>> {
         self.expect(Token::OpenParen)?;
         let mut parameters = Vec::new();
 
@@ -946,14 +962,14 @@ impl<'a> Parser<'a> {
         Ok(parameters)
     }
 
-    fn validate_pattern(&self, override_pos: &Option<Position>, param_names: &mut HashSet<Symbol>, pat: &Pattern) -> Result<()> {
+    fn validate_pattern(&self, override_pos: &Option<Position>, param_names: &mut HashSet<Symbol>, pat: &Pattern<Id>) -> Result<()> {
         match pat {
-            &Pattern::Identifier(ref sp, id) => {
-                self.check_reserved_at(id, override_pos.unwrap_or(sp.start), ErrorCause::StrictParamName)?;
-                if self.context.strict && param_names.contains(&id) {
-                    return Err(CompileError::new(override_pos.unwrap_or(sp.start), ErrorCause::StrictDupeParam))
+            &Pattern::Simple(ref id) => {
+                self.check_reserved_at(id.1, override_pos.unwrap_or(id.0.start), ErrorCause::StrictParamName)?;
+                if self.context.strict && param_names.contains(&id.1) {
+                    return Err(CompileError::new(override_pos.unwrap_or(id.0.start), ErrorCause::StrictDupeParam))
                 }
-                param_names.insert(id);
+                param_names.insert(id.1);
                 Ok(())
             },
             &Pattern::Assignment(_, ref left, _) => {
@@ -973,7 +989,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn validate_params(&self, params: &Vec<Pattern>, override_pos: Option<Position>) -> Result<()> {
+    fn validate_params(&self, params: &Vec<Pattern<Id>>, override_pos: Option<Position>) -> Result<()> {
         let mut param_names = HashSet::new();
         for param in params {
             self.validate_pattern(&override_pos, &mut param_names, param)?;

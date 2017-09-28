@@ -43,8 +43,6 @@ ES6/binding-pattern/object-pattern/**
 
 ES6/class/**
 
-ES6/destructuring-assignment/array-pattern/member-expr-in-rest
-ES6/destructuring-assignment/array-pattern/nested-assignment
 ES6/destructuring-assignment/array-pattern/nested-cover-grammar
 
 ES6/destructuring-assignment/object-pattern/**

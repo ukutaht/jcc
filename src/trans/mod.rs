@@ -150,10 +150,10 @@ fn transpile_variable_declaration<W: Write>(out: &mut W, dec: &VariableDeclarati
     Ok(())
 }
 
-fn transpile_pattern<W: Write>(out: &mut W, pat: &Pattern) -> Result<()> {
+fn transpile_pattern<W: Write>(out: &mut W, pat: &Pattern<Id>) -> Result<()> {
     match *pat {
-        Pattern::Identifier(_, n) => {
-            write!(out, "{}", &*interner::resolve(n))?
+        Pattern::Simple(ref id) => {
+            write!(out, "{}", &*interner::resolve(id.1))?
         }
         _ => unimplemented!()
     }

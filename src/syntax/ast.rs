@@ -123,8 +123,9 @@ pub enum Prop {
 
 #[derive(Debug, PartialEq)]
 pub enum AssignTarget {
-    Expression(Expression),
-    Pattern(Pattern)
+    Id(Id),
+    ComputedMember(Span, Expression, Expression),
+    StaticMember(Span, Expression, Symbol),
 }
 
 #[derive(Debug, PartialEq)]
@@ -132,7 +133,7 @@ pub enum Expression {
     Array(Span, Vec<Option<ArgumentListElement>>),
     Conditional(Span, Box<Expression>, Box<Expression>, Box<Expression>),
     Object(Span, Vec<Prop>),
-    Assignment(Span, AssignOp, Box<AssignTarget>, Box<Expression>),
+    Assignment(Span, AssignOp, Box<Pattern<AssignTarget>>, Box<Expression>),
     Binary(Span, BinOp, Box<Expression>, Box<Expression>),
     Call(Span, Box<Expression>, Vec<ArgumentListElement>),
     ComputedMember(Span, Box<Expression>, Box<Expression>),
@@ -150,11 +151,11 @@ pub enum Expression {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum Pattern {
-    Identifier(Span, Symbol),
-    Assignment(Span, Box<Pattern>, Expression),
-    Array(Span, Vec<Option<Pattern>>),
-    RestElement(Span, Box<Pattern>),
+pub enum Pattern<T> {
+    Simple(T),
+    Assignment(Span, Box<Pattern<T>>, Expression),
+    Array(Span, Vec<Option<Pattern<T>>>),
+    RestElement(Span, Box<Pattern<T>>),
 }
 
 #[derive(Debug, PartialEq)]
@@ -166,19 +167,19 @@ pub enum ArrowFunctionBody {
 #[derive(Debug, PartialEq)]
 pub struct ArrowFunction {
     pub body: ArrowFunctionBody,
-    pub parameters: Vec<Pattern>,
+    pub parameters: Vec<Pattern<Id>>,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct Function {
     pub id: Option<Symbol>,
     pub body: Block,
-    pub parameters: Vec<Pattern>,
+    pub parameters: Vec<Pattern<Id>>,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct CatchClause {
-    pub param: Pattern,
+    pub param: Pattern<Id>,
     pub body: Block,
 }
 
@@ -244,7 +245,7 @@ pub enum VariableDeclarationKind { Var, Let, Const }
 
 #[derive(Debug, PartialEq)]
 pub struct VariableDeclarator {
-    pub id: Pattern,
+    pub id: Pattern<Id>,
     pub init: Option<Expression>,
 }
 

@@ -89,10 +89,41 @@ fn binary_expression(node: &Value) -> Result<Expression> {
     Ok(Expression::Binary(span, op, Box::new(left), Box::new(right)))
 }
 
-fn assign_target(node: &Value) -> Result<AssignTarget> {
-    pattern(&node).map(AssignTarget::Pattern).or_else(|_| {
-        expression(&node).map(AssignTarget::Expression)
-    })
+fn assign_target(node: &Value) -> Result<Pattern<AssignTarget>> {
+    match expect_string(node, "type") {
+        "Identifier" => {
+            let id = interner::intern(expect_string(node, "name"));
+            Ok(Pattern::Simple(AssignTarget::Id(Id(span(node)?, id))))
+        }
+        "AssignmentPattern" => {
+            let left = assign_target(expect_value(node, "left"))?;
+            let right = expression(expect_value(node, "right"))?;
+            Ok(Pattern::Assignment(span(node)?, Box::new(left), right))
+        }
+        "RestElement" => {
+            let arg = assign_target(expect_value(node, "argument"))?;
+            Ok(Pattern::RestElement(span(node)?, Box::new(arg)))
+        }
+        "ArrayPattern" => {
+            let mut elements = Vec::new();
+            for element in expect_array(node, "elements") {
+                elements.push(maybe(element, &assign_target)?);
+            };
+            Ok(Pattern::Array(span(node)?, elements))
+        }
+        "MemberExpression" => {
+            if expect_bool(node, "computed") {
+                let left = expression(expect_value(node, "object"))?;
+                let right = expression(expect_value(node, "property"))?;
+                Ok(Pattern::Simple(AssignTarget::ComputedMember(span(node)?, left, right)))
+            } else {
+                let left = expression(expect_value(node, "object"))?;
+                let right = interner::intern(expect_string(expect_value(node, "property"), "name"));
+                Ok(Pattern::Simple(AssignTarget::StaticMember(span(node)?, left, right)))
+            }
+        }
+        _ => Err(())
+    }
 }
 
 fn assignment_expression(node: &Value) -> Result<Expression> {
@@ -351,11 +382,11 @@ fn function(node: &Value) -> Result<Function> {
     Ok(Function { id: id, parameters: parameters, body: body })
 }
 
-fn pattern(node: &Value) -> Result<Pattern> {
+fn pattern(node: &Value) -> Result<Pattern<Id>> {
     match expect_string(node, "type") {
         "Identifier" => {
             let id = interner::intern(expect_string(node, "name"));
-            Ok(Pattern::Identifier(span(node)?, id))
+            Ok(Pattern::Simple(Id(span(node)?, id)))
         }
         "AssignmentPattern" => {
             let left = pattern(expect_value(node, "left"))?;
