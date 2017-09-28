@@ -158,6 +158,15 @@ pub enum Pattern<T> {
     RestElement(Span, Box<Pattern<T>>),
 }
 
+impl<T> Pattern<T> {
+    pub fn is_simple(&self) -> bool {
+        match *self {
+            Pattern::Simple(_) => true,
+            _ => false
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum ArrowFunctionBody {
     Expression(Box<Expression>),

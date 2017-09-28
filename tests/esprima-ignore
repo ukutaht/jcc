@@ -53,7 +53,6 @@ ES6/generator/**
 ES6/identifier/**
 ES6/import-declaration/**
 
-ES6/lexical-declaration/invalid_complex_binding_without_init
 
 ES6/meta-property/**
 ES6/method-definition/**

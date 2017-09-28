@@ -909,7 +909,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_variable_declarator(&mut self, kind: VariableDeclarationKind) -> Result<VariableDeclarator> {
+    fn parse_variable_declarator(&mut self, kind: VariableDeclarationKind, in_for: bool) -> Result<VariableDeclarator> {
         let start = self.scanner.lookahead_start;
         let id = self.parse_pattern(false, kind)?;
 
@@ -917,10 +917,14 @@ impl<'a> Parser<'a> {
             Token::Eq => {
                 self.check_reserved_pat_at(&id, self.scanner.last_pos, ErrorCause::RestrictedVarName)?;
                 self.scanner.next_token()?;
-                Some(self.parse_assignment_expression()?)
+                Some(self.isolate_cover_grammar(Parser::parse_assignment_expression)?)
             }
             _ if kind == VariableDeclarationKind::Const => {
                 return Err(self.error(ErrorCause::MissingInitializerInConst))
+            }
+            _ if kind == VariableDeclarationKind::Let && !id.is_simple() && !in_for => {
+                self.scanner.next_token()?;
+                return Err(self.error(ErrorCause::UnexpectedToken(self.scanner.lookahead)))
             }
             _ => {
                 self.check_reserved_pat_at(&id, start, ErrorCause::RestrictedVarName)?;
@@ -931,11 +935,11 @@ impl<'a> Parser<'a> {
         Ok(VariableDeclarator {id, init})
     }
 
-    fn parse_variable_declaration(&mut self, kind: VariableDeclarationKind) -> Result<VariableDeclaration> {
+    fn parse_variable_declaration(&mut self, kind: VariableDeclarationKind, in_for: bool) -> Result<VariableDeclaration> {
         let mut declarators = Vec::new();
-        declarators.push(self.parse_variable_declarator(kind)?);
+        declarators.push(self.parse_variable_declarator(kind, in_for)?);
         while self.eat(Token::Comma)? {
-            declarators.push(self.parse_variable_declarator(kind)?)
+            declarators.push(self.parse_variable_declarator(kind, in_for)?)
         }
         Ok(VariableDeclaration {
             kind: kind,
@@ -946,7 +950,7 @@ impl<'a> Parser<'a> {
     fn parse_variable_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::Var)?;
-        let declaration = self.parse_variable_declaration(VariableDeclarationKind::Var)?;
+        let declaration = self.parse_variable_declaration(VariableDeclarationKind::Var, false)?;
         Ok(Statement::VariableDeclaration(self.consume_semicolon(start)?, declaration))
     }
 
@@ -1304,7 +1308,7 @@ impl<'a> Parser<'a> {
         if self.eat(Token::Semi)? {
             self.parse_for_iter_statement(start, None)
         } else if self.eat(Token::Var)? {
-            let decl = self.allow_in(false, |context| Parser::parse_variable_declaration(context, VariableDeclarationKind::Var))?;
+            let decl = self.allow_in(false, |context| Parser::parse_variable_declaration(context, VariableDeclarationKind::Var, true))?;
             if decl.declarations.len() == 1 && self.eat(Token::In)? {
                 self.parse_for_in_statement(start, ForInit::VarDecl(decl))
 
@@ -1320,7 +1324,7 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token()?;
                 return self.parse_for_in_statement(start, init)
             }
-            let decl = self.allow_in(false, |context| Parser::parse_variable_declaration(context, kind))?;
+            let decl = self.allow_in(false, |context| Parser::parse_variable_declaration(context, kind, true))?;
             if decl.declarations.len() == 1 && decl.declarations[0].init.is_none() && self.eat(Token::In)? {
                 self.parse_for_in_statement(start, ForInit::VarDecl(decl))
             } else {
@@ -1427,12 +1431,12 @@ impl<'a> Parser<'a> {
     fn parse_const_declaration(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::Const)?;
-        let declaration = self.parse_variable_declaration(VariableDeclarationKind::Const)?;
+        let declaration = self.parse_variable_declaration(VariableDeclarationKind::Const, false)?;
         Ok(Statement::VariableDeclaration(self.consume_semicolon(start)?, declaration))
     }
 
     fn parse_let_declaration(&mut self, start: Position) -> Result<Statement> {
-        let declaration = self.parse_variable_declaration(VariableDeclarationKind::Let)?;
+        let declaration = self.parse_variable_declaration(VariableDeclarationKind::Let, false)?;
         Ok(Statement::VariableDeclaration(self.consume_semicolon(start)?, declaration))
     }
 
