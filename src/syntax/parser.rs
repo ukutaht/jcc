@@ -271,7 +271,7 @@ impl<'a> Parser<'a> {
                     }
                     let rest = self.parse_rest_element()?;
                     self.expect_because(Token::CloseParen, ErrorCause::RestParamMustBeLast)?;
-                    let mut args = self.reinterpret_as_arguments(Expression::Sequence(self.finalize(start), sequence));
+                    let mut args = self.reinterpret_as_arguments(Expression::Sequence(self.finalize(start), sequence)).unwrap();
                     args.push(rest);
                     return self.parse_arrow_function(paren_start, args)
                 }
@@ -284,8 +284,13 @@ impl<'a> Parser<'a> {
 
         self.expect(Token::CloseParen)?;
 
-        if self.scanner.lookahead == Token::Arrow && !self.context.is_binding_element {
-            return Err(self.unexpected_token(self.scanner.lookahead))
+        if self.scanner.lookahead == Token::Arrow {
+            if !self.context.is_binding_element {
+                return Err(self.unexpected_token(self.scanner.lookahead))
+            } else {
+                let args = self.reinterpret_as_arguments(result).unwrap();
+                return self.parse_arrow_function(paren_start, args)
+            }
         }
 
         self.context.is_binding_element = false;
@@ -668,12 +673,12 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn reinterpret_as_arguments(&self, expr: Expression) -> Vec<Pattern<Id>> {
+    fn reinterpret_as_arguments(&self, expr: Expression) -> Option<Vec<Pattern<Id>>> {
         match expr {
             Expression::Sequence(_, exprs) => {
-                exprs.into_iter().map(|e| self.reinterpret_as_pattern(e).unwrap()).collect()
+                Some(exprs.into_iter().map(|e| self.reinterpret_as_pattern(e).unwrap()).collect())
             }
-            e => vec![self.reinterpret_as_pattern(e).unwrap()]
+            _ => Some(vec![self.reinterpret_as_pattern(expr).unwrap()])
         }
     }
 
@@ -704,8 +709,15 @@ impl<'a> Parser<'a> {
         let left = self.parse_conditional_expression()?;
 
         if self.scanner.lookahead == Token::Arrow {
-            let params = self.reinterpret_as_arguments(left);
-            self.parse_arrow_function(start, params)
+            // Arrow function without parantheses e.g.
+            // a => { something(a) }
+            // a, b => { something(a); other(b) }
+            if let &Expression::Identifier(_, _) = &left {
+                let params = vec![self.reinterpret_as_pattern(left).unwrap()];
+                self.parse_arrow_function(start, params)
+            } else {
+                return Err(self.unexpected_token(Token::Arrow))
+            }
         } else {
             match self.scanner.lookahead.as_assign_op() {
                 Some(op) => {

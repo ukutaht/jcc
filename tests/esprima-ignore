@@ -24,7 +24,6 @@ ES6/arrow-function/array-binding-pattern/invalid-dup-param
 ES6/arrow-function/object-binding-pattern/invalid-member-expr
 ES6/arrow-function/object-binding-pattern/invalid-method-in-pattern
 ES6/arrow-function/object-binding-pattern/invalid-nested-param
-ES6/arrow-function/object-binding-pattern/invalid-pattern-without-parenthesis
 ES6/arrow-function/object-binding-pattern/nested-cover-grammar
 ES6/arrow-function/object-binding-pattern/object-binding-pattern-01
 ES6/arrow-function/object-binding-pattern/object-binding-pattern-empty
@@ -48,8 +47,6 @@ ES6/class/**
 
 ES6/destructuring-assignment/array-pattern/nested-cover-grammar
 
-ES6/destructuring-assignment/object-pattern/invalid-lhs-01
-ES6/destructuring-assignment/object-pattern/invalid-lhs-02
 ES6/destructuring-assignment/object-pattern/invalid-pattern-with-method
 ES6/destructuring-assignment/object-pattern/nested-cover-grammar
 ES6/destructuring-assignment/object-pattern/object-pattern-assignment
@@ -69,10 +66,8 @@ ES6/object-literal-property-value-shorthand/**
 ES6/octal-integer-literal/**
 ES6/program/**
 
-ES6/rest-parameter/arrow-rest-parameter-object
 ES6/rest-parameter/object-method
 ES6/rest-parameter/object-shorthand-method
-ES6/rest-parameter/rest-parameter-object
 
 ES6/super-property/**
 ES6/template-literals/**
@@ -129,13 +124,9 @@ invalid-syntax/migrated_0080
 invalid-syntax/migrated_0081
 
 # Arrows
-invalid-syntax/migrated_0085
-invalid-syntax/migrated_0086
 invalid-syntax/migrated_0092
 invalid-syntax/migrated_0093
 invalid-syntax/migrated_0094
-invalid-syntax/migrated_0098
-invalid-syntax/migrated_0099
 
 
 invalid-syntax/migrated_0137.source
@@ -219,4 +210,3 @@ expression/primary/literal/regular-expression/u-flag-valid-range
 expression/primary/object/migrated_0034
 expression/primary/object/migrated_0035
 expression/primary/object/migrated_0036
-expression/primary/object/migrated_0038
