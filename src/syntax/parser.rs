@@ -191,9 +191,10 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token()?;
                 Ok(Expression::Identifier(self.finalize(start), n))
             }
-            Token::OpenSquare => self.parse_array_initializer(),
-            Token::OpenCurly => self.parse_object_initializer(),
+            Token::OpenSquare => self.inherit_cover_grammar(Parser::parse_array_initializer),
+            Token::OpenCurly => self.inherit_cover_grammar(Parser::parse_object_initializer),
             Token::OpenParen => {
+                self.context.is_binding_element = false;
                 self.inherit_cover_grammar(Parser::parse_group_expression)
             }
             Token::FunctionKeyword => {
@@ -265,6 +266,9 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token()?;
 
                 if self.scanner.lookahead == Token::Ellipsis {
+                    if !self.context.is_binding_element {
+                        return Err(self.unexpected_token(self.scanner.lookahead))
+                    }
                     let rest = self.parse_rest_element()?;
                     self.expect_because(Token::CloseParen, ErrorCause::RestParamMustBeLast)?;
                     let mut args = self.reinterpret_as_arguments(Expression::Sequence(self.finalize(start), sequence));
@@ -279,6 +283,12 @@ impl<'a> Parser<'a> {
         }
 
         self.expect(Token::CloseParen)?;
+
+        if self.scanner.lookahead == Token::Arrow && !self.context.is_binding_element {
+            return Err(self.unexpected_token(self.scanner.lookahead))
+        }
+
+        self.context.is_binding_element = false;
 
         Ok(result)
     }
@@ -655,9 +665,6 @@ impl<'a> Parser<'a> {
         let left = self.parse_conditional_expression()?;
 
         if self.scanner.lookahead == Token::Arrow {
-            if !self.context.is_binding_element {
-                return Err(self.unexpected_token(Token::Arrow));
-            };
             let params = self.reinterpret_as_arguments(left);
             self.parse_arrow_function(start, params)
         } else {
@@ -665,11 +672,16 @@ impl<'a> Parser<'a> {
                 Some(op) => {
                     self.check_reserved_expr_at(&left, Some(start), ErrorCause::RestrictedVarNameInAssignment)?;
                     self.check_assignment_allowed()?;
-                    self.scanner.next_token()?;
-                    let right = self.isolate_cover_grammar(Parser::parse_assignment_expression)?;
-                    let span = self.finalize(start);
-                    let target = self.reinterpret_as_assign_target(left).unwrap();
-                    Ok(Expression::Assignment(span, op, Box::new(target), Box::new(right)))
+                    match self.reinterpret_as_assign_target(left) {
+                        Some(target) => {
+                            self.scanner.next_token()?;
+                            let right = self.isolate_cover_grammar(Parser::parse_assignment_expression)?;
+                            let span = self.finalize(start);
+                            Ok(Expression::Assignment(span, op, Box::new(target), Box::new(right)))
+                        },
+                         _ =>  Err(self.error(ErrorCause::InvalidLHSAssignment))
+
+                    }
                 }
                 None => Ok(left)
             }

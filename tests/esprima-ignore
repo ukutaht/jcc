@@ -26,7 +26,6 @@ ES6/arrow-function/invalid-duplicated-names-rest-parameter
 ES6/arrow-function/invalid-duplicated-params
 
 ES6/arrow-function/non-arrow-param-followed-by-arrow
-ES6/arrow-function/non-arrow-param-followed-by-rest
 
 ES6/binary-integer-literal/**
 
@@ -47,7 +46,6 @@ ES6/destructuring-assignment/array-pattern/nested-cover-grammar
 
 ES6/destructuring-assignment/object-pattern/**
 ES6/destructuring-assignment/invalid-cover-grammar
-ES6/destructuring-assignment/invalid-group-assignment
 
 ES6/export-declaration/**
 ES6/for-of/**
