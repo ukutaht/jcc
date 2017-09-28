@@ -89,6 +89,18 @@ fn binary_expression(node: &Value) -> Result<Expression> {
     Ok(Expression::Binary(span, op, Box::new(left), Box::new(right)))
 }
 
+fn assign_prop_pattern(node: &Value) -> Result<PropPattern<AssignTarget>> {
+    let key = prop_key(expect_value(node, "key"))?;
+    let value = assign_target(expect_value(node, "value"))?;
+
+    Ok(PropPattern {
+        span: span(node)?,
+        key: key,
+        value: value,
+        shorthand: expect_bool(node, "shorthand")
+    })
+}
+
 fn assign_target(node: &Value) -> Result<Pattern<AssignTarget>> {
     match expect_string(node, "type") {
         "Identifier" => {
@@ -110,6 +122,13 @@ fn assign_target(node: &Value) -> Result<Pattern<AssignTarget>> {
                 elements.push(maybe(element, &assign_target)?);
             };
             Ok(Pattern::Array(span(node)?, elements))
+        }
+        "ObjectPattern" => {
+            let mut props = Vec::new();
+            for prop in expect_array(node, "properties") {
+                props.push(assign_prop_pattern(prop)?);
+            };
+            Ok(Pattern::Object(span(node)?, props))
         }
         "MemberExpression" => {
             if expect_bool(node, "computed") {
@@ -382,6 +401,18 @@ fn function(node: &Value) -> Result<Function> {
     Ok(Function { id: id, parameters: parameters, body: body })
 }
 
+fn prop_pattern(node: &Value) -> Result<PropPattern<Id>> {
+    let key = prop_key(expect_value(node, "key"))?;
+    let value = pattern(expect_value(node, "value"))?;
+
+    Ok(PropPattern {
+        span: span(node)?,
+        key: key,
+        value: value,
+        shorthand: expect_bool(node, "shorthand")
+    })
+}
+
 fn pattern(node: &Value) -> Result<Pattern<Id>> {
     match expect_string(node, "type") {
         "Identifier" => {
@@ -403,6 +434,13 @@ fn pattern(node: &Value) -> Result<Pattern<Id>> {
                 elements.push(maybe(element, &pattern)?);
             };
             Ok(Pattern::Array(span(node)?, elements))
+        }
+        "ObjectPattern" => {
+            let mut props = Vec::new();
+            for prop in expect_array(node, "properties") {
+                props.push(prop_pattern(prop)?)
+            };
+            Ok(Pattern::Object(span(node)?, props))
         }
         _ => Err(())
     }

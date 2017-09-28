@@ -155,7 +155,16 @@ pub enum Pattern<T> {
     Simple(T),
     Assignment(Span, Box<Pattern<T>>, Expression),
     Array(Span, Vec<Option<Pattern<T>>>),
+    Object(Span, Vec<PropPattern<T>>),
     RestElement(Span, Box<Pattern<T>>),
+}
+
+#[derive(Debug, PartialEq)]
+pub struct PropPattern<T> {
+    pub span: Span,
+    pub key: PropKey,
+    pub value: Pattern<T>,
+    pub shorthand: bool
 }
 
 impl<T> Pattern<T> {

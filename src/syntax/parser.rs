@@ -454,6 +454,7 @@ impl<'a> Parser<'a> {
                 };
                 Ok(())
             }
+            &Pattern::Object(_, _) => Ok(()),
             &Pattern::RestElement(_, ref arg) => self.check_reserved_pat_at(&*arg, pos, cause),
         }
     }
@@ -598,6 +599,25 @@ impl<'a> Parser<'a> {
 
                 Some(Pattern::Array(sp, result))
             }
+            Expression::Object(sp, props) => {
+                let mut result = Vec::new();
+                for prop in props.into_iter() {
+                    let prop_def = match prop {
+                        Prop::Init(sp, key, val) => {
+                            match self.reinterpret_as_pattern(val) {
+                                Some(val_pattern) => {
+                                    PropPattern { span: sp, key: key, value: val_pattern, shorthand: false }
+                                }
+                                None => return None
+                            }
+                        }
+                        _ => return None
+                    };
+                    result.push(prop_def)
+                }
+
+                Some(Pattern::Object(sp, result))
+            }
             _ => None
         }
     }
@@ -624,6 +644,25 @@ impl<'a> Parser<'a> {
                 }
 
                 Some(Pattern::Array(sp, result))
+            }
+            Expression::Object(sp, props) => {
+                let mut result = Vec::new();
+                for prop in props.into_iter() {
+                    let pat = match prop {
+                        Prop::Init(sp, key, value) => {
+                            match self.reinterpret_as_assign_target(value) {
+                                Some(target) => {
+                                    PropPattern {span: sp, key: key, value: target, shorthand: false}
+                                }
+                                None => return None
+                            }
+                        }
+                        _ => return None
+                    };
+                    result.push(pat)
+                }
+
+                Some(Pattern::Object(sp, result))
             }
             _ => None
         }
@@ -878,6 +917,68 @@ impl<'a> Parser<'a> {
         Ok(Pattern::Array(self.finalize(start), elements))
     }
 
+    fn parse_prop_pattern(&mut self, kind: VariableDeclarationKind) -> Result<PropPattern<Id>> {
+        let start = self.scanner.lookahead_start;
+        if let Token::Ident(name) = self.scanner.lookahead {
+            self.scanner.next_token()?;
+            if self.scanner.lookahead != Token::Colon {
+                Ok(PropPattern {
+                    span: self.finalize(start),
+                    key: PropKey::Identifier(self.finalize(start), name),
+                    value: Pattern::Simple(Id(self.finalize(start), name)),
+                    shorthand: true
+                })
+            } else if self.eat(Token::Eq)? {
+                let expr = self.parse_assignment_expression()?;
+                let pat = Pattern::Simple(Id(self.finalize(start), name));
+                Ok(PropPattern {
+                    span: self.finalize(start),
+                    key: PropKey::Identifier(self.finalize(start), name),
+                    value: Pattern::Assignment(self.finalize(start), Box::new(pat), expr),
+                    shorthand: true
+                })
+            } else {
+                let key = PropKey::Identifier(self.finalize(start), name);
+                self.expect(Token::Colon)?;
+                let val = self.parse_pattern(true, kind)?;
+                Ok(PropPattern {
+                    span: self.finalize(start),
+                    key: key,
+                    value: val,
+                    shorthand: false
+                })
+            }
+        } else {
+            let key = self.match_object_property_key()?.unwrap();
+            self.expect(Token::Colon)?;
+            let val = self.parse_pattern(true, kind)?;
+            Ok(PropPattern {
+                span: self.finalize(start),
+                key: key,
+                value: val,
+                shorthand: false
+             })
+        }
+    }
+
+    fn parse_object_pattern(&mut self, kind: VariableDeclarationKind) -> Result<Pattern<Id>> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::OpenCurly)?;
+        let mut props = Vec::new();
+
+        while self.scanner.lookahead != Token::CloseCurly {
+            props.push(self.parse_prop_pattern(kind)?);
+
+            if self.scanner.lookahead != Token::CloseCurly {
+                self.expect(Token::Comma)?;
+            }
+        }
+
+        self.expect(Token::CloseCurly)?;
+        Ok(Pattern::Object(self.finalize(start), props))
+    }
+
+
     fn parse_pattern(&mut self, allow_default: bool, kind: VariableDeclarationKind) -> Result<Pattern<Id>> {
         match self.scanner.lookahead {
             Token::Ident(name) => {
@@ -891,9 +992,8 @@ impl<'a> Parser<'a> {
                 let left = Pattern::Simple(Id(self.finalize(start), name));
                 if allow_default { self.parse_pattern_default(start, left) } else { Ok(left) }
             },
-            Token::OpenSquare => {
-                self.parse_array_pattern(kind)
-            }
+            Token::OpenSquare => self.parse_array_pattern(kind),
+            Token::OpenCurly => self.parse_object_pattern(kind),
             t => Err(self.unexpected_token(t))
         }
     }
@@ -1000,6 +1100,9 @@ impl<'a> Parser<'a> {
                         self.validate_pattern(override_pos, param_names, binding_pattern)?;
                     }
                 };
+                Ok(())
+            }
+            &Pattern::Object(_, _) => {
                 Ok(())
             }
         }
