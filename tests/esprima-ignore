@@ -52,7 +52,15 @@ ES6/import-declaration/**
 
 ES6/meta-property/**
 ES6/method-definition/**
-ES6/object-initialiser/**
+
+ES6/object-initialiser/proto-identifier-method
+ES6/object-initialiser/proto-identifier-shorthand
+ES6/object-initialiser/proto-literal-method
+ES6/object-initialiser/proto-literal-shorthand
+ES6/object-initialiser/proto-shorthand-identifier
+ES6/object-initialiser/proto-shorthand-literal
+ES6/object-initialiser/proto-shorthands
+
 ES6/octal-integer-literal/**
 ES6/program/**
 

@@ -930,14 +930,28 @@ impl<'a> Parser<'a> {
 
     fn check_duplicate_proto(&self, has_proto: bool, prop: &Prop) -> Result<bool> {
         if let &Prop::Init(_, ref key, _) = prop {
-            if let &PropKey::Identifier(ref span, s) = key {
-                if s == *interner::KEYWORD_PROTO {
-                    if has_proto {
-                        return Err(CompileError::new(span.end, ErrorCause::DuplicateProto))
-                    } else {
-                        return Ok(true);
+            match key {
+                &PropKey::Identifier(ref span, s) => {
+                    if s == *interner::KEYWORD_PROTO {
+                        if has_proto {
+                            return Err(CompileError::new(span.end, ErrorCause::DuplicateProto))
+                        } else {
+                            return Ok(true);
+                        }
                     }
                 }
+                &PropKey::String(ref span, s) => {
+                    let string = interner::resolve(s);
+                    let len = string.len();
+                    if &string[1..len - 1] == "__proto__" {
+                        if has_proto {
+                            return Err(CompileError::new(span.end, ErrorCause::DuplicateProto))
+                        } else {
+                            return Ok(true);
+                        }
+                    }
+                }
+                _ => return Ok(has_proto)
             }
         }
         return Ok(has_proto);
