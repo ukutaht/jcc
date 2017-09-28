@@ -116,6 +116,7 @@ pub enum PropKey {
 
 #[derive(Debug, PartialEq)]
 pub enum Prop {
+    CoverInitializedName(Span, PropKey, Expression),
     Init(Span, PropKey, Expression),
     Get(Span, PropKey, Function),
     Set(Span, PropKey, Function)

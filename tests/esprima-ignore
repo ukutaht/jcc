@@ -48,9 +48,7 @@ ES6/class/**
 ES6/destructuring-assignment/array-pattern/nested-cover-grammar
 
 ES6/destructuring-assignment/object-pattern/invalid-pattern-with-method
-ES6/destructuring-assignment/object-pattern/nested-cover-grammar
 ES6/destructuring-assignment/object-pattern/object-pattern-assignment
-ES6/destructuring-assignment/invalid-cover-grammar
 
 ES6/export-declaration/**
 ES6/for-of/**
@@ -62,7 +60,6 @@ ES6/import-declaration/**
 ES6/meta-property/**
 ES6/method-definition/**
 ES6/object-initialiser/**
-ES6/object-literal-property-value-shorthand/**
 ES6/octal-integer-literal/**
 ES6/program/**
 

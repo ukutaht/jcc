@@ -18,6 +18,7 @@ struct ParseContext {
     strict: bool,
     is_assignment_target: bool,
     is_binding_element: bool,
+    first_cover_initialized_name_error: Option<(Token, Position)>,
     labels: HashSet<Symbol>
 }
 
@@ -38,6 +39,7 @@ impl<'a> Parser<'a> {
                 strict: false,
                 is_assignment_target: false,
                 is_binding_element: false,
+                first_cover_initialized_name_error: None,
                 labels: HashSet::new()
             }
         }
@@ -118,16 +120,25 @@ impl<'a> Parser<'a> {
       where F: FnOnce(&mut Self) -> Result<T> {
         let is_assignment_target = std::mem::replace(&mut self.context.is_assignment_target, true);
         let is_binding_element = std::mem::replace(&mut self.context.is_binding_element, true);
+        let first_cover_initialized_name_error = std::mem::replace(&mut self.context.first_cover_initialized_name_error, None);
         let result = parse_fn(self);
-        std::mem::replace(&mut self.context.is_assignment_target, is_assignment_target);
-        std::mem::replace(&mut self.context.is_binding_element, is_binding_element);
-        result
+
+        match self.context.first_cover_initialized_name_error {
+            Some((tok, pos)) => Err(CompileError::new(pos, ErrorCause::UnexpectedToken(tok))),
+            None => {
+                std::mem::replace(&mut self.context.is_assignment_target, is_assignment_target);
+                std::mem::replace(&mut self.context.is_binding_element, is_binding_element);
+                std::mem::replace(&mut self.context.first_cover_initialized_name_error, first_cover_initialized_name_error);
+                result
+            }
+        }
     }
 
     fn inherit_cover_grammar<F, T>(&mut self, parse_fn: F) -> Result<T>
       where F: FnOnce(&mut Self) -> Result<T> {
         let is_assignment_target = std::mem::replace(&mut self.context.is_assignment_target, true);
         let is_binding_element = std::mem::replace(&mut self.context.is_binding_element, true);
+        let first_cover_initialized_name_error = std::mem::replace(&mut self.context.first_cover_initialized_name_error, None);
 
         let result = parse_fn(self);
 
@@ -137,6 +148,8 @@ impl<'a> Parser<'a> {
         if self.context.is_binding_element && is_binding_element {
             std::mem::replace(&mut self.context.is_binding_element, true);
         }
+        let new_cover_initialized_name_error = first_cover_initialized_name_error.or(self.context.first_cover_initialized_name_error);
+        std::mem::replace(&mut self.context.first_cover_initialized_name_error, new_cover_initialized_name_error);
         result
     }
 
@@ -616,6 +629,14 @@ impl<'a> Parser<'a> {
                                 None => return None
                             }
                         }
+                        Prop::CoverInitializedName(sp, key, val) => {
+                            match self.reinterpret_as_pattern(val) {
+                                Some(val_pattern) => {
+                                    PropPattern { span: sp, key: key, value: val_pattern, shorthand: true }
+                                }
+                                None => return None
+                            }
+                        }
                         _ => return None
                     };
                     result.push(prop_def)
@@ -662,6 +683,14 @@ impl<'a> Parser<'a> {
                                 None => return None
                             }
                         }
+                        Prop::CoverInitializedName(sp, key, val) => {
+                            match self.reinterpret_as_assign_target(val) {
+                                Some(val_pattern) => {
+                                    PropPattern { span: sp, key: key, value: val_pattern, shorthand: true }
+                                }
+                                None => return None
+                            }
+                        }
                         _ => return None
                     };
                     result.push(pat)
@@ -683,6 +712,8 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_arrow_function(&mut self, start: Position, params: Vec<Pattern<Id>>) -> Result<Expression> {
+        self.context.first_cover_initialized_name_error = None;
+
         if self.scanner.at_newline() {
             self.scanner.next_token()?;
             return Err(CompileError::new(self.scanner.lookahead_start, ErrorCause::UnexpectedToken(Token::Arrow)));
@@ -726,6 +757,7 @@ impl<'a> Parser<'a> {
                     match self.reinterpret_as_assign_target(left) {
                         Some(target) => {
                             self.scanner.next_token()?;
+                            self.context.first_cover_initialized_name_error = None;
                             let right = self.isolate_cover_grammar(Parser::parse_assignment_expression)?;
                             let span = self.finalize(start);
                             Ok(Expression::Assignment(span, op, Box::new(target), Box::new(right)))
@@ -795,9 +827,25 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_prop_init(&mut self, start: Position, key: PropKey) -> Result<Prop> {
-        self.expect(Token::Colon)?;
-        let value = self.parse_assignment_expression()?;
-        Ok(Prop::Init(self.finalize(start), key, value))
+        if self.eat(Token::Colon)? {
+            let value = self.parse_assignment_expression()?;
+            Ok(Prop::Init(self.finalize(start), key, value))
+        } else if let &PropKey::Identifier(ref sp, ref id) = &key {
+            if self.scanner.lookahead == Token::Eq {
+                self.context.first_cover_initialized_name_error = Some((self.scanner.lookahead, self.scanner.lookahead_start));
+                self.scanner.next_token()?;
+                let key = PropKey::Identifier(sp.clone(), *id);
+                let init = self.isolate_cover_grammar(Parser::parse_assignment_expression)?;
+                let pat = Pattern::Simple(AssignTarget::Id(Id(sp.clone(), *id)));
+                let value = Expression::Assignment(self.finalize(start), AssignOp::Eq, Box::new(pat), Box::new(init));
+                Ok(Prop::CoverInitializedName(self.finalize(start), key, value))
+            } else {
+                let value = Expression::Identifier(sp.clone(), *id);
+                Ok(Prop::Init(self.finalize(start), PropKey::Identifier(sp.clone(), *id), value))
+            }
+        } else {
+            Err(self.unexpected_token(self.scanner.lookahead))
+        }
     }
 
     fn parse_function_source_elements(&mut self) -> Result<Block> {
@@ -1164,13 +1212,13 @@ impl<'a> Parser<'a> {
 
     fn parse_expression(&mut self) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
-        let expr = self.parse_assignment_expression()?;
+        let expr = self.isolate_cover_grammar(Parser::parse_assignment_expression)?;
 
         if self.matches(Token::Comma) {
             let mut expressions = vec![expr];
             while !self.matches(Token::Eof) {
                 if self.eat(Token::Comma)? {
-                    expressions.push(self.parse_assignment_expression()?);
+                    expressions.push(self.isolate_cover_grammar(Parser::parse_assignment_expression)?);
                 } else {
                     break;
                 }
@@ -1447,22 +1495,32 @@ impl<'a> Parser<'a> {
                 self.parse_for_iter_statement(start, Some(ForInit::VarDecl(decl)))
             }
         } else {
+            let init_start = self.scanner.lookahead_start;
             let previous_allow_in = std::mem::replace(&mut self.context.allow_in, false);
-            let init = ForInit::Expression(self.inherit_cover_grammar(Parser::parse_expression)?);
+            let mut init_expr = self.inherit_cover_grammar(Parser::parse_assignment_expression)?;
             self.context.allow_in = previous_allow_in;
             if self.scanner.lookahead == Token::In {
                 if !self.context.is_assignment_target {
                     return Err(self.error(ErrorCause::InvalidLHSForIn))
                 };
-                if let &ForInit::Expression(Expression::Assignment(_, _, _, _)) = &init {
+                if let &Expression::Assignment(_, _, _, _) = &init_expr {
                     return Err(self.error(ErrorCause::InvalidLHSForIn))
                 };
 
                 self.scanner.next_token()?;
-                self.parse_for_in_statement(start, init)
+                self.parse_for_in_statement(start, ForInit::Expression(init_expr))
             } else {
+                if self.scanner.lookahead == Token::Comma {
+                    let mut seq = vec![init_expr];
+                    while self.scanner.lookahead == Token::Comma {
+                        self.scanner.next_token()?;
+                        seq.push(self.isolate_cover_grammar(Parser::parse_assignment_expression)?)
+                    };
+                    init_expr = Expression::Sequence(self.finalize(init_start), seq);
+                };
+
                 self.expect(Token::Semi)?;
-                self.parse_for_iter_statement(start, Some(init))
+                self.parse_for_iter_statement(start, Some(ForInit::Expression(init_expr)))
             }
         }
     }
