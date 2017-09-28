@@ -21,12 +21,8 @@ es2018/**
 
 ES6/arrow-function/array-binding-pattern/invalid-dup-param
 
-ES6/arrow-function/object-binding-pattern/invalid-member-expr
 ES6/arrow-function/object-binding-pattern/invalid-method-in-pattern
-ES6/arrow-function/object-binding-pattern/invalid-nested-param
-ES6/arrow-function/object-binding-pattern/nested-cover-grammar
 ES6/arrow-function/object-binding-pattern/object-binding-pattern-01
-ES6/arrow-function/object-binding-pattern/object-binding-pattern-empty
 
 ES6/arrow-function/invalid-duplicated-names-rest-parameter
 ES6/arrow-function/invalid-duplicated-params
@@ -40,12 +36,9 @@ ES6/binding-pattern/array-pattern/dupe-param
 ES6/binding-pattern/array-pattern/patterned-catch-dupe
 ES6/binding-pattern/array-pattern/patterned-catch
 
-ES6/binding-pattern/object-pattern/invalid-strict-for-let-let
 ES6/binding-pattern/object-pattern/properties
 
 ES6/class/**
-
-ES6/destructuring-assignment/array-pattern/nested-cover-grammar
 
 ES6/destructuring-assignment/object-pattern/invalid-pattern-with-method
 ES6/destructuring-assignment/object-pattern/object-pattern-assignment

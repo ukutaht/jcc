@@ -301,8 +301,12 @@ impl<'a> Parser<'a> {
             if !self.context.is_binding_element {
                 return Err(self.unexpected_token(self.scanner.lookahead))
             } else {
-                let args = self.reinterpret_as_arguments(result).unwrap();
-                return self.parse_arrow_function(paren_start, args)
+                match self.reinterpret_as_arguments(result) {
+                    Some(args) => {
+                        return self.parse_arrow_function(paren_start, args)
+                    }
+                    None => return Err(self.unexpected_token(self.scanner.lookahead))
+                }
             }
         }
 
@@ -402,6 +406,7 @@ impl<'a> Parser<'a> {
             match self.scanner.lookahead {
                 Token::OpenParen => {
                     if allow_call {
+                        self.context.is_binding_element = false;
                         self.context.is_assignment_target = false;
                         let args = self.parse_arguments()?;
                         let span = self.finalize(start);
@@ -411,6 +416,7 @@ impl<'a> Parser<'a> {
                     }
                 },
                 Token::OpenSquare => {
+                    self.context.is_binding_element = false;
                     self.context.is_assignment_target = true;
                     self.expect(Token::OpenSquare)?;
                     let expr = self.isolate_cover_grammar(Parser::parse_expression)?;
@@ -419,6 +425,7 @@ impl<'a> Parser<'a> {
                     result = Expression::ComputedMember(span, Box::new(result), Box::new(expr));
                 },
                 Token::Dot => {
+                    self.context.is_binding_element = false;
                     self.context.is_assignment_target = true;
                     self.scanner.next_token()?;
                     let identifier_name = self.expect_identifier_name()?;
@@ -472,8 +479,13 @@ impl<'a> Parser<'a> {
                 };
                 Ok(())
             }
-            &Pattern::Object(_, _) => Ok(()),
             &Pattern::RestElement(_, ref arg) => self.check_reserved_pat_at(&*arg, pos, cause),
+            &Pattern::Object(_, ref props) => {
+                for prop in props {
+                    self.check_reserved_pat_at(&prop.value, pos, cause.clone())?;
+                }
+                Ok(())
+            }
         }
     }
 
@@ -705,9 +717,18 @@ impl<'a> Parser<'a> {
     fn reinterpret_as_arguments(&self, expr: Expression) -> Option<Vec<Pattern<Id>>> {
         match expr {
             Expression::Sequence(_, exprs) => {
-                Some(exprs.into_iter().map(|e| self.reinterpret_as_pattern(e).unwrap()).collect())
+                let mut res = Vec::new();
+                for e in exprs.into_iter() {
+                    match self.reinterpret_as_pattern(e) {
+                        Some(p) => res.push(p),
+                        None => return None
+                    }
+                }
+                Some(res)
             }
-            _ => Some(vec![self.reinterpret_as_pattern(expr).unwrap()])
+            _ => {
+                self.reinterpret_as_pattern(expr).map(|p| { vec![p] })
+            }
         }
     }
 
@@ -981,20 +1002,20 @@ impl<'a> Parser<'a> {
         let start = self.scanner.lookahead_start;
         if let Token::Ident(name) = self.scanner.lookahead {
             self.scanner.next_token()?;
-            if self.scanner.lookahead != Token::Colon {
-                Ok(PropPattern {
-                    span: self.finalize(start),
-                    key: PropKey::Identifier(self.finalize(start), name),
-                    value: Pattern::Simple(Id(self.finalize(start), name)),
-                    shorthand: true
-                })
-            } else if self.eat(Token::Eq)? {
+            if self.eat(Token::Eq)? {
                 let expr = self.parse_assignment_expression()?;
                 let pat = Pattern::Simple(Id(self.finalize(start), name));
                 Ok(PropPattern {
                     span: self.finalize(start),
                     key: PropKey::Identifier(self.finalize(start), name),
                     value: Pattern::Assignment(self.finalize(start), Box::new(pat), expr),
+                    shorthand: true
+                })
+            } else if self.scanner.lookahead != Token::Colon {
+                Ok(PropPattern {
+                    span: self.finalize(start),
+                    key: PropKey::Identifier(self.finalize(start), name),
+                    value: Pattern::Simple(Id(self.finalize(start), name)),
                     shorthand: true
                 })
             } else {
@@ -1148,7 +1169,8 @@ impl<'a> Parser<'a> {
                 param_names.insert(id.1);
                 Ok(())
             },
-            &Pattern::Assignment(_, ref left, _) => {
+            &Pattern::Assignment(_, ref left, ref right) => {
+                self.check_reserved_expr_at(right, override_pos.clone(), ErrorCause::StrictParamName)?;
                 self.validate_pattern(override_pos, param_names, &*left)
             },
             &Pattern::RestElement(_, ref arg) => {
@@ -1162,7 +1184,10 @@ impl<'a> Parser<'a> {
                 };
                 Ok(())
             }
-            &Pattern::Object(_, _) => {
+            &Pattern::Object(_, ref props) => {
+                for prop in props {
+                    self.validate_pattern(override_pos, param_names, &prop.value)?;
+                };
                 Ok(())
             }
         }
