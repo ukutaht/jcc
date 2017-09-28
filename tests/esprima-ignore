@@ -21,7 +21,6 @@ es2018/**
 
 ES6/arrow-function/array-binding-pattern/invalid-dup-param
 
-ES6/arrow-function/object-binding-pattern/invalid-method-in-pattern
 ES6/arrow-function/object-binding-pattern/object-binding-pattern-01
 
 ES6/arrow-function/invalid-duplicated-names-rest-parameter
@@ -40,7 +39,6 @@ ES6/binding-pattern/object-pattern/properties
 
 ES6/class/**
 
-ES6/destructuring-assignment/object-pattern/invalid-pattern-with-method
 ES6/destructuring-assignment/object-pattern/object-pattern-assignment
 
 ES6/export-declaration/**
@@ -51,7 +49,7 @@ ES6/import-declaration/**
 
 
 ES6/meta-property/**
-ES6/method-definition/**
+
 
 ES6/object-initialiser/proto-identifier-method
 ES6/object-initialiser/proto-identifier-shorthand
@@ -176,22 +174,15 @@ expression/primary/literal/string/invalid_escaped_hex
 
 
 # ES6
-statement/iteration/const_forin
-statement/iteration/for-let-let
-statement/iteration/migrated_0012
-statement/iteration/migrated_0020
 statement/iteration/pattern-in-for-in
 # Tolerant mode
 statement/iteration/unterminated-do-while
 
 
 statement/iteration/invalid-strict-for-in-let
-statement/variable/complex-pattern-requires-init
 
 # Tolerant mode
 statement/with/unterminated-with
-
-expression/left-hand-side/let_object_computed
 
 expression/primary/keyword/**
 

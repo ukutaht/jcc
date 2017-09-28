@@ -1,6 +1,6 @@
 use std;
-use jcc::syntax::ast::*;
 use jcc::syntax::span::{Span, Position};
+use jcc::syntax::ast::*;
 use jcc::interner;
 use serde_json::value::Value;
 
@@ -331,8 +331,14 @@ fn prop(node: &Value) -> Result<Prop> {
     match expect_string(node, "kind") {
         "init" => {
             let key = prop_key(expect_value(node, "key"))?;
-            let value = expression(expect_value(node, "value"))?;
-            Ok(Prop::Init(span(node)?, key, value))
+
+            if expect_bool(node, "method") {
+                let value = function(expect_value(node, "value"))?;
+                Ok(Prop::Method(span(node)?, key, value))
+            } else {
+                let value = expression(expect_value(node, "value"))?;
+                Ok(Prop::Init(span(node)?, key, value))
+            }
         },
         "get" => {
             let key = prop_key(expect_value(node, "key"))?;

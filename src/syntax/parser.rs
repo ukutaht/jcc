@@ -847,10 +847,25 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn parse_property_method(&mut self, start: Position, key: PropKey) -> Result<Prop> {
+        let params = self.parse_function_parameters()?;
+        self.context.is_assignment_target = false;
+        self.context.is_binding_element = false;
+
+        let previous_strict = self.context.strict;
+        self.validate_params(&params, None)?;
+        let block = self.parse_function_source_elements()?;
+        let value = Function { id: None, body: block, parameters: params };
+        self.context.strict = previous_strict;
+        Ok(Prop::Method(self.finalize(start), key, value))
+    }
+
     fn parse_prop_init(&mut self, start: Position, key: PropKey) -> Result<Prop> {
         if self.eat(Token::Colon)? {
             let value = self.parse_assignment_expression()?;
             Ok(Prop::Init(self.finalize(start), key, value))
+        } else if self.matches(Token::OpenParen) {
+            self.parse_property_method(start, key)
         } else if let &PropKey::Identifier(ref sp, ref id) = &key {
             if self.scanner.lookahead == Token::Eq {
                 self.context.first_cover_initialized_name_error = Some((self.scanner.lookahead, self.scanner.lookahead_start));
@@ -1114,10 +1129,10 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token()?;
                 Some(self.isolate_cover_grammar(Parser::parse_assignment_expression)?)
             }
-            _ if kind == VariableDeclarationKind::Const => {
+            _ if kind == VariableDeclarationKind::Const && !in_for => {
                 return Err(self.error(ErrorCause::MissingInitializerInConst))
             }
-            _ if kind == VariableDeclarationKind::Let && !id.is_simple() && !in_for => {
+            _ if !id.is_simple() && !in_for => {
                 self.scanner.next_token()?;
                 return Err(self.error(ErrorCause::UnexpectedToken(self.scanner.lookahead)))
             }
