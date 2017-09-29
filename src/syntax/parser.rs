@@ -1172,7 +1172,13 @@ impl<'a> Parser<'a> {
                 break;
             }
             if self.scanner.lookahead == Token::Ellipsis {
-                parameters.push(self.parse_rest_element()?)
+                parameters.push(self.parse_rest_element()?);
+                if self.matches(Token::Eq) {
+                    return Err(CompileError::new(self.scanner.last_pos, ErrorCause::UnexpectedToken(Token::Eq)))
+                }
+                if !self.matches(Token::CloseParen) {
+                    return Err(self.error(ErrorCause::RestParamMustBeLast))
+                }
             } else {
                 parameters.push(self.parse_pattern(true, VariableDeclarationKind::Var)?);
             }
