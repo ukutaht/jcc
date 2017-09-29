@@ -57,7 +57,6 @@ ES6/object-initialiser/proto-literal-method
 ES6/object-initialiser/proto-literal-shorthand
 ES6/object-initialiser/proto-shorthand-identifier
 ES6/object-initialiser/proto-shorthand-literal
-ES6/object-initialiser/proto-shorthands
 
 ES6/octal-integer-literal/**
 ES6/program/**

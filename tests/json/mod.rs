@@ -335,6 +335,8 @@ fn prop(node: &Value) -> Result<Prop> {
             if expect_bool(node, "method") {
                 let value = function(expect_value(node, "value"))?;
                 Ok(Prop::Method(span(node)?, key, value))
+            } else if expect_bool(node, "shorthand") {
+                Ok(Prop::Shorthand(span(node)?, key))
             } else {
                 let value = expression(expect_value(node, "value"))?;
                 Ok(Prop::Init(span(node)?, key, value))

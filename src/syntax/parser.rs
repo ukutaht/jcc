@@ -876,8 +876,7 @@ impl<'a> Parser<'a> {
                 let value = Expression::Assignment(self.finalize(start), AssignOp::Eq, Box::new(pat), Box::new(init));
                 Ok(Prop::CoverInitializedName(self.finalize(start), key, value))
             } else {
-                let value = Expression::Identifier(sp.clone(), *id);
-                Ok(Prop::Init(self.finalize(start), PropKey::Identifier(sp.clone(), *id), value))
+                Ok(Prop::Shorthand(self.finalize(start), PropKey::Identifier(sp.clone(), *id)))
             }
         } else {
             Err(self.unexpected_token(self.scanner.lookahead))
