@@ -17,6 +17,7 @@ pub enum ErrorCause {
     InvalidHexEscape,
     InvalidLHSAssignment,
     InvalidLHSForIn,
+    InvalidLHSForLoop,
     MissingCatchOrFinally,
     MultipleDefaultsInSwitch,
     NewLineAfterThrow,
@@ -138,6 +139,9 @@ impl fmt::Display for CompileError {
             },
             ErrorCause::InvalidLHSForIn => {
                 write!(fmt, "Invalid left-hand side in for-in")
+            },
+            ErrorCause::InvalidLHSForLoop => {
+                write!(fmt, "Invalid left-hand side in for-loop")
             },
             ErrorCause::InvalidLHSAssignment => {
                 write!(fmt, "Invalid left-hand side in assignment")

@@ -225,7 +225,7 @@ pub struct ForStatement {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct ForInStatement {
+pub struct ForOpStatement {
     pub left: ForInit,
     pub right: Expression,
     pub body: Statement
@@ -248,7 +248,8 @@ pub enum Statement {
     DoWhile(Span, Box<Statement>, Expression),
     While(Span, Expression, Box<Statement>),
     For(Span, Box<ForStatement>),
-    ForIn(Span, Box<ForInStatement>),
+    ForIn(Span, Box<ForOpStatement>),
+    ForOf(Span, Box<ForOpStatement>),
     With(Span, Expression, Box<Statement>),
     Labeled(Span, Id, Box<Statement>),
     Continue(Span, Option<Id>),

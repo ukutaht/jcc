@@ -1127,8 +1127,12 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token()?;
                 Some(self.isolate_cover_grammar(Parser::parse_assignment_expression)?)
             }
-            _ if kind == VariableDeclarationKind::Const && !in_for => {
-                return Err(self.error(ErrorCause::MissingInitializerInConst))
+            _ if kind == VariableDeclarationKind::Const => {
+                if !(self.matches(Token::In) || self.match_contextual_keyword(*interner::RESERVED_OF)) {
+                    return Err(self.error(ErrorCause::MissingInitializerInConst))
+                } else {
+                    None
+                }
             }
             _ if !id.is_simple() && !in_for => {
                 self.scanner.next_token()?;
@@ -1471,16 +1475,22 @@ impl<'a> Parser<'a> {
         Ok(Statement::While(self.finalize(start), test, Box::new(body)))
     }
 
-    fn parse_for_in_statement(&mut self, start: Position, left: ForInit) -> Result<Statement> {
+    fn parse_for_op_statement(&mut self, left: ForInit) -> Result<ForOpStatement> {
         let right = self.parse_expression()?;
         self.check_reserved_expr_at(&right, None, ErrorCause::StrictReservedWord)?;
         self.expect(Token::CloseParen)?;
         let body = self.in_iteration(true, |c| Parser::parse_statement(c, true))?;
-        Ok(Statement::ForIn(self.finalize(start), Box::new(ForInStatement {
-            left: left,
-            right: right,
-            body: body
-        })))
+        Ok(ForOpStatement {left, right, body})
+    }
+
+    fn parse_for_in_statement(&mut self, start: Position, left: ForInit) -> Result<Statement> {
+        let stmt = self.parse_for_op_statement(left)?;
+        Ok(Statement::ForIn(self.finalize(start), Box::new(stmt)))
+    }
+
+    fn parse_for_of_statement(&mut self, start: Position, left: ForInit) -> Result<Statement> {
+        let stmt = self.parse_for_op_statement(left)?;
+        Ok(Statement::ForOf(self.finalize(start), Box::new(stmt)))
     }
 
     fn parse_for_iter_statement(&mut self, start: Position, init: Option<ForInit>) -> Result<Statement> {
@@ -1523,6 +1533,13 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn match_contextual_keyword(&self, expected: Symbol) -> bool {
+        match self.scanner.lookahead {
+            Token::Ident(n) if n == expected => true,
+            _ => false
+        }
+    }
+
     fn parse_for_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::ForKeyword)?;
@@ -1533,7 +1550,9 @@ impl<'a> Parser<'a> {
             let decl = self.allow_in(false, |context| Parser::parse_variable_declaration(context, VariableDeclarationKind::Var, true))?;
             if decl.declarations.len() == 1 && self.eat(Token::In)? {
                 self.parse_for_in_statement(start, ForInit::VarDecl(decl))
-
+            } else if decl.declarations.len() == 1 && decl.declarations[0].init.is_none() && self.match_contextual_keyword(*interner::RESERVED_OF) {
+                self.scanner.next_token()?;
+                self.parse_for_of_statement(start, ForInit::VarDecl(decl))
             } else {
                 self.expect(Token::Semi)?;
                 self.parse_for_iter_statement(start, Some(ForInit::VarDecl(decl)))
@@ -1549,6 +1568,9 @@ impl<'a> Parser<'a> {
             let decl = self.allow_in(false, |context| Parser::parse_variable_declaration(context, kind, true))?;
             if decl.declarations.len() == 1 && decl.declarations[0].init.is_none() && self.eat(Token::In)? {
                 self.parse_for_in_statement(start, ForInit::VarDecl(decl))
+            } else if decl.declarations.len() == 1 && decl.declarations[0].init.is_none() && self.match_contextual_keyword(*interner::RESERVED_OF) {
+                self.scanner.next_token()?;
+                self.parse_for_of_statement(start, ForInit::VarDecl(decl))
             } else {
                 self.expect(Token::Semi)?;
                 self.parse_for_iter_statement(start, Some(ForInit::VarDecl(decl)))
@@ -1558,7 +1580,7 @@ impl<'a> Parser<'a> {
             let previous_allow_in = std::mem::replace(&mut self.context.allow_in, false);
             let mut init_expr = self.inherit_cover_grammar(Parser::parse_assignment_expression)?;
             self.context.allow_in = previous_allow_in;
-            if self.scanner.lookahead == Token::In {
+            if self.matches(Token::In) {
                 if !self.context.is_assignment_target {
                     return Err(self.error(ErrorCause::InvalidLHSForIn))
                 };
@@ -1568,6 +1590,12 @@ impl<'a> Parser<'a> {
 
                 self.scanner.next_token()?;
                 self.parse_for_in_statement(start, ForInit::Expression(init_expr))
+            } else if self.match_contextual_keyword(*interner::RESERVED_OF) {
+                if let &Expression::Assignment(_, _, _, _) = &init_expr {
+                    return Err(self.error(ErrorCause::InvalidLHSForLoop))
+                };
+                self.scanner.next_token()?;
+                self.parse_for_of_statement(start, ForInit::Expression(init_expr))
             } else {
                 if self.scanner.lookahead == Token::Comma {
                     let mut seq = vec![init_expr];

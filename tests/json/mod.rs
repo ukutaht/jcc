@@ -620,14 +620,22 @@ fn for_statement(node: &Value) -> Result<Statement> {
     })))
 }
 
-fn for_in_statement(node: &Value) -> Result<Statement> {
+fn for_op_statement(node: &Value) -> Result<ForOpStatement> {
     let left = for_init(expect_value(node, "left"))?;
     let right = expression(expect_value(node, "right"))?;
     let body = statement(expect_value(node, "body"))?;
 
-    Ok(Statement::ForIn(span(node)?, Box::new(ForInStatement {
-        left, right, body
-    })))
+    Ok(ForOpStatement {left, right, body})
+}
+
+fn for_in_statement(node: &Value) -> Result<Statement> {
+    let stmt = for_op_statement(node)?;
+    Ok(Statement::ForIn(span(node)?, Box::new(stmt)))
+}
+
+fn for_of_statement(node: &Value) -> Result<Statement> {
+    let stmt = for_op_statement(node)?;
+    Ok(Statement::ForOf(span(node)?, Box::new(stmt)))
 }
 
 fn with_statement(node: &Value) -> Result<Statement> {
@@ -692,6 +700,7 @@ fn statement(node: &Value) -> Result<Statement> {
         "WhileStatement" => while_statement(node),
         "ForStatement" => for_statement(node),
         "ForInStatement" => for_in_statement(node),
+        "ForOfStatement" => for_of_statement(node),
         "WithStatement" => with_statement(node),
         "LabeledStatement" => labeled_statement(node),
         "BreakStatement" => {
