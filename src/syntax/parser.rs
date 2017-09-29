@@ -763,7 +763,6 @@ impl<'a> Parser<'a> {
         if self.scanner.lookahead == Token::Arrow {
             // Arrow function without parantheses e.g.
             // a => { something(a) }
-            // a, b => { something(a); other(b) }
             if let &Expression::Identifier(_, _) = &left {
                 let params = vec![self.reinterpret_as_pattern(left).unwrap()];
                 self.parse_arrow_function(start, params)
