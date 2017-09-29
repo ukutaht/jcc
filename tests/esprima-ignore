@@ -161,12 +161,9 @@ expression/primary/literal/string/invalid_escaped_hex
 statement/iteration/pattern-in-for-in
 # Tolerant mode
 statement/iteration/unterminated-do-while
-
-
-statement/iteration/invalid-strict-for-in-let
-
-# Tolerant mode
 statement/with/unterminated-with
+
+
 
 expression/primary/keyword/**
 

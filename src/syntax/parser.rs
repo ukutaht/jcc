@@ -1468,6 +1468,7 @@ impl<'a> Parser<'a> {
 
     fn parse_for_in_statement(&mut self, start: Position, left: ForInit) -> Result<Statement> {
         let right = self.parse_expression()?;
+        self.check_reserved_expr_at(&right, None, ErrorCause::StrictReservedWord)?;
         self.expect(Token::CloseParen)?;
         let body = self.in_iteration(true, |c| Parser::parse_statement(c, true))?;
         Ok(Statement::ForIn(self.finalize(start), Box::new(ForInStatement {
