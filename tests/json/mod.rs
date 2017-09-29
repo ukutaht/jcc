@@ -336,7 +336,7 @@ fn prop(node: &Value) -> Result<Prop> {
                 let value = function(expect_value(node, "value"))?;
                 Ok(Prop::Method(span(node)?, key, value))
             } else if expect_bool(node, "shorthand") {
-                Ok(Prop::Shorthand(span(node)?, key))
+                Ok(Prop::Shorthand(span(node)?, identifier(expect_value(node, "key"))?))
             } else {
                 let value = expression(expect_value(node, "value"))?;
                 Ok(Prop::Init(span(node)?, key, value))
@@ -609,6 +609,14 @@ fn for_init(node: &Value) -> Result<ForInit> {
     }
 }
 
+fn for_op_init(node: &Value) -> Result<ForOpInit> {
+    if expect_string(node, "type") == "VariableDeclaration" {
+        Ok(ForOpInit::VarDecl(variable_declaration(node)?))
+    } else {
+        Ok(ForOpInit::Pattern(assign_target(node)?))
+    }
+}
+
 fn for_statement(node: &Value) -> Result<Statement> {
     let init = maybe_key(node, "init", &for_init)?;
     let test = maybe_key(node, "test", &expression)?;
@@ -621,7 +629,7 @@ fn for_statement(node: &Value) -> Result<Statement> {
 }
 
 fn for_op_statement(node: &Value) -> Result<ForOpStatement> {
-    let left = for_init(expect_value(node, "left"))?;
+    let left = for_op_init(expect_value(node, "left"))?;
     let right = expression(expect_value(node, "right"))?;
     let body = statement(expect_value(node, "body"))?;
 

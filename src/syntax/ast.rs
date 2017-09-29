@@ -11,7 +11,7 @@ pub enum Literal {
     False
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Id(pub Span, pub Symbol);
 
 #[derive(Debug, PartialEq)]
@@ -119,7 +119,7 @@ pub enum Prop {
     CoverInitializedName(Span, PropKey, Expression),
     Init(Span, PropKey, Expression),
     Method(Span, PropKey, Function),
-    Shorthand(Span, PropKey),
+    Shorthand(Span, Id),
     Get(Span, PropKey, Function),
     Set(Span, PropKey, Function)
 }
@@ -225,8 +225,14 @@ pub struct ForStatement {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum ForOpInit {
+    VarDecl(VariableDeclaration),
+    Pattern(Pattern<AssignTarget>)
+}
+
+#[derive(Debug, PartialEq)]
 pub struct ForOpStatement {
-    pub left: ForInit,
+    pub left: ForOpInit,
     pub right: Expression,
     pub body: Statement
 }

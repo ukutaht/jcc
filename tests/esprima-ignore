@@ -41,12 +41,6 @@ ES6/class/**
 
 ES6/destructuring-assignment/object-pattern/object-pattern-assignment
 
-ES6/for-of/for-of-array-pattern
-ES6/for-of/for-of-object-pattern
-ES6/for-of/invalid-for-of-array-pattern
-ES6/for-of/invalid-for-of-object-pattern
-ES6/for-of/invalid-lhs-init
-
 ES6/export-declaration/**
 ES6/generator/**
 ES6/identifier/**

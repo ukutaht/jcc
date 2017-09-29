@@ -703,6 +703,11 @@ impl<'a> Parser<'a> {
                                 None => return None
                             }
                         }
+                        Prop::Shorthand(sp, id) => {
+                            let val_pattern = Pattern::Simple(AssignTarget::Id(id.clone()));
+                            let key = PropKey::Identifier(id.0, id.1);
+                            PropPattern { span: sp, key: key, value: val_pattern, shorthand: true }
+                        }
                         _ => return None
                     };
                     result.push(pat)
@@ -875,7 +880,7 @@ impl<'a> Parser<'a> {
                 let value = Expression::Assignment(self.finalize(start), AssignOp::Eq, Box::new(pat), Box::new(init));
                 Ok(Prop::CoverInitializedName(self.finalize(start), key, value))
             } else {
-                Ok(Prop::Shorthand(self.finalize(start), PropKey::Identifier(sp.clone(), *id)))
+                Ok(Prop::Shorthand(self.finalize(start), Id(sp.clone(), *id)))
             }
         } else {
             Err(self.unexpected_token(self.scanner.lookahead))
@@ -1475,7 +1480,7 @@ impl<'a> Parser<'a> {
         Ok(Statement::While(self.finalize(start), test, Box::new(body)))
     }
 
-    fn parse_for_op_statement(&mut self, left: ForInit) -> Result<ForOpStatement> {
+    fn parse_for_op_statement(&mut self, left: ForOpInit) -> Result<ForOpStatement> {
         let right = self.parse_expression()?;
         self.check_reserved_expr_at(&right, None, ErrorCause::StrictReservedWord)?;
         self.expect(Token::CloseParen)?;
@@ -1483,12 +1488,12 @@ impl<'a> Parser<'a> {
         Ok(ForOpStatement {left, right, body})
     }
 
-    fn parse_for_in_statement(&mut self, start: Position, left: ForInit) -> Result<Statement> {
+    fn parse_for_in_statement(&mut self, start: Position, left: ForOpInit) -> Result<Statement> {
         let stmt = self.parse_for_op_statement(left)?;
         Ok(Statement::ForIn(self.finalize(start), Box::new(stmt)))
     }
 
-    fn parse_for_of_statement(&mut self, start: Position, left: ForInit) -> Result<Statement> {
+    fn parse_for_of_statement(&mut self, start: Position, left: ForOpInit) -> Result<Statement> {
         let stmt = self.parse_for_op_statement(left)?;
         Ok(Statement::ForOf(self.finalize(start), Box::new(stmt)))
     }
@@ -1549,10 +1554,10 @@ impl<'a> Parser<'a> {
         } else if self.eat(Token::Var)? {
             let decl = self.allow_in(false, |context| Parser::parse_variable_declaration(context, VariableDeclarationKind::Var, true))?;
             if decl.declarations.len() == 1 && self.eat(Token::In)? {
-                self.parse_for_in_statement(start, ForInit::VarDecl(decl))
+                self.parse_for_in_statement(start, ForOpInit::VarDecl(decl))
             } else if decl.declarations.len() == 1 && decl.declarations[0].init.is_none() && self.match_contextual_keyword(*interner::RESERVED_OF) {
                 self.scanner.next_token()?;
-                self.parse_for_of_statement(start, ForInit::VarDecl(decl))
+                self.parse_for_of_statement(start, ForOpInit::VarDecl(decl))
             } else {
                 self.expect(Token::Semi)?;
                 self.parse_for_iter_statement(start, Some(ForInit::VarDecl(decl)))
@@ -1561,16 +1566,16 @@ impl<'a> Parser<'a> {
             let init_start = self.scanner.lookahead_start;
             self.scanner.next_token()?;
             if !self.context.strict && self.scanner.lookahead == Token::In {
-                let init = ForInit::Expression(Expression::Identifier(self.finalize(init_start), self.lexical_kind_as_ident(&kind)));
+                let init = ForOpInit::Pattern(Pattern::Simple(AssignTarget::Id(Id(self.finalize(init_start), self.lexical_kind_as_ident(&kind)))));
                 self.scanner.next_token()?;
                 return self.parse_for_in_statement(start, init)
             }
             let decl = self.allow_in(false, |context| Parser::parse_variable_declaration(context, kind, true))?;
             if decl.declarations.len() == 1 && decl.declarations[0].init.is_none() && self.eat(Token::In)? {
-                self.parse_for_in_statement(start, ForInit::VarDecl(decl))
+                self.parse_for_in_statement(start, ForOpInit::VarDecl(decl))
             } else if decl.declarations.len() == 1 && decl.declarations[0].init.is_none() && self.match_contextual_keyword(*interner::RESERVED_OF) {
                 self.scanner.next_token()?;
-                self.parse_for_of_statement(start, ForInit::VarDecl(decl))
+                self.parse_for_of_statement(start, ForOpInit::VarDecl(decl))
             } else {
                 self.expect(Token::Semi)?;
                 self.parse_for_iter_statement(start, Some(ForInit::VarDecl(decl)))
@@ -1589,13 +1594,18 @@ impl<'a> Parser<'a> {
                 };
 
                 self.scanner.next_token()?;
-                self.parse_for_in_statement(start, ForInit::Expression(init_expr))
+                let pattern = self.reinterpret_as_assign_target(init_expr).unwrap();
+                self.parse_for_in_statement(start, ForOpInit::Pattern(pattern))
             } else if self.match_contextual_keyword(*interner::RESERVED_OF) {
+                if !self.context.is_assignment_target {
+                    return Err(self.error(ErrorCause::InvalidLHSForLoop))
+                };
                 if let &Expression::Assignment(_, _, _, _) = &init_expr {
                     return Err(self.error(ErrorCause::InvalidLHSForLoop))
                 };
                 self.scanner.next_token()?;
-                self.parse_for_of_statement(start, ForInit::Expression(init_expr))
+                let pattern = self.reinterpret_as_assign_target(init_expr).unwrap();
+                self.parse_for_of_statement(start, ForOpInit::Pattern(pattern))
             } else {
                 if self.scanner.lookahead == Token::Comma {
                     let mut seq = vec![init_expr];
