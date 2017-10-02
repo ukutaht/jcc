@@ -669,7 +669,7 @@ fn statement(node: &Value) -> Result<Statement> {
     match expect_string(node, "type") {
         "ExpressionStatement" => {
             let expr = expression(expect_value(node, "expression"))?;
-            if let Some(_) = node.get("directive") {
+            if node.get("directive").is_some() {
                 let name = expect_string(node, "directive").to_owned();
                 Ok(Statement::Directive(span(node)?, expr, name))
             } else {

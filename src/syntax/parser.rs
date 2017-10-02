@@ -458,29 +458,29 @@ impl<'a> Parser<'a> {
     }
 
     fn check_reserved_expr_at(&self, expr: &Expression, pos: Option<Position>, cause: ErrorCause) -> Result<()> {
-        if let &Expression::Identifier(ref sp, s) = expr {
+        if let Expression::Identifier(ref sp, s) = *expr {
             self.check_reserved_at(s, pos.unwrap_or(sp.start), cause)?;
         }
-        return Ok(())
+        Ok(())
     }
 
     fn check_reserved_pat_at(&self, pat: &Pattern<Id>, pos: Position, cause: ErrorCause) -> Result<()> {
-        match pat {
-            &Pattern::Simple(ref id) => self.check_reserved_at(id.1, pos, cause),
-            &Pattern::Assignment(_, ref left, ref right) => {
+        match *pat {
+            Pattern::Simple(ref id) => self.check_reserved_at(id.1, pos, cause),
+            Pattern::Assignment(_, ref left, ref right) => {
                 self.check_reserved_pat_at(&*left, pos, cause.clone())?;
                 self.check_reserved_expr_at(&*right, None, cause)
             }
-            &Pattern::Array(_, ref elements) => {
+            Pattern::Array(_, ref elements) => {
                 for elem in elements {
-                    if let &Some(ref binding_pattern) = elem {
+                    if let Some(ref binding_pattern) = *elem {
                         self.check_reserved_pat_at(binding_pattern, pos, cause.clone())?;
                     }
                 };
                 Ok(())
             }
-            &Pattern::RestElement(_, ref arg) => self.check_reserved_pat_at(&*arg, pos, cause),
-            &Pattern::Object(_, ref props) => {
+            Pattern::RestElement(_, ref arg) => self.check_reserved_pat_at(&*arg, pos, cause),
+            Pattern::Object(_, ref props) => {
                 for prop in props {
                     self.check_reserved_pat_at(&prop.value, pos, cause.clone())?;
                 }
@@ -498,14 +498,14 @@ impl<'a> Parser<'a> {
                 return Err(CompileError::new(pos, cause))
             }
         }
-        return Ok(())
+        Ok(())
     }
 
     fn check_assignment_allowed(&mut self) -> Result<()> {
         if !self.context.is_assignment_target {
             return Err(self.error(ErrorCause::InvalidLHSAssignment));
         }
-        return Ok(())
+        Ok(())
     }
 
     fn parse_update_expression(&mut self) -> Result<Expression> {
@@ -614,7 +614,7 @@ impl<'a> Parser<'a> {
             }
             Expression::Array(sp, exprs) => {
                 let mut result = Vec::new();
-                for elem in exprs.into_iter() {
+                for elem in exprs {
                     let pat = match elem {
                         Some(ArgumentListElement::Expression(e)) => {
                             self.reinterpret_as_pattern(e)
@@ -631,7 +631,7 @@ impl<'a> Parser<'a> {
             }
             Expression::Object(sp, props) => {
                 let mut result = Vec::new();
-                for prop in props.into_iter() {
+                for prop in props {
                     let prop_def = match prop {
                         Prop::Init(sp, key, val) => {
                             match self.reinterpret_as_pattern(val) {
@@ -668,7 +668,7 @@ impl<'a> Parser<'a> {
             Expression::Assignment(sp, _op, left, right) => Some(Pattern::Assignment(sp, left, *right)),
             Expression::Array(sp, exprs) => {
                 let mut result = Vec::new();
-                for elem in exprs.into_iter() {
+                for elem in exprs {
                     let pat = match elem {
                         Some(ArgumentListElement::Expression(e)) => {
                             self.reinterpret_as_assign_target(e)
@@ -685,7 +685,7 @@ impl<'a> Parser<'a> {
             }
             Expression::Object(sp, props) => {
                 let mut result = Vec::new();
-                for prop in props.into_iter() {
+                for prop in props {
                     let pat = match prop {
                         Prop::Init(sp, key, value) => {
                             match self.reinterpret_as_assign_target(value) {
@@ -723,7 +723,7 @@ impl<'a> Parser<'a> {
         match expr {
             Expression::Sequence(_, exprs) => {
                 let mut res = Vec::new();
-                for e in exprs.into_iter() {
+                for e in exprs {
                     match self.reinterpret_as_pattern(e) {
                         Some(p) => res.push(p),
                         None => return None
@@ -755,7 +755,7 @@ impl<'a> Parser<'a> {
 
         self.validate_params(&params, Some(self.scanner.last_pos))?;
 
-        return Ok(Expression::ArrowFunction(self.finalize(start), ArrowFunction {
+        Ok(Expression::ArrowFunction(self.finalize(start), ArrowFunction {
             body: body,
             parameters: params
         }))
@@ -768,7 +768,7 @@ impl<'a> Parser<'a> {
         if self.scanner.lookahead == Token::Arrow {
             // Arrow function without parantheses e.g.
             // a => { something(a) }
-            if let &Expression::Identifier(_, _) = &left {
+            if let Expression::Identifier(_, _) = left {
                 let params = vec![self.reinterpret_as_pattern(left).unwrap()];
                 self.parse_arrow_function(start, params)
             } else {
@@ -816,7 +816,7 @@ impl<'a> Parser<'a> {
             elements.push(Some(arg));
 
             if self.scanner.lookahead != Token::CloseSquare {
-                if let &Some(ArgumentListElement::SpreadElement(_, _)) = elements.last().unwrap() {
+                if let Some(ArgumentListElement::SpreadElement(_, _)) = *elements.last().unwrap() {
                     self.context.is_assignment_target = false;
                     self.context.is_binding_element = false;
                 };
@@ -870,7 +870,7 @@ impl<'a> Parser<'a> {
             Ok(Prop::Init(self.finalize(start), key, value))
         } else if self.matches(Token::OpenParen) {
             self.parse_property_method(start, key)
-        } else if let &PropKey::Identifier(ref sp, ref id) = &key {
+        } else if let PropKey::Identifier(ref sp, ref id) = key {
             if self.scanner.lookahead == Token::Eq {
                 self.context.first_cover_initialized_name_error = Some((self.scanner.lookahead, self.scanner.lookahead_start));
                 self.scanner.next_token()?;
@@ -947,9 +947,9 @@ impl<'a> Parser<'a> {
     }
 
     fn check_duplicate_proto(&self, has_proto: bool, prop: &Prop) -> Result<bool> {
-        if let &Prop::Init(_, ref key, _) = prop {
-            match key {
-                &PropKey::Identifier(ref span, s) => {
+        if let Prop::Init(_, ref key, _) = *prop {
+            match *key {
+                PropKey::Identifier(ref span, s) => {
                     if s == *interner::KEYWORD_PROTO {
                         if has_proto {
                             return Err(CompileError::new(span.end, ErrorCause::DuplicateProto))
@@ -958,7 +958,7 @@ impl<'a> Parser<'a> {
                         }
                     }
                 }
-                &PropKey::String(ref span, s) => {
+                PropKey::String(ref span, s) => {
                     let string = interner::resolve(s);
                     let len = string.len();
                     if &string[1..len - 1] == "__proto__" {
@@ -972,7 +972,7 @@ impl<'a> Parser<'a> {
                 _ => return Ok(has_proto)
             }
         }
-        return Ok(has_proto);
+        Ok(has_proto)
     }
 
     fn parse_object_initializer(&mut self) -> Result<Expression> {
@@ -1202,8 +1202,8 @@ impl<'a> Parser<'a> {
     }
 
     fn validate_pattern(&self, override_pos: &Option<Position>, param_names: &mut HashSet<Symbol>, pat: &Pattern<Id>) -> Result<()> {
-        match pat {
-            &Pattern::Simple(ref id) => {
+        match *pat {
+            Pattern::Simple(ref id) => {
                 self.check_reserved_at(id.1, override_pos.unwrap_or(id.0.start), ErrorCause::StrictParamName)?;
                 if self.context.strict && param_names.contains(&id.1) {
                     return Err(CompileError::new(override_pos.unwrap_or(id.0.start), ErrorCause::StrictDupeParam))
@@ -1211,22 +1211,22 @@ impl<'a> Parser<'a> {
                 param_names.insert(id.1);
                 Ok(())
             },
-            &Pattern::Assignment(_, ref left, ref right) => {
-                self.check_reserved_expr_at(right, override_pos.clone(), ErrorCause::StrictParamName)?;
+            Pattern::Assignment(_, ref left, ref right) => {
+                self.check_reserved_expr_at(right, *override_pos, ErrorCause::StrictParamName)?;
                 self.validate_pattern(override_pos, param_names, &*left)
             },
-            &Pattern::RestElement(_, ref arg) => {
+            Pattern::RestElement(_, ref arg) => {
                 self.validate_pattern(override_pos, param_names, &*arg)
             }
-            &Pattern::Array(_, ref elements) => {
+            Pattern::Array(_, ref elements) => {
                 for elem in elements {
-                    if let &Some(ref binding_pattern) = elem {
+                    if let Some(ref binding_pattern) = *elem {
                         self.validate_pattern(override_pos, param_names, binding_pattern)?;
                     }
                 };
                 Ok(())
             }
-            &Pattern::Object(_, ref props) => {
+            Pattern::Object(_, ref props) => {
                 for prop in props {
                     self.validate_pattern(override_pos, param_names, &prop.value)?;
                 };
@@ -1235,12 +1235,12 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn validate_params(&self, params: &Vec<Pattern<Id>>, override_pos: Option<Position>) -> Result<()> {
+    fn validate_params(&self, params: &[Pattern<Id>], override_pos: Option<Position>) -> Result<()> {
         let mut param_names = HashSet::new();
         for param in params {
             self.validate_pattern(&override_pos, &mut param_names, param)?;
         };
-        return Ok(())
+        Ok(())
     }
 
     fn parse_function(&mut self) -> Result<Function> {
@@ -1589,7 +1589,7 @@ impl<'a> Parser<'a> {
                 if !self.context.is_assignment_target {
                     return Err(self.error(ErrorCause::InvalidLHSForIn))
                 };
-                if let &Expression::Assignment(_, _, _, _) = &init_expr {
+                if let Expression::Assignment(_, _, _, _) = init_expr {
                     return Err(self.error(ErrorCause::InvalidLHSForIn))
                 };
 
@@ -1600,7 +1600,7 @@ impl<'a> Parser<'a> {
                 if !self.context.is_assignment_target {
                     return Err(self.error(ErrorCause::InvalidLHSForLoop))
                 };
-                if let &Expression::Assignment(_, _, _, _) = &init_expr {
+                if let Expression::Assignment(_, _, _, _) = init_expr {
                     return Err(self.error(ErrorCause::InvalidLHSForLoop))
                 };
                 self.scanner.next_token()?;

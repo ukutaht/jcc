@@ -477,7 +477,7 @@ impl<'a> Scanner<'a> {
             return Err(self.invalid_token_at(self.lookahead_start));
         }
 
-        let string = unsafe { str::from_utf8_unchecked(&self.bytes.get_unchecked(start..self.index)) };
+        let string = unsafe { str::from_utf8_unchecked(self.bytes.get_unchecked(start..self.index)) };
         Ok(Token::String(interner::intern(string)))
     }
 
@@ -526,7 +526,7 @@ impl<'a> Scanner<'a> {
             return Err(CompileError::new(self.pos(), ErrorCause::UnterminatedRegex))
         }
 
-        let string = unsafe { str::from_utf8_unchecked(&self.bytes.get_unchecked(start..self.index - 1)) };
+        let string = unsafe { str::from_utf8_unchecked(self.bytes.get_unchecked(start..self.index - 1)) };
         Ok(interner::intern(string))
     }
 
@@ -553,7 +553,7 @@ impl<'a> Scanner<'a> {
     fn scan_identifier(&mut self) -> Token {
         let start = self.index;
         self.take_chars_while(char::is_es_identifier_continue);
-        let value = unsafe { str::from_utf8_unchecked(&self.bytes.get_unchecked(start..self.index)) };
+        let value = unsafe { str::from_utf8_unchecked(self.bytes.get_unchecked(start..self.index)) };
 
         match value {
             "var" => Token::Var,
