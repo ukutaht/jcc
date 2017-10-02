@@ -1736,11 +1736,16 @@ impl<'a> Parser<'a> {
 
         self.expect(Token::ClassKeyword)?;
         let id = self.parse_id()?;
+        let super_class = if self.eat(Token::ExtendsKeyword)? {
+            Some(self.parse_lhs_expression()?)
+        } else {
+            None
+        };
         let body = self.parse_class_body()?;
 
         self.context.strict = previous_strict;
 
-        Ok(ClassDecl { id: Some(id), super_class: None, body: body })
+        Ok(ClassDecl { id: Some(id), super_class, body })
     }
 
     fn parse_statement(&mut self, allow_decl: bool) -> Result<Statement> {

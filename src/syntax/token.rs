@@ -34,6 +34,7 @@ pub enum Token {
     Else,
     Eof,
     Eq,
+    ExtendsKeyword,
     EqEq,
     EqEqEq,
     FinallyKeyword,
