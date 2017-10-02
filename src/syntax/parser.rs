@@ -1710,6 +1710,39 @@ impl<'a> Parser<'a> {
         Ok(Statement::VariableDeclaration(self.consume_semicolon(start)?, declaration))
     }
 
+    fn parse_method_definition(&mut self) -> Result<MethodDefinition> {
+        panic!("Method");
+    }
+
+    fn parse_class_body(&mut self) -> Result<Vec<MethodDefinition>> {
+        let mut elems = Vec::new();
+        self.expect(Token::OpenCurly)?;
+
+        while self.scanner.lookahead != Token::CloseCurly {
+            if self.scanner.lookahead == Token::Semi {
+                self.scanner.next_token()?;
+            } else {
+                elems.push(self.parse_method_definition()?);
+            }
+        }
+
+        self.expect(Token::CloseCurly)?;
+        Ok(elems)
+    }
+
+    fn parse_class(&mut self) -> Result<ClassDecl> {
+        let previous_strict = self.context.strict;
+        self.context.strict = true;
+
+        self.expect(Token::ClassKeyword)?;
+        let id = self.parse_id()?;
+        let body = self.parse_class_body()?;
+
+        self.context.strict = previous_strict;
+
+        Ok(ClassDecl { id: Some(id), super_class: None, body: body })
+    }
+
     fn parse_statement(&mut self, allow_decl: bool) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
 
@@ -1717,6 +1750,10 @@ impl<'a> Parser<'a> {
             Token::Var => self.parse_variable_statement(),
             Token::FunctionKeyword => {
                 self.parse_function().map(Statement::FunctionDeclaration)
+            },
+            Token::ClassKeyword => {
+                let class = self.parse_class()?;
+                Ok(Statement::ClassDeclaration(self.finalize(start), class))
             },
             Token::If => self.parse_if_statement(),
             Token::OpenCurly => {

@@ -665,6 +665,38 @@ fn identifier(node: &Value) -> Result<Id> {
     Ok(Id(span(node)?, interner::intern(name)))
 }
 
+fn method_def_kind(kind: &str) -> Result<MethodDefinitionKind> {
+    match kind {
+        "constructor" => Ok(MethodDefinitionKind::Constructor),
+        "method" => Ok(MethodDefinitionKind::Method),
+        "get" => Ok(MethodDefinitionKind::Get),
+        "set" => Ok(MethodDefinitionKind::Set),
+        _ => Err(())
+    }
+}
+
+fn method(node: &Value) -> Result<MethodDefinition> {
+    Ok(MethodDefinition {
+        loc: span(node)?,
+        key: expression(expect_value(node, "key"))?,
+        value: function(expect_value(node, "value"))?,
+        computed: expect_bool(node, "computed"),
+        is_static: expect_bool(node, "static"),
+        kind: method_def_kind(expect_string(node, "kind"))?
+    })
+}
+
+fn class(node: &Value) -> Result<ClassDecl> {
+    let id = maybe_key(node, "id", &identifier)?;
+    let super_class = maybe_key(node, "superClass", &expression)?;
+    let mut body = Vec::new();
+    for m in expect_array(expect_value(node, "body"), "body") {
+        body.push(method(m)?)
+    };
+
+    Ok(ClassDecl { id, super_class, body })
+}
+
 fn statement(node: &Value) -> Result<Statement> {
     match expect_string(node, "type") {
         "ExpressionStatement" => {
@@ -689,8 +721,10 @@ fn statement(node: &Value) -> Result<Statement> {
         "VariableDeclaration" => {
             Ok(Statement::VariableDeclaration(span(node)?, variable_declaration(node)?))
         }
-        "FunctionDeclaration" => {
-            Ok(Statement::FunctionDeclaration(function(node)?))
+        "FunctionDeclaration" => function(node).map(Statement::FunctionDeclaration),
+        "ClassDeclaration" => {
+            let class = class(node)?;
+            Ok(Statement::ClassDeclaration(span(node)?, class))
         }
         "ReturnStatement" => {
             let raw_arg = expect_value(node, "argument");

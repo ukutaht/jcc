@@ -586,6 +586,7 @@ impl<'a> Scanner<'a> {
             "true" => Token::BoolTrue,
             "false" => Token::BoolFalse,
             "const" => Token::Const,
+            "class" => Token::ClassKeyword,
             _ => {
                 Token::Ident(interner::intern(value))
             }

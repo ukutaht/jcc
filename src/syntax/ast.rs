@@ -238,10 +238,31 @@ pub struct ForOpStatement {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum MethodDefinitionKind { Constructor, Method, Get, Set }
+
+#[derive(Debug, PartialEq)]
+pub struct MethodDefinition {
+    pub loc: Span,
+    pub key: Expression,
+    pub value: Function,
+    pub computed: bool,
+    pub is_static: bool,
+    pub kind: MethodDefinitionKind
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ClassDecl {
+    pub id: Option<Id>,
+    pub super_class: Option<Expression>,
+    pub body: Vec<MethodDefinition>
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Statement {
     Expression(Span, Expression),
     VariableDeclaration(Span, VariableDeclaration),
     FunctionDeclaration(Function),
+    ClassDeclaration(Span, ClassDecl),
     If(Expression, Box<Statement>, Option<Box<Statement>>),
     Block(Span, Block),
     Return(Span, Option<Expression>),

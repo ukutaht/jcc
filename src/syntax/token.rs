@@ -15,6 +15,7 @@ pub enum Token {
     BreakKeyword,
     CaseKeyword,
     CatchKeyword,
+    ClassKeyword,
     CloseCurly,
     CloseParen,
     CloseSquare,
