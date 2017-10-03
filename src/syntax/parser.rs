@@ -1743,6 +1743,12 @@ impl<'a> Parser<'a> {
             _ => unimplemented!()
         };
 
+        if let PropKey::Identifier(_, sym) = key {
+            if sym == *interner::RESERVED_CONSTRUCTOR {
+                kind = MethodDefinitionKind::Constructor;
+            };
+        };
+
         let parameters = self.parse_function_parameters()?;
         let body = self.parse_function_source_elements()?;
         let function = Function { id: None, parameters, body };

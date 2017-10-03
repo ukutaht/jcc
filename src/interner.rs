@@ -47,6 +47,7 @@ lazy_static! {
     pub static ref RESERVED_LET: Symbol = { intern("let") };
     pub static ref RESERVED_CONST: Symbol = { intern("const") };
     pub static ref RESERVED_OF: Symbol = { intern("of") };
+    pub static ref RESERVED_CONSTRUCTOR: Symbol = { intern("constructor") };
 }
 
 pub fn intern(val: &str) -> Symbol {
