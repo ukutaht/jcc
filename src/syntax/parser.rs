@@ -1711,7 +1711,25 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_method_definition(&mut self) -> Result<MethodDefinition> {
-        panic!("Method");
+        let start = self.scanner.lookahead_start;
+
+        let key = match self.match_object_property_key()? {
+            Some(k) => k,
+            None => unimplemented!()
+        };
+
+        let parameters = self.parse_function_parameters()?;
+        let body = self.parse_function_source_elements()?;
+        let function = Function { id: None, parameters, body };
+
+        Ok(MethodDefinition {
+            loc: self.finalize(start),
+            key: key,
+            value: function,
+            computed: false,
+            is_static: false,
+            kind: MethodDefinitionKind::Method
+        })
     }
 
     fn parse_class_body(&mut self) -> Result<Vec<MethodDefinition>> {

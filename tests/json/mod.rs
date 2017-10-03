@@ -678,7 +678,7 @@ fn method_def_kind(kind: &str) -> Result<MethodDefinitionKind> {
 fn method(node: &Value) -> Result<MethodDefinition> {
     Ok(MethodDefinition {
         loc: span(node)?,
-        key: expression(expect_value(node, "key"))?,
+        key: prop_key(expect_value(node, "key"))?,
         value: function(expect_value(node, "value"))?,
         computed: expect_bool(node, "computed"),
         is_static: expect_bool(node, "static"),

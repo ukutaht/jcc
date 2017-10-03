@@ -243,7 +243,7 @@ pub enum MethodDefinitionKind { Constructor, Method, Get, Set }
 #[derive(Debug, PartialEq)]
 pub struct MethodDefinition {
     pub loc: Span,
-    pub key: Expression,
+    pub key: PropKey,
     pub value: Function,
     pub computed: bool,
     pub is_static: bool,
