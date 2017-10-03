@@ -1740,7 +1740,9 @@ impl<'a> Parser<'a> {
                 is_static = false;
                 PropKey::Identifier(self.finalize(start), *interner::RESERVED_STATIC)
             }
-            _ => unimplemented!()
+            _ => {
+                return Err(self.unexpected_token(self.scanner.lookahead))
+            }
         };
 
         if let PropKey::Identifier(_, sym) = key {
