@@ -1712,10 +1712,29 @@ impl<'a> Parser<'a> {
 
     fn parse_method_definition(&mut self) -> Result<MethodDefinition> {
         let start = self.scanner.lookahead_start;
+        let mut is_static = false;
+        let mut kind = MethodDefinitionKind::Method;
+
+        if self.scanner.lookahead == Token::Ident(*interner::RESERVED_STATIC) {
+            self.scanner.next_token()?;
+            is_static = true;
+        }
+
+        if self.scanner.lookahead == Token::Ident(*interner::KEYWORD_GET) {
+            self.scanner.next_token()?;
+            kind = MethodDefinitionKind::Get;
+        } else if self.scanner.lookahead == Token::Ident(*interner::KEYWORD_SET) {
+            self.scanner.next_token()?;
+            kind = MethodDefinitionKind::Set;
+        };
 
         let key = match self.match_object_property_key()? {
             Some(k) => k,
-            None => unimplemented!()
+            None if is_static => {
+                is_static = false;
+                PropKey::Identifier(self.finalize(start), *interner::RESERVED_STATIC)
+            }
+            _ => unimplemented!()
         };
 
         let parameters = self.parse_function_parameters()?;
@@ -1727,8 +1746,8 @@ impl<'a> Parser<'a> {
             key: key,
             value: function,
             computed: false,
-            is_static: false,
-            kind: MethodDefinitionKind::Method
+            is_static: is_static,
+            kind: kind
         })
     }
 
