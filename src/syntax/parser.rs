@@ -840,6 +840,12 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token()?;
                 Ok(Some(PropKey::Number(self.finalize(start), n)))
             },
+            Token::OpenSquare => {
+                self.scanner.next_token()?;
+                let expr = self.isolate_cover_grammar(Parser::parse_assignment_expression)?;
+                self.expect(Token::CloseSquare)?;
+                Ok(Some(PropKey::Computed(expr)))
+            },
             _ => {
                 if let Some(name) = self.match_identifier_name() {
                     self.scanner.next_token()?;
@@ -1745,7 +1751,6 @@ impl<'a> Parser<'a> {
             loc: self.finalize(start),
             key: key,
             value: function,
-            computed: false,
             is_static: is_static,
             kind: kind
         })

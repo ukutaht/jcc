@@ -111,7 +111,8 @@ pub enum AssignOp {
 pub enum PropKey {
     Identifier(Span, Symbol),
     String(Span, Symbol),
-    Number(Span, f64)
+    Number(Span, f64),
+    Computed(Expression),
 }
 
 #[derive(Debug, PartialEq)]
@@ -245,7 +246,6 @@ pub struct MethodDefinition {
     pub loc: Span,
     pub key: PropKey,
     pub value: Function,
-    pub computed: bool,
     pub is_static: bool,
     pub kind: MethodDefinitionKind
 }
