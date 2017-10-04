@@ -38,6 +38,8 @@ ES6/binding-pattern/object-pattern/properties
 
 ES6/class/invalid-labelled-class-declaration
 ES6/class/invalid-setter-method-rest
+# Tolerant
+ES6/class/migrated_0026
 
 ES6/destructuring-assignment/object-pattern/object-pattern-assignment
 
@@ -111,14 +113,8 @@ invalid-syntax/migrated_0222
 invalid-syntax/migrated_0223
 
 invalid-syntax/migrated_0263
-invalid-syntax/migrated_0270
-invalid-syntax/migrated_0271
-invalid-syntax/migrated_0272
-invalid-syntax/migrated_0273
 invalid-syntax/migrated_0274
-invalid-syntax/migrated_0275
-invalid-syntax/migrated_0276
-invalid-syntax/migrated_0277
+# Not convinced this is right
 invalid-syntax/migrated_0278
 
 JSX/**

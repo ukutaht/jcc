@@ -608,6 +608,7 @@ impl<'a> Scanner<'a> {
             "const" => Token::Const,
             "class" => Token::ClassKeyword,
             "extends" => Token::ExtendsKeyword,
+            "enum" => Token::EnumKeyword,
             _ => {
                 Token::Ident(interner::intern(value))
             }

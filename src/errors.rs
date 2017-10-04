@@ -40,6 +40,8 @@ pub enum ErrorCause {
     UnqualifiedDelete,
     MissingInitializerInConst,
     LetInLexicalBinding,
+    StaticPrototype,
+    ConstructorSpecialMethod,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -67,6 +69,12 @@ impl fmt::Display for CompileError {
             },
             ErrorCause::LetInLexicalBinding => {
                 write!(fmt, "let is disallowed as a lexically bound name")
+            },
+            ErrorCause::StaticPrototype => {
+                write!(fmt, "Classes may not have static property named prototype")
+            },
+            ErrorCause::ConstructorSpecialMethod => {
+                write!(fmt, "Class constructor may not be an accessor")
             },
             ErrorCause::StrictReservedWord => {
                 write!(fmt, "Use of future reserved word in strict mode")

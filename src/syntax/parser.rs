@@ -1723,9 +1723,11 @@ impl<'a> Parser<'a> {
         let start = self.scanner.lookahead_start;
         let mut is_static = false;
         let mut kind = MethodDefinitionKind::Method;
+        let mut id_start = self.scanner.lookahead_start;
 
         if self.scanner.lookahead == Token::Ident(*interner::RESERVED_STATIC) {
             self.scanner.next_token()?;
+            id_start = self.scanner.lookahead_start;
             is_static = true;
         }
 
@@ -1751,13 +1753,21 @@ impl<'a> Parser<'a> {
         match key {
             PropKey::Identifier(_, sym) | PropKey::String(_, sym) => {
                 if !is_static && sym == *interner::RESERVED_CONSTRUCTOR {
-                    kind = MethodDefinitionKind::Constructor;
+                    if kind != MethodDefinitionKind::Method {
+                        return Err(CompileError::new(id_start, ErrorCause::ConstructorSpecialMethod));
+                    } else {
+                        kind = MethodDefinitionKind::Constructor;
+                    }
+                };
+                if is_static && sym == *interner::RESERVED_PROTOTYPE {
+                    return Err(CompileError::new(id_start, ErrorCause::StaticPrototype));
                 };
             }
             _ => {}
         };
 
         let parameters = self.parse_function_parameters()?;
+        self.validate_params(&parameters, None)?;
         let body = self.parse_function_source_elements()?;
         let function = Function { id: None, parameters, body };
 
@@ -1929,6 +1939,9 @@ impl<'a> Parser<'a> {
                 return CompileError::new(self.scanner.lookahead_start, ErrorCause::StrictReservedWord)
 
             }
+        }
+        if token == Token::EnumKeyword {
+            return CompileError::new(self.scanner.lookahead_start, ErrorCause::UnexpectedReservedWord)
         }
         CompileError::new(self.scanner.lookahead_start, ErrorCause::UnexpectedToken(token))
     }
