@@ -211,10 +211,16 @@ impl<'a> Parser<'a> {
                 self.inherit_cover_grammar(Parser::parse_group_expression)
             }
             Token::FunctionKeyword => {
-                let fun = self.parse_function()?;
                 self.context.is_assignment_target = false;
                 self.context.is_binding_element = false;
+                let fun = self.parse_function()?;
                 Ok(Expression::Function(self.finalize(start), fun))
+            },
+            Token::ClassKeyword => {
+                self.context.is_assignment_target = false;
+                self.context.is_binding_element = false;
+                let class = self.parse_class(true).map(Box::new)?;
+                Ok(Expression::Class(self.finalize(start), class))
             },
             Token::ThisKeyword => {
                 self.scanner.next_token()?;
@@ -1780,12 +1786,17 @@ impl<'a> Parser<'a> {
         Ok(elems)
     }
 
-    fn parse_class(&mut self) -> Result<ClassDecl> {
+    fn parse_class(&mut self, allow_anonymous: bool) -> Result<ClassDecl> {
         let previous_strict = self.context.strict;
         self.context.strict = true;
 
         self.expect(Token::ClassKeyword)?;
-        let id = self.parse_id()?;
+        let id = if allow_anonymous && !self.match_ident() {
+            None
+        } else {
+            Some(self.parse_id()?)
+        };
+
         let super_class = if self.eat(Token::ExtendsKeyword)? {
             Some(self.parse_lhs_expression()?)
         } else {
@@ -1795,7 +1806,7 @@ impl<'a> Parser<'a> {
 
         self.context.strict = previous_strict;
 
-        Ok(ClassDecl { id: Some(id), super_class, body })
+        Ok(ClassDecl { id, super_class, body })
     }
 
     fn parse_statement(&mut self, allow_decl: bool) -> Result<Statement> {
@@ -1807,7 +1818,7 @@ impl<'a> Parser<'a> {
                 self.parse_function().map(Statement::FunctionDeclaration)
             },
             Token::ClassKeyword => {
-                let class = self.parse_class()?;
+                let class = self.parse_class(false)?;
                 Ok(Statement::ClassDeclaration(self.finalize(start), class))
             },
             Token::If => self.parse_if_statement(),

@@ -459,6 +459,11 @@ fn pattern(node: &Value) -> Result<Pattern<Id>> {
     }
 }
 
+fn class_expression(node: &Value) -> Result<Expression> {
+    let decl = class(node).map(Box::new)?;
+    Ok(Expression::Class(span(node)?, decl))
+}
+
 fn arrow_function_expression(node: &Value) -> Result<Expression> {
     let body = if expect_bool(node, "expression") {
         ArrowFunctionBody::Expression(Box::new(expression(expect_value(node, "body"))?))
@@ -499,6 +504,7 @@ fn expression(node: &Value) -> Result<Expression> {
         "ConditionalExpression" => conditional_expression(node),
         "SequenceExpression" => sequence_expression(node),
         "FunctionExpression" => function_expression(node),
+        "ClassExpression" => class_expression(node),
         _ => Err(())
     }
 }
