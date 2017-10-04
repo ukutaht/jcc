@@ -862,7 +862,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_property_method(&mut self, start: Position, key: PropKey) -> Result<Prop> {
+    fn parse_property_method(&mut self, start: Position, key: PropKey, generator: bool) -> Result<Prop> {
         let params = self.parse_function_parameters()?;
         self.context.is_assignment_target = false;
         self.context.is_binding_element = false;
@@ -870,17 +870,17 @@ impl<'a> Parser<'a> {
         let previous_strict = self.context.strict;
         self.validate_params(&params, None)?;
         let block = self.parse_function_source_elements()?;
-        let value = Function { id: None, body: block, parameters: params, generator: false };
+        let value = Function { id: None, body: block, parameters: params, generator };
         self.context.strict = previous_strict;
         Ok(Prop::Method(self.finalize(start), key, value))
     }
 
-    fn parse_prop_init(&mut self, start: Position, key: PropKey) -> Result<Prop> {
+    fn parse_prop_init(&mut self, start: Position, key: PropKey, generator: bool) -> Result<Prop> {
         if self.eat(Token::Colon)? {
             let value = self.parse_assignment_expression()?;
             Ok(Prop::Init(self.finalize(start), key, value))
         } else if self.matches(Token::OpenParen) {
-            self.parse_property_method(start, key)
+            self.parse_property_method(start, key, generator)
         } else if let PropKey::Identifier(ref sp, ref id) = key {
             if self.scanner.lookahead == Token::Eq {
                 self.context.first_cover_initialized_name_error = Some((self.scanner.lookahead, self.scanner.lookahead_start));
@@ -934,7 +934,7 @@ impl<'a> Parser<'a> {
                 Ok(Prop::Get(self.finalize(start), key, value))
             } else {
                 let span = self.finalize(start);
-                self.parse_prop_init(start, PropKey::Identifier(span, *interner::KEYWORD_GET))
+                self.parse_prop_init(start, PropKey::Identifier(span, *interner::KEYWORD_GET), false)
             }
         } else if self.scanner.lookahead == Token::Ident(*interner::KEYWORD_SET) {
             self.scanner.next_token()?;
@@ -948,12 +948,16 @@ impl<'a> Parser<'a> {
                 Ok(Prop::Set(self.finalize(start), key, value))
             } else {
                 let span = self.finalize(start);
-                self.parse_prop_init(start, PropKey::Identifier(span, *interner::KEYWORD_SET))
+                self.parse_prop_init(start, PropKey::Identifier(span, *interner::KEYWORD_SET), false)
             }
-        } else if let Some(key) = self.match_object_property_key()? {
-            self.parse_prop_init(start, key)
         } else {
-            Err(self.unexpected_token(self.scanner.lookahead))
+            let generator = self.eat(Token::Star)?;
+
+            if let Some(key) = self.match_object_property_key()? {
+                self.parse_prop_init(start, key, generator)
+            } else {
+                Err(self.unexpected_token(self.scanner.lookahead))
+            }
         }
     }
 
@@ -1727,6 +1731,7 @@ impl<'a> Parser<'a> {
     fn parse_method_definition(&mut self) -> Result<MethodDefinition> {
         let start = self.scanner.lookahead_start;
         let mut is_static = false;
+        let mut generator = false;
         let mut kind = MethodDefinitionKind::Method;
         let mut id_start = self.scanner.lookahead_start;
 
@@ -1734,6 +1739,9 @@ impl<'a> Parser<'a> {
             self.scanner.next_token()?;
             id_start = self.scanner.lookahead_start;
             is_static = true;
+            if self.eat(Token::Star)? {
+                generator = true;
+            }
         }
 
         if self.scanner.lookahead == Token::Ident(*interner::KEYWORD_GET) {
@@ -1774,7 +1782,7 @@ impl<'a> Parser<'a> {
         let parameters = self.parse_function_parameters()?;
         self.validate_params(&parameters, None)?;
         let body = self.parse_function_source_elements()?;
-        let function = Function { id: None, parameters, body, generator: false };
+        let function = Function { id: None, parameters, body, generator };
 
         Ok(MethodDefinition {
             loc: self.finalize(start),
