@@ -152,7 +152,8 @@ pub enum Expression {
     Sequence(Span, Vec<Expression>),
     This(Span),
     ArrowFunction(Span, ArrowFunction),
-    Class(Span, Box<ClassDecl>)
+    Class(Span, Box<ClassDecl>),
+    Yield(Span, Box<Option<Expression>>, bool)
 }
 
 #[derive(Debug, PartialEq)]

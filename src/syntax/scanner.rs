@@ -609,6 +609,7 @@ impl<'a> Scanner<'a> {
             "class" => Token::ClassKeyword,
             "extends" => Token::ExtendsKeyword,
             "enum" => Token::EnumKeyword,
+            "yield" => Token::YieldKeyword,
             _ => {
                 Token::Ident(interner::intern(value))
             }

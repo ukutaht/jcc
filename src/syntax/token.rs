@@ -89,6 +89,7 @@ pub enum Token {
     Void,
     WhileKeyword,
     WithKeyword,
+    YieldKeyword,
 }
 
 use std::fmt;

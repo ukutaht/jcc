@@ -464,6 +464,11 @@ fn class_expression(node: &Value) -> Result<Expression> {
     Ok(Expression::Class(span(node)?, decl))
 }
 
+fn yield_expression(node: &Value) -> Result<Expression> {
+    let argument = maybe_key(node, "argument", &expression)?;
+    Ok(Expression::Yield(span(node)?, Box::new(argument), expect_bool(node, "delegate")))
+}
+
 fn arrow_function_expression(node: &Value) -> Result<Expression> {
     let body = if expect_bool(node, "expression") {
         ArrowFunctionBody::Expression(Box::new(expression(expect_value(node, "body"))?))
@@ -505,6 +510,7 @@ fn expression(node: &Value) -> Result<Expression> {
         "SequenceExpression" => sequence_expression(node),
         "FunctionExpression" => function_expression(node),
         "ClassExpression" => class_expression(node),
+        "YieldExpression" => yield_expression(node),
         _ => Err(())
     }
 }

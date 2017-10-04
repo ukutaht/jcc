@@ -29,6 +29,7 @@ lazy_static! {
     pub static ref KEYWORD_GET: Symbol = { intern("get") };
     pub static ref KEYWORD_SET: Symbol = { intern("set") };
     pub static ref KEYWORD_PROTO: Symbol = { intern("__proto__") };
+    pub static ref KEYWORD_YIELD: Symbol = { intern("yield") };
 
     pub static ref RESERVED_ENUM: Symbol = { intern("enum") };
     pub static ref RESERVED_IMPORT: Symbol = { intern("import") };

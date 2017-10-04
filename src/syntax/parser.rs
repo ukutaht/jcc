@@ -12,6 +12,7 @@ use std;
 
 struct ParseContext {
     allow_in: bool,
+    allow_yield: bool,
     in_iteration: bool,
     in_switch: bool,
     in_function_body: bool,
@@ -33,6 +34,7 @@ impl<'a> Parser<'a> {
             scanner: Scanner::new(source),
             context: ParseContext {
                 allow_in: true,
+                allow_yield: false,
                 in_iteration: false,
                 in_switch: false,
                 in_function_body: false,
@@ -239,6 +241,14 @@ impl<'a> Parser<'a> {
                 self.context.is_binding_element = false;
                 Ok(Expression::Literal(self.finalize(start), regex))
             },
+            Token::YieldKeyword => {
+                if !self.context.strict && !self.context.allow_yield {
+                    self.scanner.next_token()?;
+                    Ok(Expression::Identifier(self.finalize(start), *interner::KEYWORD_YIELD))
+                } else {
+                    Err(self.unexpected_token(Token::YieldKeyword))
+                }
+            },
             t => {
                 Err(self.unexpected_token(t))
             }
@@ -383,6 +393,7 @@ impl<'a> Parser<'a> {
             Token::BoolTrue => Some(*interner::KEYWORD_TRUE),
             Token::BoolFalse => Some(*interner::KEYWORD_FALSE),
             Token::In => Some(*interner::KEYWORD_IN),
+            Token::YieldKeyword => Some(*interner::KEYWORD_YIELD),
             _ => None
         }
     }
@@ -766,7 +777,18 @@ impl<'a> Parser<'a> {
         }))
     }
 
+    fn parse_yield_expression(&mut self) -> Result<Expression> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::YieldKeyword)?;
+        let argument = self.parse_assignment_expression()?;
+        Ok(Expression::Yield(self.finalize(start), Box::new(Some(argument)), false))
+    }
+
     fn parse_assignment_expression(&mut self) -> Result<Expression> {
+        if self.context.allow_yield && self.matches(Token::YieldKeyword) {
+            return self.parse_yield_expression()
+        }
+
         let start = self.scanner.lookahead_start;
         let left = self.parse_conditional_expression()?;
 
@@ -1280,6 +1302,7 @@ impl<'a> Parser<'a> {
         };
 
         let previous_strict = self.context.strict;
+        let previous_allow_yield = std::mem::replace(&mut self.context.allow_yield, generator);
 
         let parameters = self.parse_function_parameters()?;
         let block = self.parse_function_source_elements()?;
@@ -1291,6 +1314,7 @@ impl<'a> Parser<'a> {
         }
 
         self.context.strict = previous_strict;
+        self.context.allow_yield = previous_allow_yield;
 
         Ok(Function { id: id, body: block, parameters, generator })
     }
@@ -1952,6 +1976,9 @@ impl<'a> Parser<'a> {
                 return CompileError::new(self.scanner.lookahead_start, ErrorCause::StrictReservedWord)
 
             }
+        }
+        if token == Token::YieldKeyword {
+            return CompileError::new(self.scanner.lookahead_start, ErrorCause::StrictReservedWord)
         }
         if token == Token::EnumKeyword {
             return CompileError::new(self.scanner.lookahead_start, ErrorCause::UnexpectedReservedWord)
