@@ -235,7 +235,7 @@ impl<'a> Scanner<'a> {
             if self.eat_byte(b'=') {
                 Ok(Token::TimesEq)
             } else {
-                Ok(Token::Times)
+                Ok(Token::Star)
             }
         } else if self.eat_byte(b'/') {
             if self.eat_byte(b'=') {

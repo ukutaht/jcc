@@ -39,7 +39,7 @@ impl AsOperator for Token {
             Token::LShift => Some(InfixOp::BinOp(BinOp::LShift)),
             Token::RShift => Some(InfixOp::BinOp(BinOp::RShift)),
             Token::URShift => Some(InfixOp::BinOp(BinOp::URShift)),
-            Token::Times => Some(InfixOp::BinOp(BinOp::Times)),
+            Token::Star => Some(InfixOp::BinOp(BinOp::Times)),
             Token::Div => Some(InfixOp::BinOp(BinOp::Div)),
             Token::Mod => Some(InfixOp::BinOp(BinOp::Mod)),
             Token::Minus => Some(InfixOp::BinOp(BinOp::Minus)),

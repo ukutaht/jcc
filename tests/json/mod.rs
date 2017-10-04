@@ -411,7 +411,7 @@ fn function(node: &Value) -> Result<Function> {
     for param in expect_array(node, "params") {
         parameters.push(pattern(param)?)
     }
-    Ok(Function { id: id, parameters: parameters, body: body })
+    Ok(Function { id: id, parameters: parameters, body: body, generator: expect_bool(node, "generator") })
 }
 
 fn prop_pattern(node: &Value) -> Result<PropPattern<Id>> {

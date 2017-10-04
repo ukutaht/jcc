@@ -39,8 +39,8 @@ pub enum Token {
     EqEqEq,
     ExtendsKeyword,
     FinallyKeyword,
-    FunctionKeyword,
     ForKeyword,
+    FunctionKeyword,
     Gt,
     Gte,
     Ident(Symbol),
@@ -74,12 +74,12 @@ pub enum Token {
     RShiftEq,
     Return,
     Semi,
+    Star,
     String(Symbol, Symbol),
     SwitchKeyword,
     ThisKeyword,
     ThrowKeyword,
     Tilde,
-    Times,
     TimesEq,
     TryKeyword,
     Typeof,
@@ -112,7 +112,7 @@ impl fmt::Display for Token {
             Token::OpenCurly => write!(fmt, "{{"),
             Token::OpenParen => write!(fmt, "("),
             Token::Semi => write!(fmt, ";"),
-            Token::Times => write!(fmt, "*"),
+            Token::Star => write!(fmt, "*"),
             ref t => write!(fmt, "{:?}", t)
         }
     }

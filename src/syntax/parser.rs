@@ -870,7 +870,7 @@ impl<'a> Parser<'a> {
         let previous_strict = self.context.strict;
         self.validate_params(&params, None)?;
         let block = self.parse_function_source_elements()?;
-        let value = Function { id: None, body: block, parameters: params };
+        let value = Function { id: None, body: block, parameters: params, generator: false };
         self.context.strict = previous_strict;
         Ok(Prop::Method(self.finalize(start), key, value))
     }
@@ -929,7 +929,7 @@ impl<'a> Parser<'a> {
                 let parameters = self.parse_function_parameters()?;
                 self.validate_params(&parameters, None)?;
                 let block = self.parse_function_source_elements()?;
-                let value = Function { id: None, body: block, parameters: parameters };
+                let value = Function { id: None, body: block, parameters: parameters, generator: false };
                 self.context.strict = previous_strict;
                 Ok(Prop::Get(self.finalize(start), key, value))
             } else {
@@ -943,7 +943,7 @@ impl<'a> Parser<'a> {
                 let parameters = self.parse_function_parameters()?;
                 self.validate_params(&parameters, None)?;
                 let block = self.parse_function_source_elements()?;
-                let value = Function { id: None, body: block, parameters: parameters };
+                let value = Function { id: None, body: block, parameters: parameters, generator: false };
                 self.context.strict = previous_strict;
                 Ok(Prop::Set(self.finalize(start), key, value))
             } else {
@@ -1253,7 +1253,12 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_function(&mut self) -> Result<Function> {
+        let mut generator = false;
         self.expect(Token::FunctionKeyword)?;
+
+        if self.eat(Token::Star)? {
+            generator = true;
+        }
 
         let id_loc = self.scanner.lookahead_start;
         let id = match self.scanner.lookahead {
@@ -1283,7 +1288,7 @@ impl<'a> Parser<'a> {
 
         self.context.strict = previous_strict;
 
-        Ok(Function { id: id, body: block, parameters: parameters })
+        Ok(Function { id: id, body: block, parameters, generator })
     }
 
     fn parse_expression(&mut self) -> Result<Expression> {
@@ -1769,7 +1774,7 @@ impl<'a> Parser<'a> {
         let parameters = self.parse_function_parameters()?;
         self.validate_params(&parameters, None)?;
         let body = self.parse_function_source_elements()?;
-        let function = Function { id: None, parameters, body };
+        let function = Function { id: None, parameters, body, generator: false };
 
         Ok(MethodDefinition {
             loc: self.finalize(start),

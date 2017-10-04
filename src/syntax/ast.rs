@@ -198,6 +198,7 @@ pub struct Function {
     pub id: Option<Symbol>,
     pub body: Block,
     pub parameters: Vec<Pattern<Id>>,
+    pub generator: bool
 }
 
 #[derive(Debug, PartialEq)]
