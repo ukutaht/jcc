@@ -26,7 +26,6 @@ ES6/arrow-function/object-binding-pattern/object-binding-pattern-01
 ES6/arrow-function/invalid-duplicated-names-rest-parameter
 ES6/arrow-function/invalid-duplicated-params
 
-ES6/binary-integer-literal/**
 
 
 # This is wrong
@@ -47,7 +46,8 @@ ES6/generator/**
 ES6/identifier/**
 ES6/import-declaration/**
 ES6/meta-property/**
-ES6/octal-integer-literal/**
+
+
 ES6/program/**
 ES6/super-property/**
 ES6/template-literals/**
@@ -61,26 +61,6 @@ invalid-syntax/GH-1106-05
 invalid-syntax/GH-1106-06
 invalid-syntax/GH-1106-07
 
-
-# ES6 numeric literals
-invalid-syntax/migrated_0011
-invalid-syntax/migrated_0012
-invalid-syntax/migrated_0013
-invalid-syntax/migrated_0014
-invalid-syntax/migrated_0015
-invalid-syntax/migrated_0016
-invalid-syntax/migrated_0017
-invalid-syntax/migrated_0018
-invalid-syntax/migrated_0019
-invalid-syntax/migrated_0020
-invalid-syntax/migrated_0021
-invalid-syntax/migrated_0022
-invalid-syntax/migrated_0023
-invalid-syntax/migrated_0024
-invalid-syntax/migrated_0025
-invalid-syntax/migrated_0026
-invalid-syntax/migrated_0027
-invalid-syntax/migrated_0028
 
 # Regex
 invalid-syntax/migrated_0032

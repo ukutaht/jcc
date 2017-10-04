@@ -351,7 +351,13 @@ impl<'a> Scanner<'a> {
     fn scan_number(&mut self) -> Result<Token> {
         let nr = match (self.current_byte(), self.peek_byte()) {
             (Some(b'0'), Some(b'x')) | (Some(b'0'), Some(b'X')) => {
-                self.scan_hex()?
+                self.scan_radix(16)?
+            }
+            (Some(b'0'), Some(b'o')) | (Some(b'0'), Some(b'O')) => {
+                self.scan_radix(8)?
+            }
+            (Some(b'0'), Some(b'b')) | (Some(b'0'), Some(b'B')) => {
+                self.scan_radix(2)?
             }
             _ => self.scan_float()?
         };
@@ -364,13 +370,24 @@ impl<'a> Scanner<'a> {
         }
     }
 
-    fn scan_hex(&mut self) -> Result<Token> {
+    fn scan_radix(&mut self, base: u32) -> Result<Token> {
         self.next_byte();self.next_byte();
         let start = self.index;
-        self.take_while(|c| (c as char).is_digit(16));
+        self.take_while(|c| (c as char).is_digit(base));
+
+        if self.index == start {
+            return Err(self.invalid_token())
+        }
+
+        if let Some(b) = self.current_byte() {
+            if (b as char).is_digit(10) {
+                return Err(self.invalid_token())
+            }
+        }
+
         let hex = unsafe { str::from_utf8_unchecked(&self.bytes[start..self.index]) };
 
-        match u32::from_str_radix(hex, 16) {
+        match u32::from_str_radix(hex, base) {
             Ok(val) => Ok(Token::Number(val as f64)),
             Err(_) => Err(self.invalid_token())
         }
