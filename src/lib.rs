@@ -1,6 +1,5 @@
 #[macro_use]
 extern crate lazy_static;
-extern crate string_interner;
 extern crate fnv;
 
 pub mod syntax;

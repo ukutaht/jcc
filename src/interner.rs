@@ -1,23 +1,60 @@
-use string_interner::StringInterner;
 use std::sync::{RwLock, RwLockReadGuard};
 use std::ops::Deref;
-use fnv::FnvBuildHasher;
+use fnv::FnvHashMap;
 
-pub type Symbol = usize;
-pub type Interner = StringInterner<Symbol, FnvBuildHasher>;
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct Symbol(u32);
+
+pub struct Interner {
+    names: FnvHashMap<Box<str>, Symbol>,
+    strings: Vec<Box<str>>,
+}
+
+impl Interner {
+    pub fn new() -> Self {
+        Interner {
+            names: FnvHashMap::default(),
+            strings: Vec::new()
+        }
+    }
+
+    fn prefill(init: &[&str]) -> Self {
+        let mut this = Interner::new();
+        for &string in init {
+            this.intern(string);
+        }
+        this
+    }
+
+    pub fn intern(&mut self, string: &str) -> Symbol {
+        if let Some(&name) = self.names.get(string) {
+            return name;
+        }
+
+        let name = Symbol(self.strings.len() as u32);
+        let string = string.to_string().into_boxed_str();
+        self.strings.push(string.clone());
+        self.names.insert(string, name);
+        name
+    }
+
+    pub fn get(&self, symbol: Symbol) -> &str {
+        unsafe {self.strings.get_unchecked(symbol.0 as usize) }
+    }
+}
 
 pub struct LookupRef<'a>(RwLockReadGuard<'a, Interner>, Symbol);
 
 impl<'a> Deref for LookupRef<'a> {
     type Target = str;
     fn deref(&self) -> &Self::Target {
-        unsafe { self.0.resolve_unchecked(self.1) }
+        self.0.get(self.1)
     }
 }
 
 lazy_static! {
     static ref INTERNER: RwLock<Interner> = {
-        RwLock::new(StringInterner::with_hasher(FnvBuildHasher::default()))
+        RwLock::new(Interner::new())
     };
 
     pub static ref KEYWORD_NULL: Symbol = { intern("null") };
@@ -54,7 +91,7 @@ lazy_static! {
 }
 
 pub fn intern(val: &str) -> Symbol {
-    INTERNER.write().expect("RwLock failed").get_or_intern(val)
+    INTERNER.write().expect("RwLock failed").intern(val)
 }
 
 pub fn resolve<'a>(key: Symbol) -> LookupRef<'a> {
