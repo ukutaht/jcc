@@ -281,7 +281,7 @@ pub enum Statement {
     With(Span, Expression, Box<Statement>),
     Labeled(Span, Id, Box<Statement>),
     Continue(Span, Option<Id>),
-    Directive(Span, Expression, String)
+    Directive(Span, Expression, Symbol)
 }
 
 #[derive(Debug, PartialEq)]

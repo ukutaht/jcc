@@ -45,11 +45,9 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn directive_opt(&mut self, expr: &Expression) -> Option<String> {
+    fn directive_opt(&mut self, expr: &Expression) -> Option<Symbol> {
         if let Expression::Literal(_, Literal::String(val)) = *expr {
-            let string = interner::resolve(val);
-            let len = string.len();
-            Some(string[1..len - 1].to_owned())
+            Some(val)
         } else {
             None
         }
@@ -61,7 +59,7 @@ impl<'a> Parser<'a> {
         let expr = self.parse_expression()?;
         match self.directive_opt(&expr) {
             Some(dir) => {
-                if dir == "use strict" {
+                if dir == *interner::DIRECTIVE_USE_STRICT {
                     self.context.strict = true;
                 }
                 Ok(Statement::Directive(self.consume_semicolon(start)?, expr, dir))
@@ -971,9 +969,7 @@ impl<'a> Parser<'a> {
                     }
                 }
                 PropKey::String(ref span, s) => {
-                    let string = interner::resolve(s);
-                    let len = string.len();
-                    if &string[1..len - 1] == "__proto__" {
+                    if s == *interner::KEYWORD_PROTO {
                         if has_proto {
                             return Err(CompileError::new(span.end, ErrorCause::DuplicateProto))
                         } else {
@@ -1751,10 +1747,13 @@ impl<'a> Parser<'a> {
             }
         };
 
-        if let PropKey::Identifier(_, sym) = key {
-            if sym == *interner::RESERVED_CONSTRUCTOR {
-                kind = MethodDefinitionKind::Constructor;
-            };
+        match key {
+            PropKey::Identifier(_, sym) | PropKey::String(_, sym) => {
+                if !is_static && sym == *interner::RESERVED_CONSTRUCTOR {
+                    kind = MethodDefinitionKind::Constructor;
+                };
+            }
+            _ => {}
         };
 
         let parameters = self.parse_function_parameters()?;

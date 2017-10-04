@@ -48,6 +48,7 @@ lazy_static! {
     pub static ref RESERVED_CONST: Symbol = { intern("const") };
     pub static ref RESERVED_OF: Symbol = { intern("of") };
     pub static ref RESERVED_CONSTRUCTOR: Symbol = { intern("constructor") };
+    pub static ref DIRECTIVE_USE_STRICT: Symbol = { intern("use strict") };
 }
 
 pub fn intern(val: &str) -> Symbol {

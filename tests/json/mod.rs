@@ -237,7 +237,7 @@ fn literal(node: &Value) -> Result<Expression> {
         Ok(Expression::Literal(span(node)?, Literal::Null))
     } else if val.is_string() {
         let string = expect_string(node, "raw");
-        let sym = interner::intern(string);
+        let sym = interner::intern(&string[1..string.len() - 1]);
         Ok(Expression::Literal(span(node)?, Literal::String(sym)))
     } else if val.is_boolean() {
         if val.as_bool().unwrap() {
@@ -320,7 +320,7 @@ fn prop_key(computed: bool, node: &Value) -> Result<PropKey> {
             let val = expect_value(node, "value");
 
             if val.is_string() {
-                let string = expect_string(node, "raw");
+                let string = expect_string(node, "value");
                 Ok(PropKey::String(span(node)?, interner::intern(string)))
             } else if val.is_number() {
                 Ok(PropKey::Number(span(node)?, val.as_f64().unwrap()))
@@ -712,7 +712,7 @@ fn statement(node: &Value) -> Result<Statement> {
         "ExpressionStatement" => {
             let expr = expression(expect_value(node, "expression"))?;
             if node.get("directive").is_some() {
-                let name = expect_string(node, "directive").to_owned();
+                let name = interner::intern(expect_string(node, "directive"));
                 Ok(Statement::Directive(span(node)?, expr, name))
             } else {
                 Ok(Statement::Expression(span(node)?, expr))

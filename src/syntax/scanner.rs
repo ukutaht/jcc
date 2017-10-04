@@ -440,15 +440,6 @@ impl<'a> Scanner<'a> {
                             }
                         }
                     },
-                    Some('\\') => continue,
-                    Some('\'') => continue,
-                    Some('"') => continue,
-                    Some('n') => continue,
-                    Some('r') => continue,
-                    Some('t') => continue,
-                    Some('b') => continue,
-                    Some('v') => continue,
-                    Some('f') => continue,
                     Some('x') => {
                         self.scan_hex_digit()?;
                         self.scan_hex_digit()?;
@@ -477,7 +468,7 @@ impl<'a> Scanner<'a> {
             return Err(self.invalid_token_at(self.lookahead_start));
         }
 
-        let string = unsafe { str::from_utf8_unchecked(self.bytes.get_unchecked(start..self.index)) };
+        let string = unsafe { str::from_utf8_unchecked(self.bytes.get_unchecked(start+1..self.index - 1)) };
         Ok(Token::String(interner::intern(string)))
     }
 
