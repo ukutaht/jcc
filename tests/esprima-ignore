@@ -47,7 +47,6 @@ ES6/export-declaration/**
 
 ES6/generator/generator-declaration-with-yield-delegate
 ES6/generator/generator-declaration-with-yield
-ES6/generator/generator-expression-rest-param
 ES6/generator/generator-expression-with-yield-delegate
 ES6/generator/generator-expression-with-yield
 ES6/generator/generator-method-with-computed-name
