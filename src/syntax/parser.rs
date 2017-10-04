@@ -45,9 +45,10 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn directive_opt(&mut self, expr: &Expression) -> Option<Symbol> {
-        if let Expression::Literal(_, Literal::String(val)) = *expr {
-            Some(val)
+    fn directive_opt(&mut self, expr: &Expression) -> Option<String> {
+        if let Expression::Literal(_, Literal::String(raw, _)) = *expr {
+            let string = interner::resolve(raw);
+            Some(string[1..string.len() -1].to_owned())
         } else {
             None
         }
@@ -59,7 +60,7 @@ impl<'a> Parser<'a> {
         let expr = self.parse_expression()?;
         match self.directive_opt(&expr) {
             Some(dir) => {
-                if dir == *interner::DIRECTIVE_USE_STRICT {
+                if dir == "use strict" {
                     self.context.strict = true;
                 }
                 Ok(Statement::Directive(self.consume_semicolon(start)?, expr, dir))
@@ -71,7 +72,7 @@ impl<'a> Parser<'a> {
     fn parse_directive_prologues(&mut self) -> Result<Vec<StatementListItem>> {
         let mut directives = Vec::new();
 
-        while let Token::String(_) = self.scanner.lookahead {
+        while let Token::String(_, _) = self.scanner.lookahead {
             let dir = self.parse_directive()?;
             directives.push(StatementListItem::Statement(dir))
         }
@@ -192,11 +193,11 @@ impl<'a> Parser<'a> {
                 self.context.is_binding_element = false;
                 Ok(Expression::Literal(self.finalize(start), Literal::False))
             }
-            Token::String(s) => {
+            Token::String(raw, value) => {
                 self.scanner.next_token()?;
                 self.context.is_assignment_target = false;
                 self.context.is_binding_element = false;
-                Ok(Expression::Literal(self.finalize(start), Literal::String(s)))
+                Ok(Expression::Literal(self.finalize(start), Literal::String(raw, value)))
             }
             Token::Ident(n) => {
                 self.scanner.next_token()?;
@@ -836,9 +837,9 @@ impl<'a> Parser<'a> {
         let start = self.scanner.lookahead_start;
 
         match self.scanner.lookahead {
-            Token::String(s) => {
+            Token::String(_, val) => {
                 self.scanner.next_token()?;
-                Ok(Some(PropKey::String(self.finalize(start), s)))
+                Ok(Some(PropKey::String(self.finalize(start), val)))
             }
             Token::Number(n) => {
                 self.scanner.next_token()?;

@@ -158,7 +158,7 @@ impl fmt::Display for CompileError {
             ErrorCause::UnexpectedToken(Token::Number(_)) => {
                 write!(fmt, "Unexpected number")
             }
-            ErrorCause::UnexpectedToken(Token::String(_)) => {
+            ErrorCause::UnexpectedToken(Token::String(_, _)) => {
                 write!(fmt, "Unexpected string")
             }
             // TODO: Just change the tests or impl Display for all Tokens

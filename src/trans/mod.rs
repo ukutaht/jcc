@@ -225,7 +225,7 @@ fn transpile_block<W: Write>(out: &mut W, block: &Block) -> Result<()> {
 fn transpile_literal<W: Write>(out: &mut W, lit: &Literal) -> Result<()> {
     match *lit {
         Literal::Number(num) => write!(out, "{}", num),
-        Literal::String(s) => write!(out, "\"{}\"", &*interner::resolve(s)),
+        Literal::String(raw, _) => write!(out, "{}", &*interner::resolve(raw)),
         Literal::Null => write!(out, "null"),
         Literal::True => write!(out, "true"),
         Literal::False => write!(out, "false"),

@@ -416,6 +416,7 @@ impl<'a> Scanner<'a> {
     fn scan_string(&mut self, quote: u8) -> Result<Token> {
         let start = self.index;
         let mut terminated = false;
+        let mut value = String::new();
         self.eat_byte(quote);
 
         while let Some(ch) = self.next_char() {
@@ -424,9 +425,18 @@ impl<'a> Scanner<'a> {
                 break;
             } else if ch == '\\' {
                 match self.next_char() {
+                    Some('\\') => value.push('\\'),
+                    Some('\'') => value.push('\''),
+                    Some('"') => value.push('"'),
+                    Some('n') => value.push('\n'),
+                    Some('r') => value.push('\r'),
+                    Some('t') => value.push('\t'),
+                    Some('b') => value.push('\u{0008}'),
+                    Some('v') => value.push('\u{000B}'),
+                    Some('f') => value.push('\u{000C}'),
                     Some(ch) if ch.is_digit(8) => {
-                        let mut code = 0;
-                        for _ in 0..3 {
+                        let mut code = ch.to_digit(8).unwrap();
+                        for _ in 0..2 {
                             match self.current_char() {
                                 Some(ch) if ch.is_digit(8) => {
                                     let new_code = (code * 8) + ch.to_digit(8).unwrap();
@@ -439,11 +449,13 @@ impl<'a> Scanner<'a> {
                                 _ => { break; }
                             }
                         }
+                        value.push(char::from_u32(code).unwrap_or('?'));
                     },
                     Some('x') => {
-                        self.scan_hex_digit()?;
-                        self.scan_hex_digit()?;
-                        continue;
+                        let mut code = 0;
+                        code += self.scan_hex_digit()? * 16;
+                        code += self.scan_hex_digit()?;
+                        value.push(char::from_u32(code).unwrap_or('?'));
                     },
                     Some(ch) if ch.is_es_newline() => {
                         if ch == '\r' && self.current_byte() == Some(b'\n')  {
@@ -455,12 +467,12 @@ impl<'a> Scanner<'a> {
                     Some('8') | Some('9') => {
                         return Err(self.invalid_token());
                     }
-                    _ => continue
+                    _ => value.push(ch)
                 }
             } else if ch.is_es_newline() {
                 return Err(self.invalid_token_at(self.lookahead_start));
             } else {
-                continue;
+                value.push(ch);
             }
         }
 
@@ -468,8 +480,8 @@ impl<'a> Scanner<'a> {
             return Err(self.invalid_token_at(self.lookahead_start));
         }
 
-        let string = unsafe { str::from_utf8_unchecked(self.bytes.get_unchecked(start+1..self.index - 1)) };
-        Ok(Token::String(interner::intern(string)))
+        let raw = unsafe { str::from_utf8_unchecked(self.bytes.get_unchecked(start..self.index)) };
+        Ok(Token::String(interner::intern(raw), interner::intern(&value)))
     }
 
     fn scan_hex_digit(&mut self) -> Result<u32> {

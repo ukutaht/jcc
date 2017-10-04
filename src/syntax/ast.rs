@@ -4,7 +4,7 @@ use interner::Symbol;
 #[derive(Debug, PartialEq)]
 pub enum Literal {
     Number(f64),
-    String(Symbol),
+    String(Symbol, Symbol),
     Regex(Symbol, Vec<char>),
     Null,
     True,
@@ -281,7 +281,7 @@ pub enum Statement {
     With(Span, Expression, Box<Statement>),
     Labeled(Span, Id, Box<Statement>),
     Continue(Span, Option<Id>),
-    Directive(Span, Expression, Symbol)
+    Directive(Span, Expression, String)
 }
 
 #[derive(Debug, PartialEq)]

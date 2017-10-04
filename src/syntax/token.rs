@@ -73,7 +73,7 @@ pub enum Token {
     RShiftEq,
     Return,
     Semi,
-    String(Symbol),
+    String(Symbol, Symbol),
     SwitchKeyword,
     ThisKeyword,
     ThrowKeyword,

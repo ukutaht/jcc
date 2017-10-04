@@ -236,9 +236,9 @@ fn literal(node: &Value) -> Result<Expression> {
     } else if val.is_null() {
         Ok(Expression::Literal(span(node)?, Literal::Null))
     } else if val.is_string() {
-        let string = expect_string(node, "raw");
-        let sym = interner::intern(&string[1..string.len() - 1]);
-        Ok(Expression::Literal(span(node)?, Literal::String(sym)))
+        let raw = interner::intern(&expect_string(node, "raw"));
+        let val = interner::intern(&expect_string(node, "value"));
+        Ok(Expression::Literal(span(node)?, Literal::String(raw, val)))
     } else if val.is_boolean() {
         if val.as_bool().unwrap() {
             Ok(Expression::Literal(span(node)?, Literal::True))
@@ -712,7 +712,7 @@ fn statement(node: &Value) -> Result<Statement> {
         "ExpressionStatement" => {
             let expr = expression(expect_value(node, "expression"))?;
             if node.get("directive").is_some() {
-                let name = interner::intern(expect_string(node, "directive"));
+                let name = expect_string(node, "directive").to_owned();
                 Ok(Statement::Directive(span(node)?, expr, name))
             } else {
                 Ok(Statement::Expression(span(node)?, expr))
