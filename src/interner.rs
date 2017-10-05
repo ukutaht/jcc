@@ -5,6 +5,10 @@ use std::fmt;
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Symbol(u32);
 
+// The interner in thread-local, so `Symbol` shouldn't move between threads.
+impl !Send for Symbol { }
+impl !Sync for Symbol { }
+
 impl fmt::Debug for Symbol {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}({})", self, self.0)

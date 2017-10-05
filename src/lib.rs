@@ -1,3 +1,4 @@
+#![feature(optin_builtin_traits)]
 extern crate fnv;
 
 pub mod syntax;
