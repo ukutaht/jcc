@@ -244,7 +244,7 @@ impl<'a> Parser<'a> {
             Token::YieldKeyword => {
                 if !self.context.strict && !self.context.allow_yield {
                     self.scanner.next_token()?;
-                    Ok(Expression::Identifier(self.finalize(start), *interner::KEYWORD_YIELD))
+                    Ok(Expression::Identifier(self.finalize(start), interner::KEYWORD_YIELD))
                 } else {
                     Err(self.unexpected_token(Token::YieldKeyword))
                 }
@@ -387,13 +387,13 @@ impl<'a> Parser<'a> {
     fn match_identifier_name(&mut self) -> Option<Symbol> {
         match self.scanner.lookahead {
             Token::Ident(name) => Some(name),
-            Token::If => Some(*interner::KEYWORD_IF),
-            Token::Else => Some(*interner::KEYWORD_ELSE),
-            Token::Null => Some(*interner::KEYWORD_NULL),
-            Token::BoolTrue => Some(*interner::KEYWORD_TRUE),
-            Token::BoolFalse => Some(*interner::KEYWORD_FALSE),
-            Token::In => Some(*interner::KEYWORD_IN),
-            Token::YieldKeyword => Some(*interner::KEYWORD_YIELD),
+            Token::If => Some(interner::KEYWORD_IF),
+            Token::Else => Some(interner::KEYWORD_ELSE),
+            Token::Null => Some(interner::KEYWORD_NULL),
+            Token::BoolTrue => Some(interner::KEYWORD_TRUE),
+            Token::BoolFalse => Some(interner::KEYWORD_FALSE),
+            Token::In => Some(interner::KEYWORD_IN),
+            Token::YieldKeyword => Some(interner::KEYWORD_YIELD),
             _ => None
         }
     }
@@ -944,7 +944,7 @@ impl<'a> Parser<'a> {
     fn parse_object_property(&mut self) -> Result<Prop> {
         let start = self.scanner.lookahead_start;
 
-        if self.scanner.lookahead == Token::Ident(*interner::KEYWORD_GET) {
+        if self.scanner.lookahead == Token::Ident(interner::KEYWORD_GET) {
             self.scanner.next_token()?;
             if let Some(key) = self.match_object_property_key()? {
                 let previous_strict = self.context.strict;
@@ -956,9 +956,9 @@ impl<'a> Parser<'a> {
                 Ok(Prop::Get(self.finalize(start), key, value))
             } else {
                 let span = self.finalize(start);
-                self.parse_prop_init(start, PropKey::Identifier(span, *interner::KEYWORD_GET), false)
+                self.parse_prop_init(start, PropKey::Identifier(span, interner::KEYWORD_GET), false)
             }
-        } else if self.scanner.lookahead == Token::Ident(*interner::KEYWORD_SET) {
+        } else if self.scanner.lookahead == Token::Ident(interner::KEYWORD_SET) {
             self.scanner.next_token()?;
             if let Some(key) = self.match_object_property_key()? {
                 let previous_strict = self.context.strict;
@@ -970,7 +970,7 @@ impl<'a> Parser<'a> {
                 Ok(Prop::Set(self.finalize(start), key, value))
             } else {
                 let span = self.finalize(start);
-                self.parse_prop_init(start, PropKey::Identifier(span, *interner::KEYWORD_SET), false)
+                self.parse_prop_init(start, PropKey::Identifier(span, interner::KEYWORD_SET), false)
             }
         } else {
             let generator = self.eat(Token::Star)?;
@@ -987,7 +987,7 @@ impl<'a> Parser<'a> {
         if let Prop::Init(_, ref key, _) = *prop {
             match *key {
                 PropKey::Identifier(ref span, s) => {
-                    if s == *interner::KEYWORD_PROTO {
+                    if s == interner::KEYWORD_PROTO {
                         if has_proto {
                             return Err(CompileError::new(span.end, ErrorCause::DuplicateProto))
                         } else {
@@ -996,7 +996,7 @@ impl<'a> Parser<'a> {
                     }
                 }
                 PropKey::String(ref span, s) => {
-                    if s == *interner::KEYWORD_PROTO {
+                    if s == interner::KEYWORD_PROTO {
                         if has_proto {
                             return Err(CompileError::new(span.end, ErrorCause::DuplicateProto))
                         } else {
@@ -1130,7 +1130,7 @@ impl<'a> Parser<'a> {
     fn parse_pattern(&mut self, allow_default: bool, kind: VariableDeclarationKind) -> Result<Pattern<Id>> {
         match self.scanner.lookahead {
             Token::Ident(name) => {
-                if name == *interner::RESERVED_LET {
+                if name == interner::RESERVED_LET {
                     if kind == VariableDeclarationKind::Let || kind == VariableDeclarationKind::Const {
                         return Err(CompileError::new(self.scanner.lookahead_start, ErrorCause::LetInLexicalBinding))
                     }
@@ -1168,7 +1168,7 @@ impl<'a> Parser<'a> {
                 Some(self.isolate_cover_grammar(Parser::parse_assignment_expression)?)
             }
             _ if kind == VariableDeclarationKind::Const => {
-                if !(self.matches(Token::In) || self.match_contextual_keyword(*interner::RESERVED_OF)) {
+                if !(self.matches(Token::In) || self.match_contextual_keyword(interner::RESERVED_OF)) {
                     return Err(self.error(ErrorCause::MissingInitializerInConst))
                 } else {
                     None
@@ -1567,15 +1567,15 @@ impl<'a> Parser<'a> {
     fn match_lexical_kind(&self) -> Option<VariableDeclarationKind> {
         match self.scanner.lookahead {
             Token::Const => Some(VariableDeclarationKind::Const),
-            Token::Ident(n) if n == *interner::RESERVED_LET => Some(VariableDeclarationKind::Let),
+            Token::Ident(n) if n == interner::RESERVED_LET => Some(VariableDeclarationKind::Let),
             _ => None
         }
     }
 
     fn lexical_kind_as_ident(&self, kind: &VariableDeclarationKind) -> Symbol {
         match *kind {
-            VariableDeclarationKind::Let => *interner::RESERVED_LET,
-            VariableDeclarationKind::Const => *interner::RESERVED_CONST,
+            VariableDeclarationKind::Let => interner::RESERVED_LET,
+            VariableDeclarationKind::Const => interner::RESERVED_CONST,
             _ => unreachable!()
         }
     }
@@ -1597,7 +1597,7 @@ impl<'a> Parser<'a> {
             let decl = self.allow_in(false, |context| Parser::parse_variable_declaration(context, VariableDeclarationKind::Var, true))?;
             if decl.declarations.len() == 1 && self.eat(Token::In)? {
                 self.parse_for_in_statement(start, ForOpInit::VarDecl(decl))
-            } else if decl.declarations.len() == 1 && decl.declarations[0].init.is_none() && self.match_contextual_keyword(*interner::RESERVED_OF) {
+            } else if decl.declarations.len() == 1 && decl.declarations[0].init.is_none() && self.match_contextual_keyword(interner::RESERVED_OF) {
                 self.scanner.next_token()?;
                 self.parse_for_of_statement(start, ForOpInit::VarDecl(decl))
             } else {
@@ -1615,7 +1615,7 @@ impl<'a> Parser<'a> {
             let decl = self.allow_in(false, |context| Parser::parse_variable_declaration(context, kind, true))?;
             if decl.declarations.len() == 1 && decl.declarations[0].init.is_none() && self.eat(Token::In)? {
                 self.parse_for_in_statement(start, ForOpInit::VarDecl(decl))
-            } else if decl.declarations.len() == 1 && decl.declarations[0].init.is_none() && self.match_contextual_keyword(*interner::RESERVED_OF) {
+            } else if decl.declarations.len() == 1 && decl.declarations[0].init.is_none() && self.match_contextual_keyword(interner::RESERVED_OF) {
                 self.scanner.next_token()?;
                 self.parse_for_of_statement(start, ForOpInit::VarDecl(decl))
             } else {
@@ -1638,7 +1638,7 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token()?;
                 let pattern = self.reinterpret_as_assign_target(init_expr).unwrap();
                 self.parse_for_in_statement(start, ForOpInit::Pattern(pattern))
-            } else if self.match_contextual_keyword(*interner::RESERVED_OF) {
+            } else if self.match_contextual_keyword(interner::RESERVED_OF) {
                 if !self.context.is_assignment_target {
                     return Err(self.error(ErrorCause::InvalidLHSForLoop))
                 };
@@ -1759,7 +1759,7 @@ impl<'a> Parser<'a> {
         let mut kind = MethodDefinitionKind::Method;
         let mut id_start = self.scanner.lookahead_start;
 
-        if self.scanner.lookahead == Token::Ident(*interner::RESERVED_STATIC) {
+        if self.scanner.lookahead == Token::Ident(interner::RESERVED_STATIC) {
             self.scanner.next_token()?;
             id_start = self.scanner.lookahead_start;
             is_static = true;
@@ -1768,10 +1768,10 @@ impl<'a> Parser<'a> {
             }
         }
 
-        if self.scanner.lookahead == Token::Ident(*interner::KEYWORD_GET) {
+        if self.scanner.lookahead == Token::Ident(interner::KEYWORD_GET) {
             self.scanner.next_token()?;
             kind = MethodDefinitionKind::Get;
-        } else if self.scanner.lookahead == Token::Ident(*interner::KEYWORD_SET) {
+        } else if self.scanner.lookahead == Token::Ident(interner::KEYWORD_SET) {
             self.scanner.next_token()?;
             kind = MethodDefinitionKind::Set;
         };
@@ -1780,7 +1780,7 @@ impl<'a> Parser<'a> {
             Some(k) => k,
             None if is_static => {
                 is_static = false;
-                PropKey::Identifier(self.finalize(start), *interner::RESERVED_STATIC)
+                PropKey::Identifier(self.finalize(start), interner::RESERVED_STATIC)
             }
             _ => {
                 return Err(self.unexpected_token(self.scanner.lookahead))
@@ -1789,14 +1789,14 @@ impl<'a> Parser<'a> {
 
         match key {
             PropKey::Identifier(_, sym) | PropKey::String(_, sym) => {
-                if !is_static && sym == *interner::RESERVED_CONSTRUCTOR {
+                if !is_static && sym == interner::RESERVED_CONSTRUCTOR {
                     if kind != MethodDefinitionKind::Method {
                         return Err(CompileError::new(id_start, ErrorCause::ConstructorSpecialMethod));
                     } else {
                         kind = MethodDefinitionKind::Constructor;
                     }
                 };
-                if is_static && sym == *interner::RESERVED_PROTOTYPE {
+                if is_static && sym == interner::RESERVED_PROTOTYPE {
                     return Err(CompileError::new(id_start, ErrorCause::StaticPrototype));
                 };
             }
@@ -1898,7 +1898,7 @@ impl<'a> Parser<'a> {
                     Err(self.unexpected_token(Token::Const))
                 }
             }
-            Token::Ident(name) if name == *interner::RESERVED_LET && allow_decl => {
+            Token::Ident(name) if name == interner::RESERVED_LET && allow_decl => {
                 let start = self.scanner.lookahead_start;
                 let state = self.scanner.save_state();
                 self.scanner.next_token()?;
