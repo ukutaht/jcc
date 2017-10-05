@@ -114,6 +114,14 @@ impl fmt::Display for Token {
             Token::OpenParen => write!(fmt, "("),
             Token::Semi => write!(fmt, ";"),
             Token::Star => write!(fmt, "*"),
+            Token::QuestionMark => write!(fmt, "?"),
+            Token::Plus => write!(fmt, "+"),
+            Token::Lte => write!(fmt, "<="),
+            Token::Arrow => write!(fmt, "=>"),
+            Token::Ellipsis => write!(fmt, "..."),
+            Token::Colon => write!(fmt, ":"),
+            Token::Eq => write!(fmt, "="),
+            Token::Const => write!(fmt, "const"),
             ref t => write!(fmt, "{:?}", t)
         }
     }
