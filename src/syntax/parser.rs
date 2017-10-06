@@ -796,11 +796,50 @@ impl<'a> Parser<'a> {
         }))
     }
 
+    fn is_start_of_expression(&self) -> bool {
+        match self.scanner.lookahead {
+            Token::Dot | Token::Ellipsis => false,
+            Token::Semi | Token::Comma => false,
+            Token::Lt | Token::Lte => false,
+            Token::Gt | Token::Gte => false,
+            Token::Eq | Token::EqEq | Token::EqEqEq => false,
+            Token::PlusEq | Token::MinusEq => false,
+            Token::Star | Token::TimesEq => false,
+            Token::Mod | Token::ModEq => false,
+            Token::LShift | Token::LShiftEq => false,
+            Token::RShift | Token::RShiftEq => false,
+            Token::URShift | Token::URShiftEq => false,
+            Token::BitAnd | Token::BitAndEq => false,
+            Token::BitOr | Token::BitOrEq => false,
+            Token::BitXor | Token::BitXorEq => false,
+            Token::LogicalAnd | Token::LogicalOr => false,
+            Token::QuestionMark | Token::Colon => false,
+            Token::Arrow => false,
+            Token::TryKeyword | Token::CatchKeyword | Token::CaseKeyword => false,
+            Token::ContinueKeyword | Token::BreakKeyword => false,
+            Token::DoKeyword | Token::WhileKeyword => false,
+            Token::If | Token::Else => false,
+            Token::Var | Token::Const => false,
+            Token::WithKeyword | Token::ThrowKeyword => false,
+            Token::FinallyKeyword => false,
+            Token::Return => false,
+            Token::In => false,
+            Token::ForKeyword => false,
+            _ => true
+        }
+    }
+
     fn parse_yield_expression(&mut self) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::YieldKeyword)?;
-        let argument = self.parse_assignment_expression()?;
-        Ok(Expression::Yield(self.finalize(start), Box::new(Some(argument)), false))
+
+        let argument = if self.is_start_of_expression() {
+            Some(self.parse_assignment_expression()?)
+        } else {
+            None
+        };
+
+        Ok(Expression::Yield(self.finalize(start), Box::new(argument), false))
     }
 
     fn parse_assignment_expression(&mut self) -> Result<Expression> {
