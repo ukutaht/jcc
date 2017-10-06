@@ -212,8 +212,8 @@ fn member_expression(node: &Value) -> Result<Expression> {
 }
 
 fn string_literal(node: &Value) -> Result<StringLiteral> {
-    let raw = interner::intern(&expect_string(node, "raw"));
-    let value = interner::intern(&expect_string(node, "value"));
+    let raw = interner::intern(expect_string(node, "raw"));
+    let value = interner::intern(expect_string(node, "value"));
     Ok(StringLiteral { span: span(node)?, raw, value })
 }
 

@@ -1383,6 +1383,7 @@ impl<'a> Parser<'a> {
         if self.eat(Token::Semi)? || self.scanner.at_newline() {
             Ok(self.finalize(start))
         } else if self.matches(Token::Eof) || self.matches(Token::CloseCurly) {
+            self.scanner.last_pos = self.scanner.lookahead_start;
             Ok(Span {
                 start: start,
                 end: self.scanner.lookahead_start
@@ -1836,7 +1837,7 @@ impl<'a> Parser<'a> {
         };
 
         match key {
-            PropKey::Identifier(Id(_, sym)) | PropKey::String(StringLiteral{span: _, raw: _, value: sym}) => {
+            PropKey::Identifier(Id(_, sym)) | PropKey::String(StringLiteral{value: sym, ..}) => {
                 if !is_static && sym == interner::RESERVED_CONSTRUCTOR {
                     if kind != MethodDefinitionKind::Method {
                         return Err(CompileError::new(id_start, ErrorCause::ConstructorSpecialMethod));

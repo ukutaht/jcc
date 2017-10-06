@@ -219,9 +219,3 @@ expression/primary/literal/regular-expression/u-flag-valid-range
 expression/primary/object/migrated_0034
 expression/primary/object/migrated_0035
 expression/primary/object/migrated_0036
-
-
-# Spans
-comment/migrated_0031
-comment/migrated_0032
-statement/switch/migrated_0002

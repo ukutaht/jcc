@@ -27,21 +27,15 @@ impl Symbol {
     }
 }
 
+#[derive(Default)]
 pub struct Interner {
     names: FnvHashMap<Box<str>, Symbol>,
     strings: Vec<Box<str>>,
 }
 
 impl Interner {
-    pub fn new() -> Self {
-        Interner {
-            names: FnvHashMap::default(),
-            strings: Vec::new()
-        }
-    }
-
     fn prefill(init: &[&str]) -> Self {
-        let mut this = Interner::new();
+        let mut this = Interner::default();
         for &string in init {
             this.intern(string);
         }
