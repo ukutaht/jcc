@@ -77,3 +77,86 @@ impl AsOperator for Token {
         }
     }
 }
+
+pub trait AsStr {
+    fn as_str(&self) -> &str;
+}
+
+impl AsStr for BinOp {
+    fn as_str(&self) -> &'static str {
+        match *self {
+            BinOp::Plus => "+",
+            BinOp::Minus => "-",
+            BinOp::Times => "*",
+            BinOp::Div => "/",
+            BinOp::Mod => "%",
+            BinOp::BitXor => "^",
+            BinOp::BitAnd => "&",
+            BinOp::BitOr => "|",
+            BinOp::LShift => "<<",
+            BinOp::RShift => ">>",
+            BinOp::URShift => ">>>",
+            BinOp::EqEq => "==",
+            BinOp::EqEqEq => "===",
+            BinOp::NotEq => "!=",
+            BinOp::NotEqEq => "!==",
+            BinOp::Lt => "<",
+            BinOp::Lte => "<=",
+            BinOp::Gt => ">",
+            BinOp::Gte => ">=",
+            BinOp::In => "in",
+            BinOp::Instanceof => "instanceof",
+        }
+    }
+}
+
+impl AsStr for UnOp {
+    fn as_str(&self) -> &'static str {
+        match *self {
+            UnOp::Not => "!",
+            UnOp::Minus => "-",
+            UnOp::Plus => "+",
+            UnOp::Tilde => "~",
+            UnOp::Void => "void",
+            UnOp::Delete => "delete",
+            UnOp::Typeof => "typeof",
+        }
+    }
+}
+
+impl AsStr for LogOp {
+    fn as_str(&self) -> &'static str {
+        match *self {
+            LogOp::AndAnd => "&&",
+            LogOp::OrOr => "||",
+        }
+    }
+}
+
+impl AsStr for UpdateOp {
+    fn as_str(&self) -> &'static str {
+        match *self {
+            UpdateOp::PlusPlus => "++",
+            UpdateOp::MinusMinus => "--",
+        }
+    }
+}
+
+impl AsStr for AssignOp {
+    fn as_str(&self) -> &'static str {
+        match *self {
+            AssignOp::Eq => "=",
+            AssignOp::TimesEq => "*=",
+            AssignOp::DivEq => "/=",
+            AssignOp::ModEq => "%=",
+            AssignOp::PlusEq => "+=",
+            AssignOp::MinusEq => "-=",
+            AssignOp::LShiftEq => "<<=",
+            AssignOp::RShiftEq => ">>=",
+            AssignOp::URShiftEq => ">>>=",
+            AssignOp::BitAndEq => "&=",
+            AssignOp::BitXorEq => "^=",
+            AssignOp::BitOrEq => "|=",
+        }
+    }
+}

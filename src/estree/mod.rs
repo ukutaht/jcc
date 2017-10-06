@@ -1,5 +1,6 @@
 use syntax::ast::*;
 use syntax::span::*;
+use syntax::ops::AsStr;
 use interner::{Symbol};
 use serde::ser::{Serialize, Serializer, SerializeMap};
 
@@ -132,30 +133,7 @@ impl Serialize for BinOp {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where S: Serializer
     {
-        let val = match *self {
-            BinOp::Plus => "+",
-            BinOp::Minus => "-",
-            BinOp::Times => "*",
-            BinOp::Div => "/",
-            BinOp::Mod => "%",
-            BinOp::BitXor => "^",
-            BinOp::BitAnd => "&",
-            BinOp::BitOr => "|",
-            BinOp::LShift => "<<",
-            BinOp::RShift => ">>",
-            BinOp::URShift => ">>>",
-            BinOp::EqEq => "==",
-            BinOp::EqEqEq => "===",
-            BinOp::NotEq => "!=",
-            BinOp::NotEqEq => "!==",
-            BinOp::Lt => "<",
-            BinOp::Lte => "<=",
-            BinOp::Gt => ">",
-            BinOp::Gte => ">=",
-            BinOp::In => "in",
-            BinOp::Instanceof => "instanceof",
-        };
-        serializer.serialize_str(val)
+        serializer.serialize_str(self.as_str())
     }
 }
 
@@ -163,16 +141,7 @@ impl Serialize for UnOp {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where S: Serializer
     {
-        let val = match *self {
-            UnOp::Not => "!",
-            UnOp::Minus => "-",
-            UnOp::Plus => "+",
-            UnOp::Tilde => "~",
-            UnOp::Void => "void",
-            UnOp::Delete => "delete",
-            UnOp::Typeof => "typeof",
-        };
-        serializer.serialize_str(val)
+        serializer.serialize_str(self.as_str())
     }
 }
 
@@ -180,11 +149,7 @@ impl Serialize for LogOp {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where S: Serializer
     {
-        let val = match *self {
-            LogOp::AndAnd => "&&",
-            LogOp::OrOr => "||",
-        };
-        serializer.serialize_str(val)
+        serializer.serialize_str(self.as_str())
     }
 }
 
@@ -192,11 +157,7 @@ impl Serialize for UpdateOp {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where S: Serializer
     {
-        let val = match *self {
-            UpdateOp::PlusPlus => "++",
-            UpdateOp::MinusMinus => "--",
-        };
-        serializer.serialize_str(val)
+        serializer.serialize_str(self.as_str())
     }
 }
 
@@ -204,21 +165,7 @@ impl Serialize for AssignOp {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where S: Serializer
     {
-        let val = match *self {
-            AssignOp::Eq => "=",
-            AssignOp::TimesEq => "*=",
-            AssignOp::DivEq => "/=",
-            AssignOp::ModEq => "%=",
-            AssignOp::PlusEq => "+=",
-            AssignOp::MinusEq => "-=",
-            AssignOp::LShiftEq => "<<=",
-            AssignOp::RShiftEq => ">>=",
-            AssignOp::URShiftEq => ">>>=",
-            AssignOp::BitAndEq => "&=",
-            AssignOp::BitXorEq => "^=",
-            AssignOp::BitOrEq => "|=",
-        };
-        serializer.serialize_str(val)
+        serializer.serialize_str(self.as_str())
     }
 }
 
