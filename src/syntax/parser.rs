@@ -48,8 +48,8 @@ impl<'a> Parser<'a> {
     }
 
     fn directive_opt(&mut self, expr: &Expression) -> Option<String> {
-        if let Expression::Literal(_, Literal::String(raw, _)) = *expr {
-            let string = interner::resolve(raw);
+        if let Expression::Literal(_, Literal::String(ref lit)) = *expr {
+            let string = interner::resolve(lit.raw);
             Some(string[1..string.len() -1].to_owned())
         } else {
             None
@@ -181,7 +181,8 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token()?;
                 self.context.is_assignment_target = false;
                 self.context.is_binding_element = false;
-                Ok(Expression::Literal(self.finalize(start), Literal::Number(n)))
+                let lit = NumberLiteral { span: self.finalize(start), value: n };
+                Ok(Expression::Literal(self.finalize(start), Literal::Number(lit)))
             }
             Token::BoolTrue => {
                 self.scanner.next_token()?;
@@ -199,11 +200,16 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token()?;
                 self.context.is_assignment_target = false;
                 self.context.is_binding_element = false;
-                Ok(Expression::Literal(self.finalize(start), Literal::String(raw, value)))
+                let lit = StringLiteral {
+                    span: self.finalize(start),
+                    raw,
+                    value
+                };
+                Ok(Expression::Literal(self.finalize(start), Literal::String(lit)))
             }
             Token::Ident(n) => {
                 self.scanner.next_token()?;
-                Ok(Expression::Identifier(self.finalize(start), n))
+                Ok(Expression::Identifier(Id(self.finalize(start), n)))
             }
             Token::OpenSquare => self.inherit_cover_grammar(Parser::parse_array_initializer),
             Token::OpenCurly => self.inherit_cover_grammar(Parser::parse_object_initializer),
@@ -215,7 +221,7 @@ impl<'a> Parser<'a> {
                 self.context.is_assignment_target = false;
                 self.context.is_binding_element = false;
                 let fun = self.parse_function()?;
-                Ok(Expression::Function(self.finalize(start), fun))
+                Ok(Expression::Function(fun))
             },
             Token::ClassKeyword => {
                 self.context.is_assignment_target = false;
@@ -244,7 +250,7 @@ impl<'a> Parser<'a> {
             Token::YieldKeyword => {
                 if !self.context.strict && !self.context.allow_yield {
                     self.scanner.next_token()?;
-                    Ok(Expression::Identifier(self.finalize(start), interner::KEYWORD_YIELD))
+                    Ok(Expression::Identifier(Id(self.finalize(start), interner::KEYWORD_YIELD)))
                 } else {
                     Err(self.unexpected_token(Token::YieldKeyword))
                 }
@@ -374,11 +380,12 @@ impl<'a> Parser<'a> {
         Ok(Expression::New(self.finalize(start), Box::new(base), args))
     }
 
-    fn expect_identifier_name(&mut self) -> Result<Symbol> {
+    fn expect_identifier_name(&mut self) -> Result<Id> {
+        let start = self.scanner.lookahead_start;
         match self.match_identifier_name() {
             Some(ident) => {
                 self.scanner.next_token()?;
-                Ok(ident)
+                Ok(Id(self.finalize(start), ident))
             }
             None => Err(self.error(ErrorCause::UnexpectedToken(self.scanner.lookahead)))
         }
@@ -438,14 +445,26 @@ impl<'a> Parser<'a> {
                     let expr = self.isolate_cover_grammar(Parser::parse_expression)?;
                     self.expect(Token::CloseSquare)?;
                     let span = self.finalize(start);
-                    result = Expression::ComputedMember(span, Box::new(result), Box::new(expr));
+                    result = Expression::Member(Box::new(Member {
+                        span,
+                        object: result,
+                        property: expr,
+                        computed: true
+                    }));
                 },
                 Token::Dot => {
                     self.context.is_binding_element = false;
                     self.context.is_assignment_target = true;
                     self.scanner.next_token()?;
-                    let identifier_name = self.expect_identifier_name()?;
-                    result = Expression::StaticMember(self.finalize(start), Box::new(result), identifier_name)
+                    let id = self.expect_identifier_name()?;
+                    let prop = Expression::Identifier(id);
+                    let span = self.finalize(start);
+                    result = Expression::Member(Box::new(Member {
+                        span,
+                        object: result,
+                        property: prop,
+                        computed: false
+                    }));
 
                 }
                 _ => break,
@@ -461,7 +480,7 @@ impl<'a> Parser<'a> {
             self.scanner.next_token()?;
             let expr = self.inherit_cover_grammar(Parser::parse_unary_expression)?;
             if self.context.strict && prefix == UnOp::Delete {
-                if let Expression::Identifier(_, _) = expr {
+                if let Expression::Identifier(_) = expr {
                     return Err(self.error(ErrorCause::UnqualifiedDelete))
                 }
             }
@@ -474,8 +493,8 @@ impl<'a> Parser<'a> {
     }
 
     fn check_reserved_expr_at(&self, expr: &Expression, pos: Option<Position>, cause: ErrorCause) -> Result<()> {
-        if let Expression::Identifier(ref sp, s) = *expr {
-            self.check_reserved_at(s, pos.unwrap_or(sp.start), cause)?;
+        if let Expression::Identifier(ref id) = *expr {
+            self.check_reserved_at(id.1, pos.unwrap_or(id.0.start), cause)?;
         }
         Ok(())
     }
@@ -619,7 +638,7 @@ impl<'a> Parser<'a> {
 
     fn reinterpret_as_pattern(&self, expr: Expression) -> Option<Pattern<Id>> {
         match expr {
-            Expression::Identifier(sp, id) => Some(Pattern::Simple(Id(sp, id))),
+            Expression::Identifier(id) => Some(Pattern::Simple(id)),
             Expression::Assignment(sp, _, left, right) => {
                 match *left {
                     Pattern::Simple(AssignTarget::Id(id)) => {
@@ -678,9 +697,8 @@ impl<'a> Parser<'a> {
 
     fn reinterpret_as_assign_target(&self, expr: Expression) -> Option<Pattern<AssignTarget>> {
         match expr {
-            Expression::StaticMember(sp, l, r) => Some(Pattern::Simple(AssignTarget::StaticMember(sp, *l, r))),
-            Expression::ComputedMember(sp, l, r) => Some(Pattern::Simple(AssignTarget::ComputedMember(sp, *l, *r))),
-            Expression::Identifier(sp, id) => Some(Pattern::Simple(AssignTarget::Id(Id(sp, id)))),
+            Expression::Member(member) => Some(Pattern::Simple(AssignTarget::Member(*member))),
+            Expression::Identifier(id) => Some(Pattern::Simple(AssignTarget::Id(id))),
             Expression::Assignment(sp, _op, left, right) => Some(Pattern::Assignment(sp, left, *right)),
             Expression::Array(sp, exprs) => {
                 let mut result = Vec::new();
@@ -721,7 +739,7 @@ impl<'a> Parser<'a> {
                         }
                         Prop::Shorthand(sp, id) => {
                             let val_pattern = Pattern::Simple(AssignTarget::Id(id.clone()));
-                            let key = PropKey::Identifier(id.0, id.1);
+                            let key = PropKey::Identifier(id);
                             PropPattern { span: sp, key: key, value: val_pattern, shorthand: true }
                         }
                         _ => return None
@@ -771,7 +789,8 @@ impl<'a> Parser<'a> {
 
         self.validate_params(&params, Some(self.scanner.last_pos))?;
 
-        Ok(Expression::ArrowFunction(self.finalize(start), ArrowFunction {
+        Ok(Expression::ArrowFunction(ArrowFunction {
+            span: self.finalize(start),
             body: body,
             parameters: params
         }))
@@ -795,7 +814,7 @@ impl<'a> Parser<'a> {
         if self.scanner.lookahead == Token::Arrow {
             // Arrow function without parantheses e.g.
             // a => { something(a) }
-            if let Expression::Identifier(_, _) = left {
+            if let Expression::Identifier(_) = left {
                 let params = vec![self.reinterpret_as_pattern(left).unwrap()];
                 self.parse_arrow_function(start, params)
             } else {
@@ -859,13 +878,19 @@ impl<'a> Parser<'a> {
         let start = self.scanner.lookahead_start;
 
         match self.scanner.lookahead {
-            Token::String(_, val) => {
+            Token::String(raw, value) => {
                 self.scanner.next_token()?;
-                Ok(Some(PropKey::String(self.finalize(start), val)))
+                let lit = StringLiteral {
+                    span: self.finalize(start),
+                    raw,
+                    value
+                };
+                Ok(Some(PropKey::String(lit)))
             }
-            Token::Number(n) => {
+            Token::Number(value) => {
                 self.scanner.next_token()?;
-                Ok(Some(PropKey::Number(self.finalize(start), n)))
+                let lit = NumberLiteral {span: self.finalize(start), value};
+                Ok(Some(PropKey::Number(lit)))
             },
             Token::OpenSquare => {
                 self.scanner.next_token()?;
@@ -874,9 +899,10 @@ impl<'a> Parser<'a> {
                 Ok(Some(PropKey::Computed(expr)))
             },
             _ => {
+                let id_start = self.scanner.lookahead_start;
                 if let Some(name) = self.match_identifier_name() {
                     self.scanner.next_token()?;
-                    Ok(Some(PropKey::Identifier(self.finalize(start), name)))
+                    Ok(Some(PropKey::Identifier(Id(self.finalize(id_start), name))))
                 } else {
                     Ok(None)
                 }
@@ -885,6 +911,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_property_method(&mut self, start: Position, key: PropKey, generator: bool) -> Result<Prop> {
+        let function_start = self.scanner.lookahead_start;
         let params = self.parse_function_parameters()?;
         self.context.is_assignment_target = false;
         self.context.is_binding_element = false;
@@ -892,7 +919,12 @@ impl<'a> Parser<'a> {
         let previous_strict = self.context.strict;
         self.validate_params(&params, None)?;
         let block = self.parse_function_source_elements()?;
-        let value = Function { id: None, body: block, parameters: params, generator };
+        let value = Function {
+            id: None,
+            span: self.finalize(function_start),
+            body: block,
+            parameters: params,
+            generator };
         self.context.strict = previous_strict;
         Ok(Prop::Method(self.finalize(start), key, value))
     }
@@ -903,17 +935,17 @@ impl<'a> Parser<'a> {
             Ok(Prop::Init(self.finalize(start), key, value))
         } else if self.matches(Token::OpenParen) {
             self.parse_property_method(start, key, generator)
-        } else if let PropKey::Identifier(ref sp, ref id) = key {
+        } else if let PropKey::Identifier(ref id) = key {
             if self.scanner.lookahead == Token::Eq {
                 self.context.first_cover_initialized_name_error = Some((self.scanner.lookahead, self.scanner.lookahead_start));
                 self.scanner.next_token()?;
-                let key = PropKey::Identifier(sp.clone(), *id);
+                let key = PropKey::Identifier(id.clone());
                 let init = self.isolate_cover_grammar(Parser::parse_assignment_expression)?;
-                let pat = Pattern::Simple(AssignTarget::Id(Id(sp.clone(), *id)));
+                let pat = Pattern::Simple(AssignTarget::Id(id.clone()));
                 let value = Expression::Assignment(self.finalize(start), AssignOp::Eq, Box::new(pat), Box::new(init));
                 Ok(Prop::CoverInitializedName(self.finalize(start), key, value))
             } else {
-                Ok(Prop::Shorthand(self.finalize(start), Id(sp.clone(), *id)))
+                Ok(Prop::Shorthand(self.finalize(start), id.clone()))
             }
         } else {
             Err(self.unexpected_token(self.scanner.lookahead))
@@ -921,6 +953,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_function_source_elements(&mut self) -> Result<Block> {
+        let start = self.scanner.lookahead_start;
         let old_in_function_body = std::mem::replace(&mut self.context.in_function_body, true);
         let old_labels = std::mem::replace(&mut self.context.labels, HashSet::new());
         let old_in_switch = std::mem::replace(&mut self.context.in_switch, false);
@@ -938,7 +971,7 @@ impl<'a> Parser<'a> {
         std::mem::replace(&mut self.context.labels, old_labels);
         std::mem::replace(&mut self.context.in_switch, old_in_switch);
         std::mem::replace(&mut self.context.in_iteration, old_in_iteration);
-        Ok(Block(statements))
+        Ok(Block(self.finalize(start), statements))
     }
 
     fn parse_object_property(&mut self) -> Result<Prop> {
@@ -947,30 +980,34 @@ impl<'a> Parser<'a> {
         if self.scanner.lookahead == Token::Ident(interner::KEYWORD_GET) {
             self.scanner.next_token()?;
             if let Some(key) = self.match_object_property_key()? {
+                let fun_start = self.scanner.lookahead_start;
                 let previous_strict = self.context.strict;
                 let parameters = self.parse_function_parameters()?;
                 self.validate_params(&parameters, None)?;
                 let block = self.parse_function_source_elements()?;
-                let value = Function { id: None, body: block, parameters: parameters, generator: false };
+                let value = Function { id: None, span: self.finalize(fun_start), body: block, parameters: parameters, generator: false };
                 self.context.strict = previous_strict;
                 Ok(Prop::Get(self.finalize(start), key, value))
             } else {
                 let span = self.finalize(start);
-                self.parse_prop_init(start, PropKey::Identifier(span, interner::KEYWORD_GET), false)
+                let id = Id(span, interner::KEYWORD_GET);
+                self.parse_prop_init(start, PropKey::Identifier(id), false)
             }
         } else if self.scanner.lookahead == Token::Ident(interner::KEYWORD_SET) {
             self.scanner.next_token()?;
             if let Some(key) = self.match_object_property_key()? {
+                let fun_start = self.scanner.lookahead_start;
                 let previous_strict = self.context.strict;
                 let parameters = self.parse_function_parameters()?;
                 self.validate_params(&parameters, None)?;
                 let block = self.parse_function_source_elements()?;
-                let value = Function { id: None, body: block, parameters: parameters, generator: false };
+                let value = Function { id: None, span: self.finalize(fun_start), body: block, parameters: parameters, generator: false };
                 self.context.strict = previous_strict;
                 Ok(Prop::Set(self.finalize(start), key, value))
             } else {
                 let span = self.finalize(start);
-                self.parse_prop_init(start, PropKey::Identifier(span, interner::KEYWORD_SET), false)
+                let id = Id(span, interner::KEYWORD_SET);
+                self.parse_prop_init(start, PropKey::Identifier(id), false)
             }
         } else {
             let generator = self.eat(Token::Star)?;
@@ -986,7 +1023,7 @@ impl<'a> Parser<'a> {
     fn check_duplicate_proto(&self, has_proto: bool, prop: &Prop) -> Result<bool> {
         if let Prop::Init(_, ref key, _) = *prop {
             match *key {
-                PropKey::Identifier(ref span, s) => {
+                PropKey::Identifier(Id(ref span, s)) => {
                     if s == interner::KEYWORD_PROTO {
                         if has_proto {
                             return Err(CompileError::new(span.end, ErrorCause::DuplicateProto))
@@ -995,10 +1032,10 @@ impl<'a> Parser<'a> {
                         }
                     }
                 }
-                PropKey::String(ref span, s) => {
-                    if s == interner::KEYWORD_PROTO {
+                PropKey::String(ref lit) => {
+                    if lit.value == interner::KEYWORD_PROTO {
                         if has_proto {
-                            return Err(CompileError::new(span.end, ErrorCause::DuplicateProto))
+                            return Err(CompileError::new(lit.span.end, ErrorCause::DuplicateProto))
                         } else {
                             return Ok(true);
                         }
@@ -1074,19 +1111,19 @@ impl<'a> Parser<'a> {
                 let pat = Pattern::Simple(Id(self.finalize(start), name));
                 Ok(PropPattern {
                     span: self.finalize(start),
-                    key: PropKey::Identifier(self.finalize(start), name),
+                    key: PropKey::Identifier(Id(self.finalize(start), name)),
                     value: Pattern::Assignment(self.finalize(start), Box::new(pat), expr),
                     shorthand: true
                 })
             } else if self.scanner.lookahead != Token::Colon {
                 Ok(PropPattern {
                     span: self.finalize(start),
-                    key: PropKey::Identifier(self.finalize(start), name),
+                    key: PropKey::Identifier(Id(self.finalize(start), name)),
                     value: Pattern::Simple(Id(self.finalize(start), name)),
                     shorthand: true
                 })
             } else {
-                let key = PropKey::Identifier(self.finalize(start), name);
+                let key = PropKey::Identifier(Id(self.finalize(start), name));
                 self.expect(Token::Colon)?;
                 let val = self.parse_pattern(true, kind)?;
                 Ok(PropPattern {
@@ -1184,16 +1221,17 @@ impl<'a> Parser<'a> {
             }
         };
 
-        Ok(VariableDeclarator {id, init})
+        Ok(VariableDeclarator {span: self.finalize(start), id, init})
     }
 
-    fn parse_variable_declaration(&mut self, kind: VariableDeclarationKind, in_for: bool) -> Result<VariableDeclaration> {
+    fn parse_variable_declaration(&mut self, start: Position, kind: VariableDeclarationKind, in_for: bool) -> Result<VariableDeclaration> {
         let mut declarators = Vec::new();
         declarators.push(self.parse_variable_declarator(kind, in_for)?);
         while self.eat(Token::Comma)? {
             declarators.push(self.parse_variable_declarator(kind, in_for)?)
         }
         Ok(VariableDeclaration {
+            span: self.finalize(start),
             kind: kind,
             declarations: declarators
         })
@@ -1202,8 +1240,10 @@ impl<'a> Parser<'a> {
     fn parse_variable_statement(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::Var)?;
-        let declaration = self.parse_variable_declaration(VariableDeclarationKind::Var, false)?;
-        Ok(Statement::VariableDeclaration(self.consume_semicolon(start)?, declaration))
+        let mut declaration = self.parse_variable_declaration(start, VariableDeclarationKind::Var, false)?;
+        let span = self.consume_semicolon(start)?;
+        declaration.span = span;
+        Ok(Statement::VariableDeclaration(declaration))
     }
 
     fn parse_function_parameters(&mut self) -> Result<Vec<Pattern<Id>>> {
@@ -1279,6 +1319,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_function(&mut self) -> Result<Function> {
+        let start = self.scanner.lookahead_start;
         let mut generator = false;
         self.expect(Token::FunctionKeyword)?;
 
@@ -1316,7 +1357,7 @@ impl<'a> Parser<'a> {
         self.context.strict = previous_strict;
         self.context.allow_yield = previous_allow_yield;
 
-        Ok(Function { id: id, body: block, parameters, generator })
+        Ok(Function { id: id, span: self.finalize(start), body: block, parameters, generator })
     }
 
     fn parse_expression(&mut self) -> Result<Expression> {
@@ -1365,6 +1406,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_if_statement(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
         self.expect(Token::If)?;
         self.expect(Token::OpenParen)?;
         let test = self.parse_expression()?;
@@ -1378,7 +1420,7 @@ impl<'a> Parser<'a> {
             _ => None
         };
 
-        Ok(Statement::If(test, Box::new(then), alternate))
+        Ok(Statement::If(self.finalize(start), test, Box::new(then), alternate))
     }
 
     fn parse_return_statement(&mut self) -> Result<Statement> {
@@ -1416,13 +1458,14 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_catch_clause(&mut self) -> Result<CatchClause> {
+        let start = self.scanner.lookahead_start;
         self.expect(Token::CatchKeyword)?;
         self.expect(Token::OpenParen)?;
         let param = self.parse_pattern(false, VariableDeclarationKind::Var)?;
         self.check_reserved_pat_at(&param, self.scanner.last_pos, ErrorCause::RestrictedVarNameInCatch)?;
         self.expect(Token::CloseParen)?;
         let body = self.parse_block()?;
-        Ok(CatchClause { param: param, body: body })
+        Ok(CatchClause { span: self.finalize(start), param: param, body: body })
     }
 
     fn parse_try_statement(&mut self) -> Result<Statement> {
@@ -1448,6 +1491,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_switch_case(&mut self) -> Result<SwitchCase> {
+        let start = self.scanner.lookahead_start;
         let test = if self.eat(Token::DefaultKeyword)? {
             None
         } else {
@@ -1463,10 +1507,10 @@ impl<'a> Parser<'a> {
                     || self.matches(Token::CaseKeyword) {
                         break;
                     };
-            consequent.push(self.parse_statement_list_item()?);
+            consequent.push(self.parse_statement(true)?);
         };
 
-        Ok(SwitchCase { test: test, consequent: Block(consequent) })
+        Ok(SwitchCase { span: self.finalize(start), test: test, consequent: consequent })
     }
 
     fn parse_switch_statement(&mut self) -> Result<Statement> {
@@ -1591,10 +1635,11 @@ impl<'a> Parser<'a> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::ForKeyword)?;
         self.expect(Token::OpenParen)?;
+        let init_start = self.scanner.lookahead_start;
         if self.eat(Token::Semi)? {
             self.parse_for_iter_statement(start, None)
         } else if self.eat(Token::Var)? {
-            let decl = self.allow_in(false, |context| Parser::parse_variable_declaration(context, VariableDeclarationKind::Var, true))?;
+            let decl = self.allow_in(false, |context| Parser::parse_variable_declaration(context, init_start, VariableDeclarationKind::Var, true))?;
             if decl.declarations.len() == 1 && self.eat(Token::In)? {
                 self.parse_for_in_statement(start, ForOpInit::VarDecl(decl))
             } else if decl.declarations.len() == 1 && decl.declarations[0].init.is_none() && self.match_contextual_keyword(interner::RESERVED_OF) {
@@ -1605,14 +1650,13 @@ impl<'a> Parser<'a> {
                 self.parse_for_iter_statement(start, Some(ForInit::VarDecl(decl)))
             }
         } else if let Some(kind) = self.match_lexical_kind() {
-            let init_start = self.scanner.lookahead_start;
             self.scanner.next_token()?;
             if !self.context.strict && self.scanner.lookahead == Token::In {
                 let init = ForOpInit::Pattern(Pattern::Simple(AssignTarget::Id(Id(self.finalize(init_start), self.lexical_kind_as_ident(&kind)))));
                 self.scanner.next_token()?;
                 return self.parse_for_in_statement(start, init)
             }
-            let decl = self.allow_in(false, |context| Parser::parse_variable_declaration(context, kind, true))?;
+            let mut decl = self.allow_in(false, |context| Parser::parse_variable_declaration(context, init_start, kind, true))?;
             if decl.declarations.len() == 1 && decl.declarations[0].init.is_none() && self.eat(Token::In)? {
                 self.parse_for_in_statement(start, ForOpInit::VarDecl(decl))
             } else if decl.declarations.len() == 1 && decl.declarations[0].init.is_none() && self.match_contextual_keyword(interner::RESERVED_OF) {
@@ -1620,10 +1664,10 @@ impl<'a> Parser<'a> {
                 self.parse_for_of_statement(start, ForOpInit::VarDecl(decl))
             } else {
                 self.expect(Token::Semi)?;
+                decl.span = self.finalize(init_start);
                 self.parse_for_iter_statement(start, Some(ForInit::VarDecl(decl)))
             }
         } else {
-            let init_start = self.scanner.lookahead_start;
             let previous_allow_in = std::mem::replace(&mut self.context.allow_in, false);
             let mut init_expr = self.inherit_cover_grammar(Parser::parse_assignment_expression)?;
             self.context.allow_in = previous_allow_in;
@@ -1743,13 +1787,17 @@ impl<'a> Parser<'a> {
     fn parse_const_declaration(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::Const)?;
-        let declaration = self.parse_variable_declaration(VariableDeclarationKind::Const, false)?;
-        Ok(Statement::VariableDeclaration(self.consume_semicolon(start)?, declaration))
+        let mut declaration = self.parse_variable_declaration(start, VariableDeclarationKind::Const, false)?;
+        let span = self.consume_semicolon(start)?;
+        declaration.span = span;
+        Ok(Statement::VariableDeclaration(declaration))
     }
 
     fn parse_let_declaration(&mut self, start: Position) -> Result<Statement> {
-        let declaration = self.parse_variable_declaration(VariableDeclarationKind::Let, false)?;
-        Ok(Statement::VariableDeclaration(self.consume_semicolon(start)?, declaration))
+        let mut declaration = self.parse_variable_declaration(start, VariableDeclarationKind::Let, false)?;
+        let span = self.consume_semicolon(start)?;
+        declaration.span = span;
+        Ok(Statement::VariableDeclaration(declaration))
     }
 
     fn parse_method_definition(&mut self) -> Result<MethodDefinition> {
@@ -1780,7 +1828,7 @@ impl<'a> Parser<'a> {
             Some(k) => k,
             None if is_static => {
                 is_static = false;
-                PropKey::Identifier(self.finalize(start), interner::RESERVED_STATIC)
+                PropKey::Identifier(Id(self.finalize(start), interner::RESERVED_STATIC))
             }
             _ => {
                 return Err(self.unexpected_token(self.scanner.lookahead))
@@ -1788,7 +1836,7 @@ impl<'a> Parser<'a> {
         };
 
         match key {
-            PropKey::Identifier(_, sym) | PropKey::String(_, sym) => {
+            PropKey::Identifier(Id(_, sym)) | PropKey::String(StringLiteral{span: _, raw: _, value: sym}) => {
                 if !is_static && sym == interner::RESERVED_CONSTRUCTOR {
                     if kind != MethodDefinitionKind::Method {
                         return Err(CompileError::new(id_start, ErrorCause::ConstructorSpecialMethod));
@@ -1803,10 +1851,11 @@ impl<'a> Parser<'a> {
             _ => {}
         };
 
+        let fun_start = self.scanner.lookahead_start;
         let parameters = self.parse_function_parameters()?;
         self.validate_params(&parameters, None)?;
         let body = self.parse_function_source_elements()?;
-        let function = Function { id: None, parameters, body, generator };
+        let function = Function { id: None, span: self.finalize(fun_start), parameters, body, generator };
 
         Ok(MethodDefinition {
             loc: self.finalize(start),
@@ -1817,7 +1866,8 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_class_body(&mut self) -> Result<Vec<MethodDefinition>> {
+    fn parse_class_body(&mut self) -> Result<ClassBody> {
+        let start = self.scanner.lookahead_start;
         let mut elems = Vec::new();
         self.expect(Token::OpenCurly)?;
 
@@ -1830,7 +1880,7 @@ impl<'a> Parser<'a> {
         }
 
         self.expect(Token::CloseCurly)?;
-        Ok(elems)
+        Ok(ClassBody(self.finalize(start), elems))
     }
 
     fn parse_class(&mut self, allow_anonymous: bool) -> Result<ClassDecl> {
@@ -1871,7 +1921,7 @@ impl<'a> Parser<'a> {
             Token::If => self.parse_if_statement(),
             Token::OpenCurly => {
                 let block = self.parse_block()?;
-                Ok(Statement::Block(self.finalize(start), block))
+                Ok(Statement::Block(block))
             },
             Token::Semi => {
                 self.scanner.next_token()?;
@@ -1928,7 +1978,7 @@ impl<'a> Parser<'a> {
 
     fn as_id(&self, expr: &Expression) -> Option<Id> {
         match *expr {
-            Expression::Identifier(ref sp, id) => Some(Id(sp.clone(), id)),
+            Expression::Identifier(ref id) => Some(id.clone()),
             _ => None
         }
     }
@@ -1939,6 +1989,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_block(&mut self) -> Result<Block> {
+        let start = self.scanner.lookahead_start;
         self.expect(Token::OpenCurly)?;
         let mut statements = Vec::new();
 
@@ -1947,7 +1998,7 @@ impl<'a> Parser<'a> {
         }
 
         self.expect(Token::CloseCurly)?;
-        Ok(Block(statements))
+        Ok(Block(self.finalize(start), statements))
     }
 
     fn expect_because(&mut self, expected: Token, cause: ErrorCause) -> Result<Token> {

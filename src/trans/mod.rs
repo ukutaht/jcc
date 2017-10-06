@@ -12,15 +12,15 @@ pub fn transpile<W: Write>(out: &mut W, program: &Program) -> Result<()> {
 pub fn transpile_expression<W: Write>(out: &mut W, expr: &Expression) -> Result<()> {
     match *expr {
         Expression::Literal(_, ref lit) => transpile_literal(out, lit),
-        Expression::Identifier(_, name) => transpile_ident(out, name.as_str()),
+        Expression::Identifier(ref id) => transpile_ident(out, id.1.as_str()),
         Expression::Array(_, ref elements) => transpile_array(out, elements),
         Expression::Call(_, ref callee, ref arguments) => transpile_call(out, &*callee, arguments),
         Expression::New(_, ref callee, ref arguments) => transpile_new(out, &*callee, arguments),
         Expression::Binary(_, ref op, ref left, ref right) => transpile_binop(out, op, &*left, &*right),
         Expression::Logical(_, ref op, ref left, ref right) => transpile_logop(out, op, &*left, &*right),
-        Expression::StaticMember(_, ref object, property) => transpile_static_member(out, &*object, property.as_str()),
+        Expression::Member(ref member) => transpile_member(out, member),
         Expression::Unary(_, ref op, ref expr) => transpile_unary_operator(out, op, &*expr),
-        Expression::Function(_, ref func) => transpile_function(out, func),
+        Expression::Function(ref func) => transpile_function(out, func),
         ref e => panic!("Cannot trans: {:?}", e)
     }
 }
@@ -38,9 +38,13 @@ fn transpile_unary_operator<W: Write>(out: &mut W, operator: &UnOp, expr: &Expre
     transpile_expression(out, expr)
 }
 
-fn transpile_static_member<W: Write>(out: &mut W, base: &Expression, property: &str) -> Result<()> {
-    try!(transpile_expression(out, base));
-    write!(out, ".{}", property)
+fn transpile_member<W: Write>(out: &mut W, member: &Member) -> Result<()> {
+    if member.computed {
+        unimplemented!()
+    };
+    transpile_expression(out, &member.object)?;
+    write!(out, ".")?;
+    transpile_expression(out, &member.property)
 }
 
 fn transpile_binop<W: Write>(out: &mut W, op: &BinOp, left: &Expression, right: &Expression) -> Result<()> {
@@ -182,10 +186,10 @@ fn transpile_statement<W: Write>(out: &mut W, statement: &Statement) -> Result<(
     match *statement {
         Statement::Expression(_, ref e) => transpile_expression(out, e),
         Statement::Directive(_, ref e, _) => transpile_expression(out, e),
-        Statement::VariableDeclaration(_, ref dec) => transpile_variable_declaration(out, dec),
+        Statement::VariableDeclaration(ref dec) => transpile_variable_declaration(out, dec),
         Statement::FunctionDeclaration(ref dec) => transpile_function(out, dec),
-        Statement::Block(_, ref b) => transpile_block(out, b),
-        Statement::If(ref e, ref then, ref alternate) => transpile_if(out, e, then, alternate),
+        Statement::Block(ref b) => transpile_block(out, b),
+        Statement::If(_, ref e, ref then, ref alternate) => transpile_if(out, e, then, alternate),
         _ => panic!("Unknown statement")
     }
 }
@@ -215,7 +219,7 @@ fn transpile_statement_list_item<W: Write>(out: &mut W, item: &StatementListItem
 
 fn transpile_block<W: Write>(out: &mut W, block: &Block) -> Result<()> {
     write!(out, "{{ ")?;
-    for item in &block.0 {
+    for item in &block.1 {
         try!(transpile_statement_list_item(out, item))
     }
     write!(out, " }}")
@@ -223,8 +227,8 @@ fn transpile_block<W: Write>(out: &mut W, block: &Block) -> Result<()> {
 
 fn transpile_literal<W: Write>(out: &mut W, lit: &Literal) -> Result<()> {
     match *lit {
-        Literal::Number(num) => write!(out, "{}", num),
-        Literal::String(raw, _) => write!(out, "{}", raw),
+        Literal::Number(ref num) => write!(out, "{}", num.value),
+        Literal::String(ref lit) => write!(out, "{}", lit.raw),
         Literal::Null => write!(out, "null"),
         Literal::True => write!(out, "true"),
         Literal::False => write!(out, "false"),

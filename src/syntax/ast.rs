@@ -2,9 +2,22 @@ use syntax::span::Span;
 use interner::Symbol;
 
 #[derive(Debug, PartialEq)]
+pub struct StringLiteral {
+    pub span: Span,
+    pub raw: Symbol,
+    pub value: Symbol
+}
+
+#[derive(Debug, PartialEq)]
+pub struct NumberLiteral {
+    pub span: Span,
+    pub value: f64
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Literal {
-    Number(f64),
-    String(Symbol, Symbol),
+    Number(NumberLiteral),
+    String(StringLiteral),
     Regex(Symbol, Vec<char>),
     Null,
     True,
@@ -109,14 +122,15 @@ pub enum AssignOp {
 
 #[derive(Debug, PartialEq)]
 pub enum PropKey {
-    Identifier(Span, Symbol),
-    String(Span, Symbol),
-    Number(Span, f64),
+    Identifier(Id),
+    String(StringLiteral),
+    Number(NumberLiteral),
     Computed(Expression),
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Prop {
+    // Only used during parsing, should never leak out of the parser
     CoverInitializedName(Span, PropKey, Expression),
     Init(Span, PropKey, Expression),
     Method(Span, PropKey, Function),
@@ -126,10 +140,17 @@ pub enum Prop {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct Member {
+    pub span: Span,
+    pub object: Expression,
+    pub property: Expression,
+    pub computed: bool
+}
+
+#[derive(Debug, PartialEq)]
 pub enum AssignTarget {
     Id(Id),
-    ComputedMember(Span, Expression, Expression),
-    StaticMember(Span, Expression, Symbol),
+    Member(Member),
 }
 
 #[derive(Debug, PartialEq)]
@@ -140,18 +161,17 @@ pub enum Expression {
     Assignment(Span, AssignOp, Box<Pattern<AssignTarget>>, Box<Expression>),
     Binary(Span, BinOp, Box<Expression>, Box<Expression>),
     Call(Span, Box<Expression>, Vec<ArgumentListElement>),
-    ComputedMember(Span, Box<Expression>, Box<Expression>),
-    Function(Span, Function),
-    Identifier(Span, Symbol),
+    Member(Box<Member>),
+    Function(Function),
+    Identifier(Id),
     Literal(Span, Literal),
     Logical(Span, LogOp, Box<Expression>, Box<Expression>),
     New(Span, Box<Expression>, Vec<ArgumentListElement>),
-    StaticMember(Span, Box<Expression>, Symbol),
     Unary(Span, UnOp, Box<Expression>),
     Update(Span, UpdateOp, Box<Expression>, bool),
     Sequence(Span, Vec<Expression>),
     This(Span),
-    ArrowFunction(Span, ArrowFunction),
+    ArrowFunction(ArrowFunction),
     Class(Span, Box<ClassDecl>),
     Yield(Span, Box<Option<Expression>>, bool)
 }
@@ -190,12 +210,23 @@ pub enum ArrowFunctionBody {
 
 #[derive(Debug, PartialEq)]
 pub struct ArrowFunction {
+    pub span: Span,
     pub body: ArrowFunctionBody,
     pub parameters: Vec<Pattern<Id>>,
 }
 
+impl ArrowFunction {
+    pub fn is_expression(&self) -> bool {
+        match self.body {
+            ArrowFunctionBody::Expression(_) => true,
+            _ => false
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub struct Function {
+    pub span: Span,
     pub id: Option<Symbol>,
     pub body: Block,
     pub parameters: Vec<Pattern<Id>>,
@@ -204,14 +235,16 @@ pub struct Function {
 
 #[derive(Debug, PartialEq)]
 pub struct CatchClause {
+    pub span: Span,
     pub param: Pattern<Id>,
     pub body: Block,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct SwitchCase {
+    pub span: Span,
     pub test: Option<Expression>,
-    pub consequent: Block
+    pub consequent: Vec<Statement>
 }
 
 #[derive(Debug, PartialEq)]
@@ -254,20 +287,23 @@ pub struct MethodDefinition {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct ClassBody(pub Span, pub Vec<MethodDefinition>);
+
+#[derive(Debug, PartialEq)]
 pub struct ClassDecl {
     pub id: Option<Id>,
     pub super_class: Option<Expression>,
-    pub body: Vec<MethodDefinition>
+    pub body: ClassBody
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Statement {
     Expression(Span, Expression),
-    VariableDeclaration(Span, VariableDeclaration),
+    VariableDeclaration(VariableDeclaration),
     FunctionDeclaration(Function),
     ClassDeclaration(Span, ClassDecl),
-    If(Expression, Box<Statement>, Option<Box<Statement>>),
-    Block(Span, Block),
+    If(Span, Expression, Box<Statement>, Option<Box<Statement>>),
+    Block(Block),
     Return(Span, Option<Expression>),
     Debugger(Span),
     Empty(Span),
@@ -297,17 +333,19 @@ pub enum VariableDeclarationKind { Var, Let, Const }
 
 #[derive(Debug, PartialEq)]
 pub struct VariableDeclarator {
+    pub span: Span,
     pub id: Pattern<Id>,
     pub init: Option<Expression>,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct VariableDeclaration {
+    pub span: Span,
     pub kind: VariableDeclarationKind,
     pub declarations: Vec<VariableDeclarator>,
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Block(pub Vec<StatementListItem>);
+pub struct Block(pub Span, pub Vec<StatementListItem>);
 #[derive(Debug, PartialEq)]
 pub struct Program(pub Vec<StatementListItem>);

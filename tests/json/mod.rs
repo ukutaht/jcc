@@ -131,15 +131,12 @@ fn assign_target(node: &Value) -> Result<Pattern<AssignTarget>> {
             Ok(Pattern::Object(span(node)?, props))
         }
         "MemberExpression" => {
-            if expect_bool(node, "computed") {
-                let left = expression(expect_value(node, "object"))?;
-                let right = expression(expect_value(node, "property"))?;
-                Ok(Pattern::Simple(AssignTarget::ComputedMember(span(node)?, left, right)))
-            } else {
-                let left = expression(expect_value(node, "object"))?;
-                let right = interner::intern(expect_string(expect_value(node, "property"), "name"));
-                Ok(Pattern::Simple(AssignTarget::StaticMember(span(node)?, left, right)))
-            }
+            let object = expression(expect_value(node, "object"))?;
+            let property = expression(expect_value(node, "property"))?;
+            let computed = expect_bool(node, "computed");
+            Ok(Pattern::Simple(AssignTarget::Member(Member {
+                span: span(node)?, object, property, computed
+            })))
         }
         _ => Err(())
     }
@@ -206,20 +203,25 @@ fn new_expression(node: &Value) -> Result<Expression> {
 
 fn member_expression(node: &Value) -> Result<Expression> {
     let object = expression(expect_value(node, "object"))?;
-    let prop = expression(expect_value(node, "property"))?;
+    let property = expression(expect_value(node, "property"))?;
+    let computed = expect_bool(node, "computed");
     let span = span(node)?;
-
-    if expect_bool(node, "computed") {
-        Ok(Expression::ComputedMember(span, Box::new(object), Box::new(prop)))
-    } else {
-        match prop {
-            Expression::Identifier(_, s) => {
-                Ok(Expression::StaticMember(span, Box::new(object), s))
-            }
-            _ => Err(())
-        }
-    }
+    Ok(Expression::Member(Box::new(Member {
+        span, object, property, computed
+    })))
 }
+
+fn string_literal(node: &Value) -> Result<StringLiteral> {
+    let raw = interner::intern(&expect_string(node, "raw"));
+    let value = interner::intern(&expect_string(node, "value"));
+    Ok(StringLiteral { span: span(node)?, raw, value })
+}
+
+fn number_literal(node: &Value) -> Result<NumberLiteral> {
+    let value = expect_value(node, "value").as_f64().unwrap();
+    Ok(NumberLiteral { span: span(node)?, value })
+}
+
 
 fn literal(node: &Value) -> Result<Expression> {
     if node.get("regex").is_some() {
@@ -232,13 +234,11 @@ fn literal(node: &Value) -> Result<Expression> {
     let val = expect_value(node, "value");
 
     if val.is_number() {
-        Ok(Expression::Literal(span(node)?, Literal::Number(val.as_f64().unwrap())))
+        Ok(Expression::Literal(span(node)?, Literal::Number(number_literal(node)?)))
     } else if val.is_null() {
         Ok(Expression::Literal(span(node)?, Literal::Null))
     } else if val.is_string() {
-        let raw = interner::intern(&expect_string(node, "raw"));
-        let val = interner::intern(&expect_string(node, "value"));
-        Ok(Expression::Literal(span(node)?, Literal::String(raw, val)))
+        Ok(Expression::Literal(span(node)?, Literal::String(string_literal(node)?)))
     } else if val.is_boolean() {
         if val.as_bool().unwrap() {
             Ok(Expression::Literal(span(node)?, Literal::True))
@@ -315,15 +315,14 @@ fn prop_key(computed: bool, node: &Value) -> Result<PropKey> {
     };
 
     match expect_string(node, "type") {
-        "Identifier" => Ok(PropKey::Identifier(span(node)?, interner::intern(expect_string(node, "name")))),
+        "Identifier" => Ok(PropKey::Identifier(identifier(node)?)),
         "Literal" => {
             let val = expect_value(node, "value");
 
             if val.is_string() {
-                let string = expect_string(node, "value");
-                Ok(PropKey::String(span(node)?, interner::intern(string)))
+                Ok(PropKey::String(string_literal(node)?))
             } else if val.is_number() {
-                Ok(PropKey::Number(span(node)?, val.as_f64().unwrap()))
+                Ok(PropKey::Number(number_literal(node)?))
             } else {
                 Err(())
             }
@@ -386,7 +385,7 @@ fn sequence_expression(node: &Value) -> Result<Expression> {
 }
 
 fn function_expression(node: &Value) -> Result<Expression> {
-    Ok(Expression::Function(span(node)?, function(node)?))
+    Ok(Expression::Function(function(node)?))
 }
 
 fn block(node: &Value) -> Result<Block> {
@@ -395,7 +394,7 @@ fn block(node: &Value) -> Result<Block> {
         items.push(statement_list_item(value)?)
     }
 
-    Ok(Block(items))
+    Ok(Block(span(node)?, items))
 }
 
 fn function(node: &Value) -> Result<Function> {
@@ -411,7 +410,7 @@ fn function(node: &Value) -> Result<Function> {
     for param in expect_array(node, "params") {
         parameters.push(pattern(param)?)
     }
-    Ok(Function { id: id, parameters: parameters, body: body, generator: expect_bool(node, "generator") })
+    Ok(Function { id: id, span: span(node)?, parameters: parameters, body: body, generator: expect_bool(node, "generator") })
 }
 
 fn prop_pattern(node: &Value) -> Result<PropPattern<Id>> {
@@ -481,8 +480,8 @@ fn arrow_function_expression(node: &Value) -> Result<Expression> {
         parameters.push(pattern(param)?)
     }
 
-    let fun = ArrowFunction { body, parameters };
-    Ok(Expression::ArrowFunction(span(node)?, fun))
+    let fun = ArrowFunction { span: span(node)?, body, parameters };
+    Ok(Expression::ArrowFunction(fun))
 }
 
 fn expression(node: &Value) -> Result<Expression> {
@@ -496,10 +495,7 @@ fn expression(node: &Value) -> Result<Expression> {
         "UnaryExpression" => unary_expression(node),
         "UpdateExpression" => update_expression(node),
         "CallExpression" => call_expression(node),
-        "Identifier" => {
-            let sym = interner::intern(expect_string(node, "name"));
-            Ok(Expression::Identifier(span, sym))
-        }
+        "Identifier" => Ok(Expression::Identifier(identifier(node)?)),
         "Literal" => literal(node),
         "LogicalExpression" => logical_expression(node),
         "MemberExpression" => member_expression(node),
@@ -521,21 +517,23 @@ fn block_statement(node: &Value) -> Result<Statement> {
         statement_list_items.push(statement_list_item(item)?);
     }
 
-    Ok(Statement::Block(span(node)?, Block(statement_list_items)))
+    Ok(Statement::Block(Block(span(node)?, statement_list_items)))
 }
 
 fn if_statement(node: &Value) -> Result<Statement> {
+    let span = span(node)?;
     let test = expression(expect_value(node, "test"))?;
     let consequent = statement(expect_value(node, "consequent"))?;
     let alternate = maybe_key(node, "alternate", &statement)?.map(Box::new);
 
-    Ok(Statement::If(test, Box::new(consequent), alternate))
+    Ok(Statement::If(span, test, Box::new(consequent), alternate))
 }
 
 fn variable_declarator(node: &Value) -> Result<VariableDeclarator> {
     let init = maybe_key(node, "init", &expression)?;
 
     Ok(VariableDeclarator {
+        span: span(node)?,
         id: pattern(expect_value(node, "id"))?,
         init: init
     })
@@ -554,6 +552,7 @@ fn variable_declaration(node: &Value) -> Result<VariableDeclaration> {
     };
 
     Ok(VariableDeclaration {
+        span: span(node)?,
         kind: kind,
         declarations: declarators
     })
@@ -567,7 +566,7 @@ fn throw_statement(node: &Value) -> Result<Statement> {
 fn catch_clause(node: &Value) -> Result<CatchClause> {
     let param = pattern(expect_value(node, "param"))?;
     let body = block(expect_value(node, "body"))?;
-    Ok(CatchClause { param: param, body: body })
+    Ok(CatchClause { span: span(node)?, param: param, body: body })
 }
 
 fn try_statement(node: &Value) -> Result<Statement> {
@@ -587,10 +586,10 @@ fn switch_case(node: &Value) -> Result<SwitchCase> {
 
     let mut consequent = Vec::new();
     for item in expect_array(node, "consequent") {
-        consequent.push(statement_list_item(item)?)
+        consequent.push(statement(item)?)
     }
 
-    Ok(SwitchCase { test: test, consequent: Block(consequent) })
+    Ok(SwitchCase { span: span(node)?, test: test, consequent: consequent })
 }
 
 fn switch_statement(node: &Value) -> Result<Statement> {
@@ -702,14 +701,18 @@ fn method(node: &Value) -> Result<MethodDefinition> {
     })
 }
 
+fn class_body(node: &Value) -> Result<ClassBody> {
+    let mut body = Vec::new();
+    for m in expect_array(node, "body") {
+        body.push(method(m)?)
+    };
+    Ok(ClassBody(span(node)?, body))
+}
+
 fn class(node: &Value) -> Result<ClassDecl> {
     let id = maybe_key(node, "id", &identifier)?;
     let super_class = maybe_key(node, "superClass", &expression)?;
-    let mut body = Vec::new();
-    for m in expect_array(expect_value(node, "body"), "body") {
-        body.push(method(m)?)
-    };
-
+    let body = class_body(expect_value(node, "body"))?;
     Ok(ClassDecl { id, super_class, body })
 }
 
@@ -735,7 +738,7 @@ fn statement(node: &Value) -> Result<Statement> {
         }
         "IfStatement" => if_statement(node),
         "VariableDeclaration" => {
-            Ok(Statement::VariableDeclaration(span(node)?, variable_declaration(node)?))
+            Ok(Statement::VariableDeclaration(variable_declaration(node)?))
         }
         "FunctionDeclaration" => function(node).map(Statement::FunctionDeclaration),
         "ClassDeclaration" => {

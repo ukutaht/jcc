@@ -1,4 +1,5 @@
 extern crate jcc;
+extern crate serde_json;
 
 use std::env;
 use std::io::prelude::*;
@@ -12,7 +13,10 @@ fn parse(filename: &str) {
     let ast = jcc::parse(&buffer);
 
     match ast {
-        Ok(code) => println!("{:#?}", code),
+        Ok(program) => {
+            let json = serde_json::to_string_pretty(&program).expect("Failed to convert to json");
+            println!("{}", json)
+        }
         Err(err) => panic!("{}", err),
     }
 }

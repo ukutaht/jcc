@@ -1,8 +1,10 @@
 #![feature(optin_builtin_traits)]
 extern crate fnv;
+extern crate serde;
 
 pub mod syntax;
 pub mod trans;
+pub mod estree;
 pub mod errors;
 pub mod interner;
 
