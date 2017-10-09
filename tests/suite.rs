@@ -67,8 +67,10 @@ fn esprima_tests(target: &mut Vec<TestDescAndFn>) {
             match (jcc::parse(&source[..]), expected) {
                 (Ok(actual_ast), expected) => {
                     assert!(actual_ast == expected, "esprima test got wrong result\n\
-                    expected: {:#?}\n\
-                    actual AST: {:#?}", expected, actual_ast);
+                    expected: {}\n\
+                    actual AST: {}",
+                    serde_json::to_string_pretty(&expected).unwrap(),
+                    serde_json::to_string_pretty(&actual_ast).unwrap());
                 }
                 (Err(actual_err), _) => {
                     assert!(false, "esprima test failed to parse:\n{:#?}", actual_err);

@@ -46,15 +46,11 @@ ES6/destructuring-assignment/object-pattern/object-pattern-assignment
 ES6/export-declaration/**
 
 ES6/generator/generator-declaration-with-yield-delegate
-ES6/generator/generator-declaration-with-yield
 ES6/generator/generator-expression-with-yield-delegate
-ES6/generator/generator-expression-with-yield
 ES6/generator/generator-method-with-computed-name
 ES6/generator/generator-method-with-invalid-computed-name
 ES6/generator/generator-method-with-yield-delegate
-ES6/generator/generator-method-with-yield-expression
 ES6/generator/generator-method-with-yield-line-terminator
-ES6/generator/generator-method-with-yield
 ES6/generator/generator-parameter-binding-element
 ES6/generator/generator-parameter-binding-property-reserved
 ES6/generator/generator-parameter-binding-property

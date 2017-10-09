@@ -955,6 +955,7 @@ impl<'a> Parser<'a> {
         self.context.is_assignment_target = false;
         self.context.is_binding_element = false;
 
+        let previous_allow_yield = std::mem::replace(&mut self.context.allow_yield, generator);
         let previous_strict = self.context.strict;
         self.validate_params(&params, None)?;
         let block = self.parse_function_source_elements()?;
@@ -965,6 +966,7 @@ impl<'a> Parser<'a> {
             parameters: params,
             generator };
         self.context.strict = previous_strict;
+        self.context.allow_yield = previous_allow_yield;
         Ok(Prop::Method(self.finalize(start), key, value))
     }
 
