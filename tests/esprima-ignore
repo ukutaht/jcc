@@ -34,7 +34,6 @@ ES6/binding-pattern/array-pattern/dupe-param
 ES6/binding-pattern/array-pattern/patterned-catch-dupe
 ES6/binding-pattern/array-pattern/patterned-catch
 
-ES6/binding-pattern/object-pattern/properties
 
 ES6/class/invalid-labelled-class-declaration
 ES6/class/invalid-setter-method-rest

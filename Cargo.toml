@@ -23,3 +23,4 @@ fnv = "1.0.3"
 [dev-dependencies]
 rustc-test = "0.1"
 glob = "0.2"
+pretty_assertions = "0.3.4"

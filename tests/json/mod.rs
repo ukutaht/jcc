@@ -408,7 +408,8 @@ fn function(node: &Value) -> Result<Function> {
 }
 
 fn prop_pattern(node: &Value) -> Result<PropPattern<Id>> {
-    let key = prop_key(false, expect_value(node, "key"))?;
+    let computed = expect_bool(node, "computed");
+    let key = prop_key(computed, expect_value(node, "key"))?;
     let value = pattern(expect_value(node, "value"))?;
 
     Ok(PropPattern {
