@@ -51,6 +51,7 @@ ES6/generator/generator-parameter-computed-property-name
 ES6/generator/generator-parameter-invalid-binding-element
 ES6/generator/generator-parameter-invalid-binding-property
 ES6/generator/generator-parameter-invalid-computed-property-name
+ES6/generator/generator-expression-with-yield-delegate
 # I think it should report unexpected *
 ES6/generator/malformed-generator-method-2
 
@@ -71,12 +72,14 @@ ES6/yield/yield-arg-super
 ES6/yield/yield-generator-arrow-concise-body
 ES6/yield/yield-generator-arrow-default
 ES6/yield/yield-generator-arrow-function-body
-ES6/yield/yield-generator-default-parameter
 ES6/yield/yield-generator-function-expression
-ES6/yield/yield-lexical-declaration
 ES6/yield/yield-super-property
 ES6/yield/yield-yield-expression-delegate
 ES6/yield/yield-yield-expression
+
+# Wrong
+ES6/yield/invalid-yield-generator-expression-rest
+ES6/yield/invalid-yield-generator-rest
 
 # Unicode escapes
 invalid-syntax/GH-1106-03

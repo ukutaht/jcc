@@ -101,6 +101,14 @@ impl<'a> Parser<'a> {
         result
     }
 
+    fn allow_yield<F, T>(&mut self, allow_yield: bool, parse_fn: F) -> Result<T>
+      where F: FnOnce(&mut Self) -> Result<T> {
+        let allow_yield = std::mem::replace(&mut self.context.allow_yield, allow_yield);
+        let result = parse_fn(self);
+        std::mem::replace(&mut self.context.allow_in, allow_yield);
+        result
+    }
+
     fn in_switch<F, T>(&mut self, in_switch: bool, parse_fn: F) -> Result<T>
       where F: FnOnce(&mut Self) -> Result<T> {
         let in_switch = std::mem::replace(&mut self.context.in_switch, in_switch);
@@ -1223,7 +1231,11 @@ impl<'a> Parser<'a> {
                 let start = self.scanner.lookahead_start;
                 let id = self.parse_id()?;
                 let left = Pattern::Simple(id);
-                if allow_default { self.parse_pattern_default(start, left) } else { Ok(left) }
+                if allow_default {
+                    self.allow_yield(false, |this| this.parse_pattern_default(start, left))
+                } else {
+                    Ok(left)
+                }
             }
         }
     }
@@ -2003,7 +2015,7 @@ impl<'a> Parser<'a> {
                 let state = self.scanner.save_state();
                 self.scanner.next_token()?;
                 match self.scanner.lookahead {
-                    Token::Ident(_) | Token::OpenSquare | Token::OpenCurly => {
+                    Token::Ident(_) | Token::OpenSquare | Token::OpenCurly | Token::YieldKeyword => {
                         self.parse_let_declaration(start)
                     }
                     _ => {
