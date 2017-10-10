@@ -762,24 +762,29 @@ impl<'a> Parser<'a> {
     }
 
     fn reinterpret_as_arguments(&self, expr: Expression) -> Option<Vec<Pattern<Id>>> {
-        match expr {
-            Expression::Sequence(_, exprs) => {
-                let mut res = Vec::new();
-                for e in exprs {
-                    match self.reinterpret_as_pattern(e) {
-                        Some(p) => res.push(p),
-                        None => return None
-                    }
+        let exprs = match expr {
+            Expression::Sequence(_, sequence) => sequence,
+            e => vec![e]
+        };
+
+        let mut res = Vec::new();
+        for e in exprs {
+            match self.reinterpret_as_pattern(e) {
+                Some(Pattern::Assignment(sp, op, Expression::Yield(id_sp, arg, _))) => {
+                    if arg.is_some() {
+                        return None
+                    };
+                    res.push(Pattern::Assignment(sp, op, Expression::Identifier(Id(id_sp, interner::KEYWORD_YIELD))))
                 }
-                Some(res)
-            }
-            _ => {
-                self.reinterpret_as_pattern(expr).map(|p| { vec![p] })
+                Some(p) => res.push(p),
+                None => return None
             }
         }
+        Some(res)
     }
 
     fn parse_arrow_function(&mut self, start: Position, params: Vec<Pattern<Id>>) -> Result<Expression> {
+        let previous_allow_yield = std::mem::replace(&mut self.context.allow_yield, false);
         self.context.first_cover_initialized_name_error = None;
 
         if self.scanner.at_newline() {
@@ -796,6 +801,7 @@ impl<'a> Parser<'a> {
         };
 
         self.validate_params(&params, Some(self.scanner.last_pos))?;
+        self.context.allow_yield = previous_allow_yield;
 
         Ok(Expression::ArrowFunction(ArrowFunction {
             span: self.finalize(start),
@@ -806,6 +812,7 @@ impl<'a> Parser<'a> {
 
     fn is_start_of_expression(&self) -> bool {
         match self.scanner.lookahead {
+            Token::CloseCurly | Token::CloseParen | Token::CloseSquare => false,
             Token::Dot | Token::Ellipsis => false,
             Token::Semi | Token::Comma => false,
             Token::Lt | Token::Lte => false,
@@ -846,9 +853,9 @@ impl<'a> Parser<'a> {
             None
         } else if self.eat(Token::Star)? {
             delegate = true;
-            Some(self.parse_assignment_expression()?)
+            Some(self.allow_yield(true, Parser::parse_assignment_expression)?)
         } else if self.is_start_of_expression() {
-            Some(self.parse_assignment_expression()?)
+            Some(self.allow_yield(true, Parser::parse_assignment_expression)?)
         } else {
             None
         };

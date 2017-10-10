@@ -69,8 +69,6 @@ ES6/yield/invalid-yield-generator-arrow-parameters
 ES6/yield/invalid-yield-generator-export-default.module
 ES6/yield/invalid-yield-generator-expression-name
 ES6/yield/yield-arg-super
-ES6/yield/yield-generator-arrow-concise-body
-ES6/yield/yield-generator-arrow-default
 ES6/yield/yield-generator-arrow-function-body
 ES6/yield/yield-generator-function-expression
 ES6/yield/yield-super-property
