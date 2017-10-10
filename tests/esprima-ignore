@@ -45,13 +45,6 @@ ES6/destructuring-assignment/object-pattern/object-pattern-assignment
 
 ES6/export-declaration/**
 
-ES6/generator/generator-parameter-binding-element
-ES6/generator/generator-parameter-binding-property
-ES6/generator/generator-parameter-computed-property-name
-ES6/generator/generator-parameter-invalid-binding-element
-ES6/generator/generator-parameter-invalid-binding-property
-ES6/generator/generator-parameter-invalid-computed-property-name
-ES6/generator/generator-expression-with-yield-delegate
 # I think it should report unexpected *
 ES6/generator/malformed-generator-method-2
 
@@ -63,11 +56,7 @@ ES6/super-property/**
 ES6/template-literals/**
 ES6/unicode-code-point-escape-sequence/**
 
-ES6/yield/invalid-yield-generator-arrow-default
-ES6/yield/invalid-yield-generator-arrow-parameter
-ES6/yield/invalid-yield-generator-arrow-parameters
 ES6/yield/invalid-yield-generator-export-default.module
-ES6/yield/invalid-yield-generator-expression-name
 ES6/yield/yield-arg-super
 ES6/yield/yield-super-property
 

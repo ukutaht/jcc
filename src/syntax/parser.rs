@@ -105,7 +105,7 @@ impl<'a> Parser<'a> {
       where F: FnOnce(&mut Self) -> Result<T> {
         let allow_yield = std::mem::replace(&mut self.context.allow_yield, allow_yield);
         let result = parse_fn(self);
-        std::mem::replace(&mut self.context.allow_in, allow_yield);
+        std::mem::replace(&mut self.context.allow_yield, allow_yield);
         result
     }
 
@@ -1382,7 +1382,7 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    fn parse_function(&mut self, id_required: bool) -> Result<Function> {
+    fn parse_function(&mut self, is_expr: bool) -> Result<Function> {
         let start = self.scanner.lookahead_start;
         let mut generator = false;
         self.expect(Token::FunctionKeyword)?;
@@ -1393,8 +1393,9 @@ impl<'a> Parser<'a> {
 
         let id_loc = self.scanner.lookahead_start;
         let id = match self.scanner.lookahead {
-            Token::OpenParen if !id_required => None,
-            Token::YieldKeyword if !self.context.strict && !generator && !id_required => Some(self.parse_identifier_name()?),
+            Token::OpenParen if !is_expr => None,
+            Token::YieldKeyword if !self.context.strict && !generator && !is_expr => Some(self.parse_identifier_name()?),
+            Token::YieldKeyword if !is_expr => return Err(self.unexpected_token(Token::YieldKeyword)),
             _ => Some(self.parse_id()?)
         };
 
