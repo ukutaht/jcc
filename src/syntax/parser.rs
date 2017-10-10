@@ -387,7 +387,7 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token()?;
                 Ok(Id(self.finalize(start), ident))
             }
-            None => Err(self.error(ErrorCause::UnexpectedToken(self.scanner.lookahead)))
+            None => Err(self.unexpected_token(self.scanner.lookahead))
         }
     }
 
@@ -1151,26 +1151,26 @@ impl<'a> Parser<'a> {
 
     fn parse_prop_pattern(&mut self, kind: VariableDeclarationKind) -> Result<PropPattern<Id>> {
         let start = self.scanner.lookahead_start;
-        if let Token::Ident(name) = self.scanner.lookahead {
-            self.scanner.next_token()?;
+        if let Token::Ident(_) = self.scanner.lookahead {
+            let id = self.parse_id()?;
             if self.eat(Token::Eq)? {
                 let expr = self.parse_assignment_expression()?;
-                let pat = Pattern::Simple(Id(self.finalize(start), name));
+                let pat = Pattern::Simple(id.clone());
                 Ok(PropPattern {
                     span: self.finalize(start),
-                    key: PropKey::Identifier(Id(self.finalize(start), name)),
+                    key: PropKey::Identifier(id),
                     value: Pattern::Assignment(self.finalize(start), Box::new(pat), expr),
                     shorthand: true
                 })
             } else if self.scanner.lookahead != Token::Colon {
                 Ok(PropPattern {
                     span: self.finalize(start),
-                    key: PropKey::Identifier(Id(self.finalize(start), name)),
-                    value: Pattern::Simple(Id(self.finalize(start), name)),
+                    key: PropKey::Identifier(id.clone()),
+                    value: Pattern::Simple(id.clone()),
                     shorthand: true
                 })
             } else {
-                let key = PropKey::Identifier(Id(self.finalize(start), name));
+                let key = PropKey::Identifier(id);
                 self.expect(Token::Colon)?;
                 let val = self.parse_pattern(true, kind)?;
                 Ok(PropPattern {
@@ -1212,20 +1212,19 @@ impl<'a> Parser<'a> {
 
     fn parse_pattern(&mut self, allow_default: bool, kind: VariableDeclarationKind) -> Result<Pattern<Id>> {
         match self.scanner.lookahead {
-            Token::Ident(name) => {
-                if name == interner::RESERVED_LET {
+            Token::OpenSquare => self.parse_array_pattern(kind),
+            Token::OpenCurly => self.parse_object_pattern(kind),
+            _ => {
+                if self.match_contextual_keyword(interner::RESERVED_LET) {
                     if kind == VariableDeclarationKind::Let || kind == VariableDeclarationKind::Const {
                         return Err(CompileError::new(self.scanner.lookahead_start, ErrorCause::LetInLexicalBinding))
                     }
                 }
                 let start = self.scanner.lookahead_start;
-                self.scanner.next_token()?;
-                let left = Pattern::Simple(Id(self.finalize(start), name));
+                let id = self.parse_id()?;
+                let left = Pattern::Simple(id);
                 if allow_default { self.parse_pattern_default(start, left) } else { Ok(left) }
-            },
-            Token::OpenSquare => self.parse_array_pattern(kind),
-            Token::OpenCurly => self.parse_object_pattern(kind),
-            t => Err(self.unexpected_token(t))
+            }
         }
     }
 
@@ -1259,7 +1258,7 @@ impl<'a> Parser<'a> {
             }
             _ if !id.is_simple() && !in_for => {
                 self.scanner.next_token()?;
-                return Err(self.error(ErrorCause::UnexpectedToken(self.scanner.lookahead)))
+                return Err(self.unexpected_token(self.scanner.lookahead))
             }
             _ => {
                 self.check_reserved_pat_at(&id, start, ErrorCause::RestrictedVarName)?;
@@ -1826,12 +1825,12 @@ impl<'a> Parser<'a> {
                 if self.context.strict {
                     Err(CompileError::new(start, ErrorCause::StrictReservedWord))
                 } else if self.context.allow_yield {
-                    Err(CompileError::new(start, ErrorCause::UnexpectedToken(t)))
+                    Err(self.unexpected_token_at(start, t))
                 } else {
                     Ok(Id(self.finalize(start), interner::KEYWORD_YIELD))
                 }
             },
-            t => Err(CompileError::new(start, ErrorCause::UnexpectedToken(t)))
+            t => Err(self.unexpected_token_at(start, t))
         }
     }
 
@@ -2069,23 +2068,27 @@ impl<'a> Parser<'a> {
     }
 
     fn unexpected_token(&self, token: Token) -> CompileError {
+        self.unexpected_token_at(self.scanner.lookahead_start, token)
+    }
+
+    fn unexpected_token_at(&self, pos: Position, token: Token) -> CompileError {
         if let Token::Ident(s) = token {
             if s.is_future_reserved_word() {
-                return CompileError::new(self.scanner.lookahead_start, ErrorCause::UnexpectedReservedWord)
+                return CompileError::new(pos, ErrorCause::UnexpectedReservedWord)
 
             }
             if self.context.strict && s.is_strict_mode_reserved_word() {
-                return CompileError::new(self.scanner.lookahead_start, ErrorCause::StrictReservedWord)
+                return CompileError::new(pos, ErrorCause::StrictReservedWord)
 
             }
         }
-        if token == Token::YieldKeyword {
-            return CompileError::new(self.scanner.lookahead_start, ErrorCause::StrictReservedWord)
+        if self.context.strict && token == Token::YieldKeyword {
+            return CompileError::new(pos, ErrorCause::StrictReservedWord)
         }
         if token == Token::EnumKeyword {
-            return CompileError::new(self.scanner.lookahead_start, ErrorCause::UnexpectedReservedWord)
+            return CompileError::new(pos, ErrorCause::UnexpectedReservedWord)
         }
-        CompileError::new(self.scanner.lookahead_start, ErrorCause::UnexpectedToken(token))
+        CompileError::new(pos, ErrorCause::UnexpectedToken(token))
     }
 
     fn error(&self, cause: ErrorCause) -> CompileError {

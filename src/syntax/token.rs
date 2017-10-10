@@ -122,6 +122,7 @@ impl fmt::Display for Token {
             Token::Colon => write!(fmt, ":"),
             Token::Eq => write!(fmt, "="),
             Token::Const => write!(fmt, "const"),
+            Token::YieldKeyword => write!(fmt, "yield"),
             ref t => write!(fmt, "{:?}", t)
         }
     }
