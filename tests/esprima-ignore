@@ -32,7 +32,6 @@ ES6/arrow-function/invalid-duplicated-params
 ES6/binding-pattern/array-pattern/dupe-param
 
 ES6/binding-pattern/array-pattern/patterned-catch-dupe
-ES6/binding-pattern/array-pattern/patterned-catch
 
 
 ES6/class/invalid-labelled-class-declaration
