@@ -388,7 +388,7 @@ impl<'a> Parser<'a> {
         Ok(Expression::New(self.finalize(start), Box::new(base), args))
     }
 
-    fn expect_identifier_name(&mut self) -> Result<Id> {
+    fn parse_identifier_name(&mut self) -> Result<Id> {
         let start = self.scanner.lookahead_start;
         match self.match_identifier_name() {
             Some(ident) => {
@@ -464,7 +464,7 @@ impl<'a> Parser<'a> {
                     self.context.is_binding_element = false;
                     self.context.is_assignment_target = true;
                     self.scanner.next_token()?;
-                    let id = self.expect_identifier_name()?;
+                    let id = self.parse_identifier_name()?;
                     let prop = Expression::Identifier(id);
                     let span = self.finalize(start);
                     result = Expression::Member(Box::new(Member {
@@ -1394,6 +1394,7 @@ impl<'a> Parser<'a> {
         let id_loc = self.scanner.lookahead_start;
         let id = match self.scanner.lookahead {
             Token::OpenParen if !id_required => None,
+            Token::YieldKeyword if !self.context.strict && !generator && !id_required => Some(self.parse_identifier_name()?),
             _ => Some(self.parse_id()?)
         };
 
