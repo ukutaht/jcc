@@ -831,15 +831,21 @@ impl<'a> Parser<'a> {
 
     fn parse_yield_expression(&mut self) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
+        let mut delegate = false;
         self.expect(Token::YieldKeyword)?;
 
-        let argument = if self.is_start_of_expression() {
+        let argument = if self.scanner.at_newline() {
+            None
+        } else if self.eat(Token::Star)? {
+            delegate = true;
+            Some(self.parse_assignment_expression()?)
+        } else if self.is_start_of_expression() {
             Some(self.parse_assignment_expression()?)
         } else {
             None
         };
 
-        Ok(Expression::Yield(self.finalize(start), Box::new(argument), false))
+        Ok(Expression::Yield(self.finalize(start), Box::new(argument), delegate))
     }
 
     fn parse_assignment_expression(&mut self) -> Result<Expression> {

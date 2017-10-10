@@ -45,21 +45,12 @@ ES6/destructuring-assignment/object-pattern/object-pattern-assignment
 
 ES6/export-declaration/**
 
-ES6/generator/generator-declaration-with-yield-delegate
-ES6/generator/generator-expression-with-yield-delegate
-ES6/generator/generator-method-with-computed-name
-ES6/generator/generator-method-with-invalid-computed-name
-ES6/generator/generator-method-with-yield-delegate
-ES6/generator/generator-method-with-yield-line-terminator
 ES6/generator/generator-parameter-binding-element
-ES6/generator/generator-parameter-binding-property-reserved
 ES6/generator/generator-parameter-binding-property
 ES6/generator/generator-parameter-computed-property-name
 ES6/generator/generator-parameter-invalid-binding-element
 ES6/generator/generator-parameter-invalid-binding-property
 ES6/generator/generator-parameter-invalid-computed-property-name
-ES6/generator/incomplete-yield-delegate
-ES6/generator/invalid-labelled-generator
 # I think it should report unexpected *
 ES6/generator/malformed-generator-method-2
 
