@@ -227,7 +227,7 @@ impl ArrowFunction {
 #[derive(Debug, PartialEq)]
 pub struct Function {
     pub span: Span,
-    pub id: Option<Symbol>,
+    pub id: Option<Id>,
     pub body: Block,
     pub parameters: Vec<Pattern<Id>>,
     pub generator: bool

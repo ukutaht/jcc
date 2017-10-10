@@ -165,8 +165,8 @@ fn transpile_pattern<W: Write>(out: &mut W, pat: &Pattern<Id>) -> Result<()> {
 
 fn transpile_function<W: Write>(out: &mut W, fun: &Function) -> Result<()> {
     match fun.id {
-        Some(id) => {
-            write!(out, "function {}(", id)?
+        Some(ref id) => {
+            write!(out, "function {}(", id.1)?
         }
         None => write!(out, "function(")?,
     }

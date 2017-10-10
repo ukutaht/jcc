@@ -399,13 +399,7 @@ fn block(node: &Value) -> Result<Block> {
 
 fn function(node: &Value) -> Result<Function> {
     let body = block(expect_value(node, "body"))?;
-    let id = if expect_value(node, "id").is_null() {
-        None
-    } else {
-        let name = expect_string(expect_value(node, "id"), "name");
-        Some(interner::intern(name))
-
-    };
+    let id = maybe(expect_value(node, "id"), &identifier)?;
     let mut parameters = Vec::new();
     for param in expect_array(node, "params") {
         parameters.push(pattern(param)?)

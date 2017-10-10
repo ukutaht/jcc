@@ -220,7 +220,7 @@ impl<'a> Parser<'a> {
             Token::FunctionKeyword => {
                 self.context.is_assignment_target = false;
                 self.context.is_binding_element = false;
-                let fun = self.parse_function()?;
+                let fun = self.parse_function(false)?;
                 Ok(Expression::Function(fun))
             },
             Token::ClassKeyword => {
@@ -1210,7 +1210,6 @@ impl<'a> Parser<'a> {
         Ok(Pattern::Object(self.finalize(start), props))
     }
 
-
     fn parse_pattern(&mut self, allow_default: bool, kind: VariableDeclarationKind) -> Result<Pattern<Id>> {
         match self.scanner.lookahead {
             Token::Ident(name) => {
@@ -1365,7 +1364,7 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    fn parse_function(&mut self) -> Result<Function> {
+    fn parse_function(&mut self, id_required: bool) -> Result<Function> {
         let start = self.scanner.lookahead_start;
         let mut generator = false;
         self.expect(Token::FunctionKeyword)?;
@@ -1376,17 +1375,8 @@ impl<'a> Parser<'a> {
 
         let id_loc = self.scanner.lookahead_start;
         let id = match self.scanner.lookahead {
-            Token::Ident(name) => {
-                self.check_reserved_at(name, self.scanner.lookahead_start, ErrorCause::RestrictedVarNameInFunction)?;
-                self.scanner.next_token()?;
-                Some(name)
-            }
-            Token::OpenParen => {
-                None
-            }
-            t => {
-                return Err(self.unexpected_token(t));
-            }
+            Token::OpenParen if !id_required => None,
+            _ => Some(self.parse_id()?)
         };
 
         let previous_strict = self.context.strict;
@@ -1397,8 +1387,8 @@ impl<'a> Parser<'a> {
 
         self.validate_params(&parameters, None)?;
 
-        if let Some(name) = id {
-            self.check_reserved_at(name, id_loc, ErrorCause::RestrictedVarNameInFunction)?;
+        if let Some(ref name) = id {
+            self.check_reserved_at(name.1, id_loc, ErrorCause::RestrictedVarNameInFunction)?;
         }
 
         self.context.strict = previous_strict;
@@ -1826,9 +1816,22 @@ impl<'a> Parser<'a> {
         let start = self.scanner.lookahead_start;
         match self.scanner.next_token()? {
             Token::Ident(s) => {
-                Ok(Id(self.finalize(start), s))
+                if self.context.strict && s.is_strict_mode_reserved_word() {
+                    Err(CompileError::new(start, ErrorCause::StrictReservedWord))
+                } else {
+                    Ok(Id(self.finalize(start), s))
+                }
             },
-            t => Err(self.error(ErrorCause::UnexpectedToken(t)))
+            t@Token::YieldKeyword => {
+                if self.context.strict {
+                    Err(CompileError::new(start, ErrorCause::StrictReservedWord))
+                } else if self.context.allow_yield {
+                    Err(CompileError::new(start, ErrorCause::UnexpectedToken(t)))
+                } else {
+                    Ok(Id(self.finalize(start), interner::KEYWORD_YIELD))
+                }
+            },
+            t => Err(CompileError::new(start, ErrorCause::UnexpectedToken(t)))
         }
     }
 
@@ -1960,7 +1963,7 @@ impl<'a> Parser<'a> {
         match self.scanner.lookahead {
             Token::Var => self.parse_variable_statement(),
             Token::FunctionKeyword => {
-                self.parse_function().map(Statement::FunctionDeclaration)
+                self.parse_function(true).map(Statement::FunctionDeclaration)
             },
             Token::ClassKeyword => {
                 let class = self.parse_class(false)?;
