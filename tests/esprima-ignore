@@ -34,12 +34,11 @@ ES6/binding-pattern/array-pattern/dupe-param
 ES6/binding-pattern/array-pattern/patterned-catch-dupe
 
 
+# Should fail
 ES6/class/invalid-labelled-class-declaration
 ES6/class/invalid-setter-method-rest
-# Tolerant
 ES6/class/migrated_0026
 
-ES6/destructuring-assignment/object-pattern/object-pattern-assignment
 
 ES6/export-declaration/**
 

@@ -90,7 +90,8 @@ fn binary_expression(node: &Value) -> Result<Expression> {
 }
 
 fn assign_prop_pattern(node: &Value) -> Result<PropPattern<AssignTarget>> {
-    let key = prop_key(false, expect_value(node, "key"))?;
+    let computed = expect_bool(node, "computed");
+    let key = prop_key(computed, expect_value(node, "key"))?;
     let value = assign_target(expect_value(node, "value"))?;
 
     Ok(PropPattern {
@@ -332,9 +333,11 @@ fn prop_key(computed: bool, node: &Value) -> Result<PropKey> {
 }
 
 fn prop(node: &Value) -> Result<Prop> {
+    let computed = expect_bool(node, "computed");
+
     match expect_string(node, "kind") {
         "init" => {
-            let key = prop_key(false, expect_value(node, "key"))?;
+            let key = prop_key(computed, expect_value(node, "key"))?;
 
             if expect_bool(node, "method") {
                 let value = function(expect_value(node, "value"))?;
@@ -347,12 +350,12 @@ fn prop(node: &Value) -> Result<Prop> {
             }
         },
         "get" => {
-            let key = prop_key(false, expect_value(node, "key"))?;
+            let key = prop_key(computed, expect_value(node, "key"))?;
             let value = function(expect_value(node, "value"))?;
             Ok(Prop::Get(span(node)?, key, value))
         },
         "set" => {
-            let key = prop_key(false, expect_value(node, "key"))?;
+            let key = prop_key(computed, expect_value(node, "key"))?;
             let value = function(expect_value(node, "value"))?;
             Ok(Prop::Set(span(node)?, key, value))
         },
