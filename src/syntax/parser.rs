@@ -435,16 +435,12 @@ impl<'a> Parser<'a> {
 
         loop {
             match self.scanner.lookahead {
-                Token::OpenParen => {
-                    if allow_call {
-                        self.context.is_binding_element = false;
-                        self.context.is_assignment_target = false;
-                        let args = self.parse_arguments()?;
-                        let span = self.finalize(start);
-                        result = Expression::Call(span, Box::new(result), args);
-                    } else {
-                        break;
-                    }
+                Token::OpenParen if allow_call => {
+                    self.context.is_binding_element = false;
+                    self.context.is_assignment_target = false;
+                    let args = self.parse_arguments()?;
+                    let span = self.finalize(start);
+                    result = Expression::Call(span, Box::new(result), args);
                 },
                 Token::OpenSquare => {
                     self.context.is_binding_element = false;
