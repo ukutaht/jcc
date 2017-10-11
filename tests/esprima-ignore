@@ -130,8 +130,3 @@ expression/primary/literal/regular-expression/u-flag-invalid-range-4-hex
 expression/primary/literal/regular-expression/u-flag-invalid-range-var-hex
 expression/primary/literal/regular-expression/u-flag-surrogate-pair
 expression/primary/literal/regular-expression/u-flag-valid-range
-
-# ES6
-expression/primary/object/migrated_0034
-expression/primary/object/migrated_0035
-expression/primary/object/migrated_0036
