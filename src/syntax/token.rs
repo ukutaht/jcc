@@ -76,6 +76,7 @@ pub enum Token {
     Semi,
     Star,
     String(Symbol, Symbol),
+    SuperKeyword,
     SwitchKeyword,
     ThisKeyword,
     ThrowKeyword,

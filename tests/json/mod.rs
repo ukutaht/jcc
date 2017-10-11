@@ -132,7 +132,7 @@ fn assign_target(node: &Value) -> Result<Pattern<AssignTarget>> {
             Ok(Pattern::Object(span(node)?, props))
         }
         "MemberExpression" => {
-            let object = expression(expect_value(node, "object"))?;
+            let object = callee(expect_value(node, "object"))?;
             let property = expression(expect_value(node, "property"))?;
             let computed = expect_bool(node, "computed");
             Ok(Pattern::Simple(AssignTarget::Member(Member {
@@ -203,7 +203,7 @@ fn new_expression(node: &Value) -> Result<Expression> {
 }
 
 fn member_expression(node: &Value) -> Result<Expression> {
-    let object = expression(expect_value(node, "object"))?;
+    let object = callee(expect_value(node, "object"))?;
     let property = expression(expect_value(node, "property"))?;
     let computed = expect_bool(node, "computed");
     let span = span(node)?;
@@ -265,9 +265,16 @@ fn logical_expression(node: &Value) -> Result<Expression> {
     Ok(Expression::Logical(span, op, Box::new(left), Box::new(right)))
 }
 
+fn callee(node: &Value) -> Result<Callee> {
+    match expect_string(node, "type") {
+        "Super" => span(node).map(Callee::Super),
+        _ => expression(node).map(Callee::Expression)
+    }
+}
+
 fn call_expression(node: &Value) -> Result<Expression> {
     let span = span(node)?;
-    let callee = expression(expect_value(node, "callee"))?;
+    let callee = callee(expect_value(node, "callee"))?;
     let mut arguments = Vec::new();
 
     for argument in expect_array(node, "arguments") {

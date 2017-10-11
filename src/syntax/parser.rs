@@ -424,13 +424,24 @@ impl<'a> Parser<'a> {
         result
     }
 
+    fn parse_super(&mut self) -> Result<Callee> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::SuperKeyword)?;
+        match self.scanner.lookahead {
+            Token::OpenParen | Token::OpenSquare | Token::Dot => Ok(Callee::Super(self.finalize(start))),
+            t => Err(self.unexpected_token(t))
+        }
+    }
+
     fn parse_lhs_expression_opt(&mut self, allow_call: bool) -> Result<Expression> {
         let start = self.scanner.lookahead_start;
 
-        let mut result = if self.matches(Token::New) {
-            self.inherit_cover_grammar(Parser::parse_new_expression)?
+        let mut result = if self.matches(Token::SuperKeyword) && self.context.in_function_body {
+            self.parse_super()?
+        } else if self.matches(Token::New) {
+            Callee::Expression(self.inherit_cover_grammar(Parser::parse_new_expression)?)
         } else {
-            self.inherit_cover_grammar(Parser::parse_primary_expression)?
+            Callee::Expression(self.inherit_cover_grammar(Parser::parse_primary_expression)?)
         };
 
         loop {
@@ -440,7 +451,7 @@ impl<'a> Parser<'a> {
                     self.context.is_assignment_target = false;
                     let args = self.parse_arguments()?;
                     let span = self.finalize(start);
-                    result = Expression::Call(span, Box::new(result), args);
+                    result = Callee::Expression(Expression::Call(span, Box::new(result), args));
                 },
                 Token::OpenSquare => {
                     self.context.is_binding_element = false;
@@ -449,12 +460,12 @@ impl<'a> Parser<'a> {
                     let expr = self.isolate_cover_grammar(Parser::parse_expression)?;
                     self.expect(Token::CloseSquare)?;
                     let span = self.finalize(start);
-                    result = Expression::Member(Box::new(Member {
+                    result = Callee::Expression(Expression::Member(Box::new(Member {
                         span,
                         object: result,
                         property: expr,
                         computed: true
-                    }));
+                    })));
                 },
                 Token::Dot => {
                     self.context.is_binding_element = false;
@@ -463,19 +474,22 @@ impl<'a> Parser<'a> {
                     let id = self.parse_identifier_name()?;
                     let prop = Expression::Identifier(id);
                     let span = self.finalize(start);
-                    result = Expression::Member(Box::new(Member {
+                    result = Callee::Expression(Expression::Member(Box::new(Member {
                         span,
                         object: result,
                         property: prop,
                         computed: false
-                    }));
+                    })));
 
                 }
                 _ => break,
             }
         }
 
-        Ok(result)
+        match result {
+            Callee::Expression(e) => Ok(e),
+            Callee::Super(ref sp) => Err(self.unexpected_token_at(sp.start, Token::SuperKeyword))
+        }
     }
 
     fn parse_unary_expression(&mut self) -> Result<Expression> {
@@ -2108,6 +2122,9 @@ impl<'a> Parser<'a> {
             return CompileError::new(pos, ErrorCause::StrictReservedWord)
         }
         if token == Token::EnumKeyword {
+            return CompileError::new(pos, ErrorCause::UnexpectedReservedWord)
+        }
+        if token == Token::SuperKeyword {
             return CompileError::new(pos, ErrorCause::UnexpectedReservedWord)
         }
         CompileError::new(pos, ErrorCause::UnexpectedToken(token))

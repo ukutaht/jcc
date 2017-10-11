@@ -42,7 +42,7 @@ fn transpile_member<W: Write>(out: &mut W, member: &Member) -> Result<()> {
     if member.computed {
         unimplemented!()
     };
-    transpile_expression(out, &member.object)?;
+    transpile_callee(out, &member.object)?;
     write!(out, ".")?;
     transpile_expression(out, &member.property)
 }
@@ -85,11 +85,20 @@ fn transpile_logop<W: Write>(out: &mut W, op: &LogOp, left: &Expression, right: 
 }
 
 fn transpile_call<W: Write>(out: &mut W,
-                            callee: &Expression,
+                            callee: &Callee,
                             arguments: &[ArgumentListElement])
                             -> Result<()> {
-    transpile_expression(out, callee)?;
+    transpile_callee(out, callee)?;
     transpile_arguments(out, arguments)
+}
+
+fn transpile_callee<W: Write>(out: &mut W,
+                            callee: &Callee)
+                            -> Result<()> {
+    match *callee {
+        Callee::Super(_) => write!(out, "super"),
+        Callee::Expression(ref expr) => transpile_expression(out, expr)
+    }
 }
 
 fn transpile_new<W: Write>(out: &mut W,

@@ -142,7 +142,7 @@ pub enum Prop {
 #[derive(Debug, PartialEq)]
 pub struct Member {
     pub span: Span,
-    pub object: Expression,
+    pub object: Callee,
     pub property: Expression,
     pub computed: bool
 }
@@ -154,13 +154,19 @@ pub enum AssignTarget {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum Callee {
+    Expression(Expression),
+    Super(Span)
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Expression {
     Array(Span, Vec<Option<ArgumentListElement>>),
     Conditional(Span, Box<Expression>, Box<Expression>, Box<Expression>),
     Object(Span, Vec<Prop>),
     Assignment(Span, AssignOp, Box<Pattern<AssignTarget>>, Box<Expression>),
     Binary(Span, BinOp, Box<Expression>, Box<Expression>),
-    Call(Span, Box<Expression>, Vec<ArgumentListElement>),
+    Call(Span, Box<Callee>, Vec<ArgumentListElement>),
     Member(Box<Member>),
     Function(Function),
     Identifier(Id),

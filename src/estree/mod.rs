@@ -520,6 +520,22 @@ impl Serialize for AssignTarget {
     }
 }
 
+impl Serialize for Callee {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where S: Serializer
+    {
+        match *self {
+            Callee::Super(ref sp) => {
+                let mut map = serializer.serialize_map(Some(2))?;
+                map.serialize_entry("type", "Super")?;
+                map.serialize_entry("loc", sp)?;
+                map.end()
+            }
+            Callee::Expression(ref expr) => expr.serialize(serializer),
+        }
+    }
+}
+
 impl Serialize for Block {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where S: Serializer

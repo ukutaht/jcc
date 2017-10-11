@@ -19,42 +19,31 @@ ES2016/**
 es2017/**
 es2018/**
 
+# Not sure about these
 ES6/arrow-function/array-binding-pattern/invalid-dup-param
-
-
 ES6/arrow-function/invalid-duplicated-names-rest-parameter
 ES6/arrow-function/invalid-duplicated-params
-
-
-
-# This is wrong
 ES6/binding-pattern/array-pattern/dupe-param
-
 ES6/binding-pattern/array-pattern/patterned-catch-dupe
-
 
 # Should fail
 ES6/class/invalid-labelled-class-declaration
 ES6/class/invalid-setter-method-rest
 ES6/class/migrated_0026
 
-
-ES6/export-declaration/**
-
 # I think it should report unexpected *
 ES6/generator/malformed-generator-method-2
 
+ES6/export-declaration/**
 ES6/identifier/**
 ES6/import-declaration/**
 ES6/meta-property/**
 ES6/program/**
-ES6/super-property/**
 ES6/template-literals/**
 ES6/unicode-code-point-escape-sequence/**
 
 ES6/yield/invalid-yield-generator-export-default.module
 ES6/yield/yield-arg-super
-ES6/yield/yield-super-property
 
 # Wrong
 ES6/yield/invalid-yield-generator-expression-rest
