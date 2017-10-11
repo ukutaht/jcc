@@ -692,6 +692,11 @@ impl<'a> Parser<'a> {
                                 None => return None
                             }
                         }
+                        Prop::Shorthand(sp, id) => {
+                            let val_pattern = Pattern::Simple(id.clone());
+                            let key = PropKey::Identifier(id);
+                            PropPattern { span: sp, key: key, value: val_pattern, shorthand: true }
+                        }
                         _ => return None
                     };
                     result.push(prop_def)
