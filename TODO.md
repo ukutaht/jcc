@@ -28,3 +28,6 @@ https://llogiq.github.io/2017/06/01/perf-pitfalls.html
 10. Preserve comments config
 
 11. Add logging
+
+12. Consider if-chain for nested statements in parser:
+https://crates.io/crates/if_chain
