@@ -611,6 +611,7 @@ impl<'a> Scanner<'a> {
             "while" => Token::WhileKeyword,
             "with" => Token::WithKeyword,
             "yield" => Token::YieldKeyword,
+            "export" => Token::ExportKeyword,
             _ => {
                 Token::Ident(interner::intern(value))
             }

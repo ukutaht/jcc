@@ -721,6 +721,23 @@ fn class(node: &Value) -> Result<ClassDecl> {
     Ok(ClassDecl { id, super_class, body })
 }
 
+fn export_specifier(node: &Value) -> Result<ExportSpecifier> {
+    unimplemented!()
+}
+
+fn export_named_declaration(node: &Value) -> Result<Statement> {
+    let declaration = maybe_key(node, "declaration", &statement)?.map(Box::new);
+    let mut specifiers = Vec::new();
+    for s in expect_array(node, "specifiers") {
+        specifiers.push(export_specifier(s)?)
+    };
+    Ok(Statement::ExportNamedDeclaration(span(node)?, ExportNamedDeclaration {
+        declaration,
+        specifiers,
+        source: None
+    }))
+}
+
 fn statement(node: &Value) -> Result<Statement> {
     match expect_string(node, "type") {
         "ExpressionStatement" => {
@@ -769,6 +786,7 @@ fn statement(node: &Value) -> Result<Statement> {
         "ForOfStatement" => for_of_statement(node),
         "WithStatement" => with_statement(node),
         "LabeledStatement" => labeled_statement(node),
+        "ExportNamedDeclaration" => export_named_declaration(node),
         "BreakStatement" => {
             let id = maybe_key(node, "label", &identifier)?;
             Ok(Statement::Break(span(node)?, id))

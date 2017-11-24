@@ -34,7 +34,45 @@ ES6/class/migrated_0026
 # I think it should report unexpected *
 ES6/generator/malformed-generator-method-2
 
-ES6/export-declaration/**
+ES6/export-declaration/export-default-array
+ES6/export-declaration/export-default-assignment.module
+ES6/export-declaration/export-default-class
+ES6/export-declaration/export-default-expression
+ES6/export-declaration/export-default-function
+ES6/export-declaration/export-default-named-class
+ES6/export-declaration/export-default-named-function
+ES6/export-declaration/export-default-number
+ES6/export-declaration/export-default-object
+ES6/export-declaration/export-default-value
+ES6/export-declaration/export-from-batch
+ES6/export-declaration/export-from-default
+ES6/export-declaration/export-from-named-as-default
+ES6/export-declaration/export-from-named-as-specifier
+ES6/export-declaration/export-from-named-as-specifiers
+ES6/export-declaration/export-from-specifier
+ES6/export-declaration/export-from-specifiers
+ES6/export-declaration/export-function-declaration
+ES6/export-declaration/export-function
+ES6/export-declaration/export-let-number
+ES6/export-declaration/export-named-as-default
+ES6/export-declaration/export-named-as-specifier
+ES6/export-declaration/export-named-as-specifiers
+ES6/export-declaration/export-named-empty
+ES6/export-declaration/export-named-keyword-as-specifier
+ES6/export-declaration/export-named-keyword-specifier
+ES6/export-declaration/export-named-specifier
+ES6/export-declaration/export-named-specifiers-comma
+ES6/export-declaration/export-named-specifiers
+ES6/export-declaration/export-var-anonymous-function
+ES6/export-declaration/export-var-number
+ES6/export-declaration/export-var
+ES6/export-declaration/invalid-export-batch-missing-from-clause.module
+ES6/export-declaration/invalid-export-batch-token.module
+ES6/export-declaration/invalid-export-default-equal.module
+ES6/export-declaration/invalid-export-default-token.module
+ES6/export-declaration/invalid-export-default.module
+ES6/export-declaration/invalid-export-named-default.module
+
 ES6/identifier/**
 ES6/import-declaration/**
 ES6/meta-property/**
@@ -91,7 +129,7 @@ invalid-syntax/migrated_0166.source
 invalid-syntax/migrated_0167.source
 invalid-syntax/migrated_0169.source
 
-# Strict mode
+# Strict mode Octal
 invalid-syntax/migrated_0216
 invalid-syntax/migrated_0217
 invalid-syntax/migrated_0218

@@ -760,6 +760,7 @@ impl Serialize for Statement {
                 map.serialize_entry("directive", &dir)?;
                 map.end()
             }
+            _ => unimplemented!()
         }
     }
 }

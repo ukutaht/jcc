@@ -1992,6 +1992,25 @@ impl<'a> Parser<'a> {
         Ok(ClassDecl { id, super_class, body })
     }
 
+    fn parse_export_declaration(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::ExportKeyword)?;
+
+        match self.scanner.lookahead {
+            Token::Const => {
+                let decl = self.parse_const_declaration()?;
+
+                let export = ExportNamedDeclaration {
+                    declaration: Some(Box::new(decl)),
+                    specifiers: Vec::new(),
+                    source: None
+                };
+                Ok(Statement::ExportNamedDeclaration(self.finalize(start), export))
+            },
+            _ => unimplemented!()
+        }
+    }
+
     fn parse_statement(&mut self, allow_decl: bool) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
 
@@ -1999,6 +2018,9 @@ impl<'a> Parser<'a> {
             Token::Var => self.parse_variable_statement(),
             Token::FunctionKeyword => {
                 self.parse_function(true).map(Statement::FunctionDeclaration)
+            },
+            Token::ExportKeyword => {
+                self.parse_export_declaration()
             },
             Token::ClassKeyword => {
                 let class = self.parse_class(false)?;

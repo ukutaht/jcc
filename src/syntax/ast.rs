@@ -303,6 +303,19 @@ pub struct ClassDecl {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct ExportSpecifier {
+    pub exported: Id,
+    pub local: Id
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ExportNamedDeclaration {
+    pub declaration: Option<Box<Statement>>,
+    pub specifiers: Vec<ExportSpecifier>,
+    pub source: Option<Literal>
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Statement {
     Expression(Span, Expression),
     VariableDeclaration(VariableDeclaration),
@@ -325,7 +338,8 @@ pub enum Statement {
     With(Span, Expression, Box<Statement>),
     Labeled(Span, Id, Box<Statement>),
     Continue(Span, Option<Id>),
-    Directive(Span, Expression, String)
+    Directive(Span, Expression, String),
+    ExportNamedDeclaration(Span, ExportNamedDeclaration)
 }
 
 #[derive(Debug, PartialEq)]

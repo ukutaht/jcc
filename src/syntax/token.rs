@@ -37,6 +37,7 @@ pub enum Token {
     Eq,
     EqEq,
     EqEqEq,
+    ExportKeyword,
     ExtendsKeyword,
     FinallyKeyword,
     ForKeyword,
