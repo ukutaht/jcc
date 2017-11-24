@@ -2007,6 +2007,18 @@ impl<'a> Parser<'a> {
                 };
                 Ok(Statement::ExportNamedDeclaration(self.finalize(start), export))
             },
+            Token::Ident(interner::RESERVED_LET) => {
+                let let_start = self.scanner.lookahead_start;
+                self.scanner.next_token()?;
+                let decl = self.parse_let_declaration(let_start)?;
+
+                let export = ExportNamedDeclaration {
+                    declaration: Some(Box::new(decl)),
+                    specifiers: Vec::new(),
+                    source: None
+                };
+                Ok(Statement::ExportNamedDeclaration(self.finalize(start), export))
+            }
             _ => unimplemented!()
         }
     }
