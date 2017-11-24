@@ -62,9 +62,6 @@ ES6/export-declaration/export-named-keyword-specifier
 ES6/export-declaration/export-named-specifier
 ES6/export-declaration/export-named-specifiers-comma
 ES6/export-declaration/export-named-specifiers
-ES6/export-declaration/export-var-anonymous-function
-ES6/export-declaration/export-var-number
-ES6/export-declaration/export-var
 ES6/export-declaration/invalid-export-batch-missing-from-clause.module
 ES6/export-declaration/invalid-export-batch-token.module
 ES6/export-declaration/invalid-export-default-equal.module

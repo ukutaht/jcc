@@ -2019,6 +2019,17 @@ impl<'a> Parser<'a> {
                 };
                 Ok(Statement::ExportNamedDeclaration(self.finalize(start), export))
             }
+
+            Token::Var => {
+                let decl = self.parse_statement(true)?;
+
+                let export = ExportNamedDeclaration {
+                    declaration: Some(Box::new(decl)),
+                    specifiers: Vec::new(),
+                    source: None
+                };
+                Ok(Statement::ExportNamedDeclaration(self.finalize(start), export))
+            }
             _ => unimplemented!()
         }
     }
