@@ -2039,7 +2039,13 @@ impl<'a> Parser<'a> {
                                 ExportDefaultDeclaration { declaration }
                                 ))
                     }
-                    _ => unimplemented!()
+                    _ => {
+                        let declaration = self.parse_assignment_expression().map(DefaultExportable::Expression)?;
+                        Ok(Statement::ExportDefaultDeclaration(
+                                self.consume_semicolon(start)?,
+                                ExportDefaultDeclaration { declaration }
+                                ))
+                    }
                 }
             }
             _ => unimplemented!()
