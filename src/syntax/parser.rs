@@ -2020,7 +2020,7 @@ impl<'a> Parser<'a> {
                 Ok(Statement::ExportNamedDeclaration(self.finalize(start), export))
             }
 
-            Token::Var => {
+            Token::Var | Token::FunctionKeyword => {
                 let decl = self.parse_statement(true)?;
 
                 let export = ExportNamedDeclaration {
