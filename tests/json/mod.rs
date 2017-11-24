@@ -738,6 +738,17 @@ fn export_named_declaration(node: &Value) -> Result<Statement> {
     }))
 }
 
+fn export_default_declaration(node: &Value) -> Result<Statement> {
+    let val = expect_value(node, "declaration");
+    let declaration = statement(val)
+        .map(Box::new)
+        .map(DefaultExportable::Statement)
+        .or(expression(val).map(DefaultExportable::Expression))?;
+    Ok(Statement::ExportDefaultDeclaration(span(node)?, ExportDefaultDeclaration {
+        declaration,
+    }))
+}
+
 fn statement(node: &Value) -> Result<Statement> {
     match expect_string(node, "type") {
         "ExpressionStatement" => {
@@ -787,6 +798,7 @@ fn statement(node: &Value) -> Result<Statement> {
         "WithStatement" => with_statement(node),
         "LabeledStatement" => labeled_statement(node),
         "ExportNamedDeclaration" => export_named_declaration(node),
+        "ExportDefaultDeclaration" => export_default_declaration(node),
         "BreakStatement" => {
             let id = maybe_key(node, "label", &identifier)?;
             Ok(Statement::Break(span(node)?, id))

@@ -2019,7 +2019,6 @@ impl<'a> Parser<'a> {
                 };
                 Ok(Statement::ExportNamedDeclaration(self.finalize(start), export))
             }
-
             Token::Var | Token::FunctionKeyword => {
                 let decl = self.parse_statement(true)?;
 
@@ -2029,6 +2028,19 @@ impl<'a> Parser<'a> {
                     source: None
                 };
                 Ok(Statement::ExportNamedDeclaration(self.finalize(start), export))
+            }
+            Token::DefaultKeyword => {
+                self.scanner.next_token()?;
+                match self.scanner.lookahead {
+                    Token::OpenSquare => {
+                        let declaration = self.parse_array_initializer().map(DefaultExportable::Expression)?;
+                        Ok(Statement::ExportDefaultDeclaration(
+                                self.consume_semicolon(start)?,
+                                ExportDefaultDeclaration { declaration }
+                                ))
+                    }
+                    _ => unimplemented!()
+                }
             }
             _ => unimplemented!()
         }

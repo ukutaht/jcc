@@ -316,6 +316,17 @@ pub struct ExportNamedDeclaration {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum DefaultExportable {
+    Expression(Expression),
+    Statement(Box<Statement>)
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ExportDefaultDeclaration {
+    pub declaration: DefaultExportable,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Statement {
     Expression(Span, Expression),
     VariableDeclaration(VariableDeclaration),
@@ -339,7 +350,8 @@ pub enum Statement {
     Labeled(Span, Id, Box<Statement>),
     Continue(Span, Option<Id>),
     Directive(Span, Expression, String),
-    ExportNamedDeclaration(Span, ExportNamedDeclaration)
+    ExportNamedDeclaration(Span, ExportNamedDeclaration),
+    ExportDefaultDeclaration(Span, ExportDefaultDeclaration)
 }
 
 #[derive(Debug, PartialEq)]
