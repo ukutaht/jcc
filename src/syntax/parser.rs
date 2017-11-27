@@ -1997,6 +1997,7 @@ impl<'a> Parser<'a> {
         self.expect(Token::ExportKeyword)?;
 
         match self.scanner.lookahead {
+            // is it necessary to special-case const and let?
             Token::Const => {
                 let decl = self.parse_const_declaration()?;
 
@@ -2032,10 +2033,10 @@ impl<'a> Parser<'a> {
             Token::DefaultKeyword => {
                 self.scanner.next_token()?;
                 match self.scanner.lookahead {
-                    Token::OpenSquare => {
-                        let declaration = self.parse_array_initializer().map(DefaultExportable::Expression)?;
+                    Token::FunctionKeyword => {
+                        let declaration = self.parse_function(true).map(Statement::FunctionDeclaration).map(Box::new).map(DefaultExportable::Statement)?;
                         Ok(Statement::ExportDefaultDeclaration(
-                                self.consume_semicolon(start)?,
+                                self.finalize(start),
                                 ExportDefaultDeclaration { declaration }
                                 ))
                     }

@@ -37,9 +37,6 @@ ES6/generator/malformed-generator-method-2
 ES6/export-declaration/export-default-class
 ES6/export-declaration/export-default-function
 ES6/export-declaration/export-default-named-class
-ES6/export-declaration/export-default-named-function
-ES6/export-declaration/export-default-number
-ES6/export-declaration/export-default-object
 ES6/export-declaration/export-from-batch
 ES6/export-declaration/export-from-default
 ES6/export-declaration/export-from-named-as-default
