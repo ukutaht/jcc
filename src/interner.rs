@@ -99,6 +99,7 @@ declare_keywords! {
     (26, RESERVED_CONSTRUCTOR, "constructor")
     (27, RESERVED_PROTOTYPE,   "prototype")
     (28, DIRECTIVE_USE_STRICT, "use strict")
+    (29, RESERVED_FROM,        "from")
 }
 
 fn with_interner<T, F: FnOnce(&mut Interner) -> T>(f: F) -> T {

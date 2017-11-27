@@ -1992,11 +1992,29 @@ impl<'a> Parser<'a> {
         Ok(ClassDecl { id, super_class, body })
     }
 
+    fn parse_module_specifier(&mut self) -> Result<StringLiteral> {
+        let start = self.scanner.lookahead_start;
+
+        match self.scanner.lookahead {
+            Token::String(raw, value) => {
+                self.scanner.next_token()?;
+                Ok(StringLiteral { span: self.finalize(start), value, raw })
+            },
+            t => Err(self.unexpected_token(t))
+        }
+    }
+
     fn parse_export_declaration(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::ExportKeyword)?;
 
         match self.scanner.lookahead {
+            Token::Star => {
+                self.scanner.next_token()?;
+                self.expect(Token::Ident(interner::RESERVED_FROM))?;
+                let source = self.parse_module_specifier()?;
+                Ok(Statement::ExportAllDeclaration(self.consume_semicolon(start)?, source))
+            }
             // is it necessary to special-case const and let?
             Token::Const => {
                 let decl = self.parse_const_declaration()?;

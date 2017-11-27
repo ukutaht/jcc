@@ -351,7 +351,8 @@ pub enum Statement {
     Continue(Span, Option<Id>),
     Directive(Span, Expression, String),
     ExportNamedDeclaration(Span, ExportNamedDeclaration),
-    ExportDefaultDeclaration(Span, ExportDefaultDeclaration)
+    ExportDefaultDeclaration(Span, ExportDefaultDeclaration),
+    ExportAllDeclaration(Span, StringLiteral)
 }
 
 #[derive(Debug, PartialEq)]

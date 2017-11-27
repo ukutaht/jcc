@@ -34,7 +34,6 @@ ES6/class/migrated_0026
 # I think it should report unexpected *
 ES6/generator/malformed-generator-method-2
 
-ES6/export-declaration/export-from-batch
 ES6/export-declaration/export-from-default
 ES6/export-declaration/export-from-named-as-default
 ES6/export-declaration/export-from-named-as-specifier
