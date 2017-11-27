@@ -2040,6 +2040,14 @@ impl<'a> Parser<'a> {
                                 ExportDefaultDeclaration { declaration }
                                 ))
                     }
+                    Token::ClassKeyword => {
+                        let class_start = self.scanner.lookahead_start;
+                        let declaration = self.parse_class(true).map(|c| Statement::ClassDeclaration(self.finalize(class_start), c)).map(Box::new).map(DefaultExportable::Statement)?;
+                        Ok(Statement::ExportDefaultDeclaration(
+                                self.finalize(start),
+                                ExportDefaultDeclaration { declaration }
+                                ))
+                    }
                     _ => {
                         let declaration = self.parse_assignment_expression().map(DefaultExportable::Expression)?;
                         Ok(Statement::ExportDefaultDeclaration(
