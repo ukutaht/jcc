@@ -2034,7 +2034,7 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token()?;
                 match self.scanner.lookahead {
                     Token::FunctionKeyword => {
-                        let declaration = self.parse_function(true).map(Statement::FunctionDeclaration).map(Box::new).map(DefaultExportable::Statement)?;
+                        let declaration = self.parse_function(false).map(Statement::FunctionDeclaration).map(Box::new).map(DefaultExportable::Statement)?;
                         Ok(Statement::ExportDefaultDeclaration(
                                 self.finalize(start),
                                 ExportDefaultDeclaration { declaration }
