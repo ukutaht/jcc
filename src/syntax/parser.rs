@@ -2124,20 +2124,13 @@ impl<'a> Parser<'a> {
                 let start = self.scanner.lookahead_start;
                 let expr = self.parse_expression()?;
                 if self.scanner.lookahead == Token::Colon {
-                    if let Some(id) = self.as_id(&expr) {
-                        return self.parse_labeled_statement(start, id)
+                    if let &Expression::Identifier(ref id) = &expr {
+                        return self.parse_labeled_statement(start, id.clone())
                     }
                 }
                 Ok(Statement::Expression(self.consume_semicolon(start)?, expr))
             }
             _ => self.parse_expression_statement(),
-        }
-    }
-
-    fn as_id(&self, expr: &Expression) -> Option<Id> {
-        match *expr {
-            Expression::Identifier(ref id) => Some(id.clone()),
-            _ => None
         }
     }
 
