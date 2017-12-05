@@ -40,10 +40,6 @@ ES6/export-declaration/export-from-named-as-specifier
 ES6/export-declaration/export-from-named-as-specifiers
 ES6/export-declaration/export-from-specifier
 ES6/export-declaration/export-from-specifiers
-ES6/export-declaration/export-named-as-default
-ES6/export-declaration/export-named-as-specifier
-ES6/export-declaration/export-named-as-specifiers
-ES6/export-declaration/export-named-keyword-as-specifier
 ES6/export-declaration/invalid-export-batch-missing-from-clause.module
 ES6/export-declaration/invalid-export-batch-token.module
 ES6/export-declaration/invalid-export-default-equal.module

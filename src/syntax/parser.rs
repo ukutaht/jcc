@@ -410,6 +410,7 @@ impl<'a> Parser<'a> {
             Token::In => Some(interner::KEYWORD_IN),
             Token::YieldKeyword => Some(interner::KEYWORD_YIELD),
             Token::TryKeyword => Some(interner::KEYWORD_TRY),
+            Token::DefaultKeyword => Some(interner::KEYWORD_DEFAULT),
             _ => None
         }
     }
@@ -2008,9 +2009,16 @@ impl<'a> Parser<'a> {
     fn parse_export_specifier(&mut self) -> Result<ExportSpecifier> {
         let local = self.parse_identifier_name()?;
 
+        let exported = if self.match_contextual_keyword(interner::RESERVED_AS) {
+            self.scanner.next_token()?;
+            self.parse_identifier_name()?
+        } else {
+            local.clone()
+        };
+
         Ok(ExportSpecifier {
             local,
-            exported: None
+            exported
         })
     }
 

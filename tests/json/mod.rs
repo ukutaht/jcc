@@ -723,12 +723,7 @@ fn class(node: &Value) -> Result<ClassDecl> {
 
 fn export_specifier(node: &Value) -> Result<ExportSpecifier> {
     let local = identifier(expect_value(node, "local"))?;
-    let exported_raw = identifier(expect_value(node, "exported"))?;
-    let exported = if local == exported_raw {
-        None
-    } else {
-        Some(exported_raw)
-    };
+    let exported = identifier(expect_value(node, "exported"))?;
 
     Ok(ExportSpecifier {local, exported})
 }
