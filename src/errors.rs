@@ -37,6 +37,8 @@ pub enum ErrorCause {
     UnexpectedReservedWord,
     UnterminatedRegex,
     UnexpectedToken(Token),
+    MissingFromClause,
+    UnexpectedFrom,
     UnqualifiedDelete,
     MissingInitializerInConst,
     LetInLexicalBinding,
@@ -172,6 +174,12 @@ impl fmt::Display for CompileError {
             ErrorCause::UnexpectedToken(ref t) => {
                 write!(fmt, "Unexpected token {}", t)
             }
+            ErrorCause::MissingFromClause => {
+                write!(fmt, "Unexpected token")
+            },
+            ErrorCause::UnexpectedFrom => {
+                write!(fmt, "Unexpected token from")
+            },
             ErrorCause::UnexpectedReservedWord => {
                 write!(fmt, "Unexpected reserved word")
             }

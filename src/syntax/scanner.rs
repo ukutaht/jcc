@@ -51,6 +51,10 @@ impl<'a> Scanner<'a> {
         self.last_pos.line != self.lookahead_start.line
     }
 
+    pub fn is_eof(&self) -> bool {
+        self.lookahead == Token::Eof
+    }
+
     pub fn position_at_start(&mut self) -> Result<()> {
         self.lookahead = self.lex()?;
         Ok(())

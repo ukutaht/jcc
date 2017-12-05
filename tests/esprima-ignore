@@ -36,10 +36,6 @@ ES6/generator/malformed-generator-method-2
 
 ES6/export-declaration/invalid-export-batch-missing-from-clause.module
 ES6/export-declaration/invalid-export-batch-token.module
-ES6/export-declaration/invalid-export-default-equal.module
-ES6/export-declaration/invalid-export-default-token.module
-ES6/export-declaration/invalid-export-default.module
-ES6/export-declaration/invalid-export-named-default.module
 
 ES6/identifier/**
 ES6/import-declaration/**

@@ -2085,6 +2085,9 @@ impl<'a> Parser<'a> {
                                 ))
                     }
                     _ => {
+                        if self.match_contextual_keyword(interner::RESERVED_FROM) {
+                            return Err(self.error(ErrorCause::UnexpectedFrom))
+                        }
                         let declaration = self.parse_assignment_expression().map(DefaultExportable::Expression)?;
                         Ok(Statement::ExportDefaultDeclaration(
                                 self.consume_semicolon(start)?,
@@ -2094,9 +2097,11 @@ impl<'a> Parser<'a> {
                 }
             }
             Token::OpenCurly => {
+                let mut is_export_default = false;
                 let mut specifiers = Vec::new();
                 self.expect(Token::OpenCurly)?;
                 while self.scanner.lookahead != Token::CloseCurly {
+                    is_export_default = is_export_default || self.scanner.lookahead == Token::DefaultKeyword;
                     specifiers.push(self.parse_export_specifier()?);
 
                     if self.scanner.lookahead != Token::CloseCurly {
@@ -2109,6 +2114,12 @@ impl<'a> Parser<'a> {
                 let source = if self.match_contextual_keyword(interner::RESERVED_FROM) {
                     self.scanner.next_token()?;
                     Some(self.parse_module_specifier()?)
+                } else if is_export_default {
+                    return if self.scanner.is_eof() {
+                        Err(self.error(ErrorCause::MissingFromClause))
+                    } else {
+                        Err(self.error(ErrorCause::UnexpectedToken(self.scanner.lookahead)))
+                    }
                 } else {
                     None
                 };
