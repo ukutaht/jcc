@@ -312,7 +312,7 @@ pub struct ExportSpecifier {
 pub struct ExportNamedDeclaration {
     pub declaration: Option<Box<Statement>>,
     pub specifiers: Vec<ExportSpecifier>,
-    pub source: Option<Literal>
+    pub source: Option<StringLiteral>
 }
 
 #[derive(Debug, PartialEq)]

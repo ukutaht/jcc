@@ -2106,10 +2106,17 @@ impl<'a> Parser<'a> {
 
                 self.expect(Token::CloseCurly)?;
 
+                let source = if self.match_contextual_keyword(interner::RESERVED_FROM) {
+                    self.scanner.next_token()?;
+                    Some(self.parse_module_specifier()?)
+                } else {
+                    None
+                };
+
                 let decl = ExportNamedDeclaration {
                     declaration: None,
                     specifiers,
-                    source: None
+                    source
                 };
 
                 Ok(Statement::ExportNamedDeclaration(self.consume_semicolon(start)?, decl))

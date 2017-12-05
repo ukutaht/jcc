@@ -734,10 +734,12 @@ fn export_named_declaration(node: &Value) -> Result<Statement> {
     for s in expect_array(node, "specifiers") {
         specifiers.push(export_specifier(s)?)
     };
+
+    let source = maybe_key(node, "source", &string_literal)?;
     Ok(Statement::ExportNamedDeclaration(span(node)?, ExportNamedDeclaration {
         declaration,
         specifiers,
-        source: None
+        source
     }))
 }
 

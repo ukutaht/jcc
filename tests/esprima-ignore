@@ -34,12 +34,6 @@ ES6/class/migrated_0026
 # I think it should report unexpected *
 ES6/generator/malformed-generator-method-2
 
-ES6/export-declaration/export-from-default
-ES6/export-declaration/export-from-named-as-default
-ES6/export-declaration/export-from-named-as-specifier
-ES6/export-declaration/export-from-named-as-specifiers
-ES6/export-declaration/export-from-specifier
-ES6/export-declaration/export-from-specifiers
 ES6/export-declaration/invalid-export-batch-missing-from-clause.module
 ES6/export-declaration/invalid-export-batch-token.module
 ES6/export-declaration/invalid-export-default-equal.module
