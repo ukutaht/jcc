@@ -409,6 +409,7 @@ impl<'a> Parser<'a> {
             Token::BoolFalse => Some(interner::KEYWORD_FALSE),
             Token::In => Some(interner::KEYWORD_IN),
             Token::YieldKeyword => Some(interner::KEYWORD_YIELD),
+            Token::TryKeyword => Some(interner::KEYWORD_TRY),
             _ => None
         }
     }
@@ -2004,6 +2005,15 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn parse_export_specifier(&mut self) -> Result<ExportSpecifier> {
+        let local = self.parse_identifier_name()?;
+
+        Ok(ExportSpecifier {
+            local,
+            exported: None
+        })
+    }
+
     fn parse_export_declaration(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::ExportKeyword)?;
@@ -2075,7 +2085,28 @@ impl<'a> Parser<'a> {
                     }
                 }
             }
-            _ => unimplemented!()
+            Token::OpenCurly => {
+                let mut specifiers = Vec::new();
+                self.expect(Token::OpenCurly)?;
+                while self.scanner.lookahead != Token::CloseCurly {
+                    specifiers.push(self.parse_export_specifier()?);
+
+                    if self.scanner.lookahead != Token::CloseCurly {
+                        self.expect(Token::Comma)?;
+                    }
+                }
+
+                self.expect(Token::CloseCurly)?;
+
+                let decl = ExportNamedDeclaration {
+                    declaration: None,
+                    specifiers,
+                    source: None
+                };
+
+                Ok(Statement::ExportNamedDeclaration(self.consume_semicolon(start)?, decl))
+            }
+            t => Err(self.unexpected_token(t))
         }
     }
 

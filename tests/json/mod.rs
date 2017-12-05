@@ -722,7 +722,15 @@ fn class(node: &Value) -> Result<ClassDecl> {
 }
 
 fn export_specifier(node: &Value) -> Result<ExportSpecifier> {
-    unimplemented!()
+    let local = identifier(expect_value(node, "local"))?;
+    let exported_raw = identifier(expect_value(node, "exported"))?;
+    let exported = if local == exported_raw {
+        None
+    } else {
+        Some(exported_raw)
+    };
+
+    Ok(ExportSpecifier {local, exported})
 }
 
 fn export_named_declaration(node: &Value) -> Result<Statement> {

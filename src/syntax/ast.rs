@@ -304,8 +304,8 @@ pub struct ClassDecl {
 
 #[derive(Debug, PartialEq)]
 pub struct ExportSpecifier {
-    pub exported: Id,
-    pub local: Id
+    pub local: Id,
+    pub exported: Option<Id>
 }
 
 #[derive(Debug, PartialEq)]
