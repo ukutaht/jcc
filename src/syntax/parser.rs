@@ -1,6 +1,6 @@
 use errors::{CompileError, ErrorCause, Result};
 use syntax::ast::*;
-use syntax::span::{Span, Position};
+use syntax::span::{Span, SourceLocation, Position};
 use syntax::token::Token;
 use syntax::scanner::Scanner;
 use syntax::ops::AsOperator;
@@ -177,8 +177,11 @@ impl<'a> Parser<'a> {
 
     fn finalize(&self, start: Position) -> Span {
         Span {
-            start: start,
-            end: self.scanner.last_pos
+            range: None,
+            loc: Some(SourceLocation {
+                start: start,
+                end: self.scanner.last_pos
+            })
         }
     }
 
@@ -490,7 +493,7 @@ impl<'a> Parser<'a> {
 
         match result {
             Callee::Expression(e) => Ok(e),
-            Callee::Super(ref sp) => Err(self.unexpected_token_at(sp.start, Token::SuperKeyword))
+            Callee::Super(ref sp) => Err(self.unexpected_token_at_position(sp.clone().loc.expect("expected a location").start, Token::SuperKeyword))
         }
     }
 
@@ -514,7 +517,7 @@ impl<'a> Parser<'a> {
 
     fn check_reserved_expr_at(&self, expr: &Expression, pos: Option<Position>, cause: ErrorCause) -> Result<()> {
         if let Expression::Identifier(ref id) = *expr {
-            self.check_reserved_at(id.1, pos.unwrap_or(id.0.start), cause)?;
+            self.check_reserved_at(id.1, pos.unwrap_or(id.clone().0.loc.expect("expected a location").start), cause)?;
         }
         Ok(())
     }
@@ -590,11 +593,7 @@ impl<'a> Parser<'a> {
     }
 
     fn combine_binary(&self, operator: InfixOp, left: Expression, right: Expression, start: Position) -> Expression {
-        let span = Span {
-            start: start,
-            end: self.scanner.last_pos
-        };
-
+        let span = Span::loc(start, self.scanner.last_pos);
         match operator {
             InfixOp::BinOp(op) => Expression::Binary(span, op, Box::new(left), Box::new(right)),
             InfixOp::LogOp(op) => Expression::Logical(span, op, Box::new(left), Box::new(right)),
@@ -1105,7 +1104,7 @@ impl<'a> Parser<'a> {
                 PropKey::Identifier(Id(ref span, s)) => {
                     if s == interner::KEYWORD_PROTO {
                         if has_proto {
-                            return Err(CompileError::new(span.end, ErrorCause::DuplicateProto))
+                            return Err(CompileError::new_at_end(span, ErrorCause::DuplicateProto))
                         } else {
                             return Ok(true);
                         }
@@ -1114,7 +1113,7 @@ impl<'a> Parser<'a> {
                 PropKey::String(ref lit) => {
                     if lit.value == interner::KEYWORD_PROTO {
                         if has_proto {
-                            return Err(CompileError::new(lit.span.end, ErrorCause::DuplicateProto))
+                            return Err(CompileError::new_at_end(&lit.span, ErrorCause::DuplicateProto))
                         } else {
                             return Ok(true);
                         }
@@ -1360,9 +1359,10 @@ impl<'a> Parser<'a> {
     fn validate_pattern(&self, override_pos: &Option<Position>, param_names: &mut HashSet<Symbol>, pat: &Pattern<Id>) -> Result<()> {
         match *pat {
             Pattern::Simple(ref id) => {
-                self.check_reserved_at(id.1, override_pos.unwrap_or(id.0.start), ErrorCause::StrictParamName)?;
+                let pattern_start = id.0.clone().loc.expect("expected a proper location").start;
+                self.check_reserved_at(id.1, override_pos.unwrap_or(pattern_start), ErrorCause::StrictParamName)?;
                 if self.context.strict && param_names.contains(&id.1) {
-                    return Err(CompileError::new(override_pos.unwrap_or(id.0.start), ErrorCause::StrictDupeParam))
+                    return Err(CompileError::new(override_pos.unwrap_or(pattern_start), ErrorCause::StrictDupeParam))
                 }
                 param_names.insert(id.1);
                 Ok(())
@@ -1458,10 +1458,7 @@ impl<'a> Parser<'a> {
             Ok(self.finalize(start))
         } else if self.matches(Token::Eof) || self.matches(Token::CloseCurly) {
             self.scanner.last_pos = self.scanner.lookahead_start;
-            Ok(Span {
-                start: start,
-                end: self.scanner.lookahead_start
-            })
+            Ok(Span::loc(start, self.scanner.lookahead_start))
         } else {
             Err(self.unexpected_token(self.scanner.lookahead))
         }
@@ -1863,12 +1860,12 @@ impl<'a> Parser<'a> {
                 if self.context.strict {
                     Err(CompileError::new(start, ErrorCause::StrictReservedWord))
                 } else if self.context.allow_yield {
-                    Err(self.unexpected_token_at(start, t))
+                    Err(self.unexpected_token_at_position(start, t))
                 } else {
                     Ok(Id(self.finalize(start), interner::KEYWORD_YIELD))
                 }
             },
-            t => Err(self.unexpected_token_at(start, t))
+            t => Err(self.unexpected_token_at_position(start, t))
         }
     }
 
@@ -2244,10 +2241,10 @@ impl<'a> Parser<'a> {
     }
 
     fn unexpected_token(&self, token: Token) -> CompileError {
-        self.unexpected_token_at(self.scanner.lookahead_start, token)
+        self.unexpected_token_at_position(self.scanner.lookahead_start, token)
     }
 
-    fn unexpected_token_at(&self, pos: Position, token: Token) -> CompileError {
+    fn unexpected_token_at_position(&self, pos: Position, token: Token) -> CompileError {
         if let Token::Ident(s) = token {
             if s.is_future_reserved_word() {
                 return CompileError::new(pos, ErrorCause::UnexpectedReservedWord)

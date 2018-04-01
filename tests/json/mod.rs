@@ -1,5 +1,5 @@
 use std;
-use jcc::syntax::span::{Span, Position};
+use jcc::syntax::span::{Span, SourceLocation, Position, Range};
 use jcc::syntax::ast::*;
 use jcc::interner;
 use serde_json::value::Value;
@@ -45,15 +45,31 @@ fn position(node: &Value) -> Result<Position> {
     })
 }
 
-fn span(node: &Value) -> Result<Span> {
-    let loc = expect_value(node, "loc");
-    let start = expect_value(loc, "start");
-    let end = expect_value(loc, "end");
+fn expect_u32(node: &Value) -> u32 {
+    node.as_u64().unwrap() as u32
+}
 
-    Ok(Span {
-        start: position(start)?,
-        end: position(end)?
-    })
+fn source_location(node: &Value) -> Result<SourceLocation> {
+    let start = expect_value(node, "start");
+    let end = expect_value(node, "end");
+    Ok(SourceLocation { start: position(start)?, end: position(end)?})
+}
+
+fn range_location(node: &Value) -> Result<Range> {
+    let array = expect_array(node, "range");
+    Ok(Range { from: expect_u32(&array[0]), to: expect_u32(&array[1]) })
+}
+
+fn span(node: &Value) -> Result<Span> {
+    let mut loc = None;
+    let mut range = None;
+    if let Some(loc_node) = node.get("loc") {
+        loc = Some(source_location(loc_node)?);
+    } else if node.get("range").is_some() {
+        range = Some(range_location(node)?);
+    }
+
+    Ok(Span { loc: loc, range: range})
 }
 
 fn binary_expression(node: &Value) -> Result<Expression> {

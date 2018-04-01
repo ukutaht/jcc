@@ -15,16 +15,38 @@ impl Position {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct Span {
+pub struct Range {
+    pub from: u32,
+    pub to: u32
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct SourceLocation {
     pub start: Position,
     pub end: Position
 }
 
-impl Span {
-    pub fn initial() -> Span {
-        Span {
+impl SourceLocation {
+    pub fn initial() -> SourceLocation {
+        SourceLocation {
             start: Position::origin(),
             end: Position::origin()
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Span {
+    pub range: Option<Range>,
+    pub loc: Option<SourceLocation>
+}
+
+
+impl Span {
+    pub fn loc(start: Position, end: Position) -> Span {
+        Span {
+            range: None,
+            loc: Some(SourceLocation { start: start, end: end})
         }
     }
 }

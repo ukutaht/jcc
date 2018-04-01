@@ -1,5 +1,5 @@
 use syntax::token::Token;
-use syntax::span::Position;
+use syntax::span::{Span, Position};
 use std::error::Error;
 use std::fmt;
 use std;
@@ -55,6 +55,24 @@ pub struct CompileError {
 impl CompileError {
     pub fn new(pos: Position, cause: ErrorCause) -> CompileError {
         CompileError { pos: pos.one_indexed(), cause: cause }
+    }
+
+    // TODO: possibly punting here...
+    pub fn new_at_span(span: &Span, cause: ErrorCause) -> CompileError {
+        if let Some(ref loc) = span.loc {
+            CompileError { pos: loc.start.one_indexed(), cause: cause }
+        } else {
+            CompileError { pos: Position::origin(), cause: cause }
+        }
+    }
+
+    // TODO: possibly punting here...
+    pub fn new_at_end(span: &Span, cause: ErrorCause) -> CompileError {
+        if let Some(ref loc) = span.loc {
+            CompileError { pos: loc.end.one_indexed(), cause: cause }
+        } else {
+            CompileError { pos: Position::origin(), cause: cause }
+        }
     }
 }
 
