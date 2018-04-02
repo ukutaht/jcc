@@ -1,5 +1,3 @@
-use std::ascii::AsciiExt;
-
 macro_rules! match_one_char_class {
     ( ( $start:expr, $end:expr ) ) => {
         $start ... $end
