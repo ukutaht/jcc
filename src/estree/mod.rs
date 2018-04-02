@@ -2,7 +2,7 @@ use syntax::ast::*;
 use syntax::span::*;
 use syntax::ops::AsStr;
 use interner::{Symbol};
-use serde::ser::{Serialize, Serializer, SerializeMap};
+use serde::ser::{Serialize, Serializer, SerializeMap, SerializeSeq};
 
 impl Serialize for Position {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -15,13 +15,40 @@ impl Serialize for Position {
     }
 }
 
-impl Serialize for Span {
+impl Serialize for Range {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where S: Serializer
     {
+        let mut seq = serializer.serialize_seq(Some(2))?;
+        seq.serialize_element(&self.from)?;
+        seq.serialize_element(&self.to)?;
+        seq.end()
+    }
+}
+
+impl Serialize for SourceLocation {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where S: Serializer
+    {
+
         let mut map = serializer.serialize_map(Some(2))?;
         map.serialize_entry("start", &self.start)?;
         map.serialize_entry("end", &self.end)?;
+        map.end()
+    }
+}
+
+impl Serialize for Span {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where S: Serializer {
+
+        let mut map = serializer.serialize_map(Some(3))?;
+        if let Some(ref loc) = self.loc {
+            map.serialize_entry("loc", loc)?;
+        }
+        if let Some(ref range) = self.range {
+            map.serialize_entry("range", range)?;
+        }
         map.end()
     }
 }
