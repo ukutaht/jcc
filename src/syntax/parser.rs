@@ -2022,6 +2022,40 @@ impl<'a> Parser<'a> {
         })
     }
 
+    fn parse_import_declaration(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::ImportKeyword)?;
+
+        match self.scanner.lookahead {
+            Token::Ident(_) => {
+                let id = self.parse_identifier_name()?;
+                self.expect(Token::Ident(interner::RESERVED_FROM))?;
+                let source = self.parse_module_specifier()?;
+
+                let declaration = ImportDefaultDeclaration {
+                    identifier: id,
+                };
+
+                Ok(Statement::ImportDeclaration(
+                        self.consume_semicolon(start)?,
+                        ImportDeclaration { source, specifiers: vec!(declaration)}
+                ))
+            }
+            Token::String(_,_) => {
+                let source = self.parse_module_specifier()?;
+
+                Ok(Statement::ImportDeclaration(
+                        self.consume_semicolon(start)?,
+                        ImportDeclaration{ source: source, specifiers: vec!() }
+                ))
+            }
+
+            other => {
+                Err(CompileError::new(start, ErrorCause::UnexpectedToken(other)))
+            }
+        }
+    }
+
     fn parse_export_declaration(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::ExportKeyword)?;
@@ -2146,6 +2180,9 @@ impl<'a> Parser<'a> {
             },
             Token::ExportKeyword => {
                 self.parse_export_declaration()
+            },
+            Token::ImportKeyword => {
+                self.parse_import_declaration()
             },
             Token::ClassKeyword => {
                 let class = self.parse_class(false)?;

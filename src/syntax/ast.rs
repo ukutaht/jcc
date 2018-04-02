@@ -327,6 +327,17 @@ pub struct ExportDefaultDeclaration {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct ImportDefaultDeclaration {
+    pub identifier: Id
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ImportDeclaration {
+    pub source: StringLiteral,
+    pub specifiers: Vec<ImportDefaultDeclaration>,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Statement {
     Expression(Span, Expression),
     VariableDeclaration(VariableDeclaration),
@@ -352,7 +363,8 @@ pub enum Statement {
     Directive(Span, Expression, String),
     ExportNamedDeclaration(Span, ExportNamedDeclaration),
     ExportDefaultDeclaration(Span, ExportDefaultDeclaration),
-    ExportAllDeclaration(Span, StringLiteral)
+    ExportAllDeclaration(Span, StringLiteral),
+    ImportDeclaration(Span, ImportDeclaration),
 }
 
 #[derive(Debug, PartialEq)]

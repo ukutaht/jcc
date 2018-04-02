@@ -743,6 +743,36 @@ fn export_named_declaration(node: &Value) -> Result<Statement> {
     }))
 }
 
+fn import_default_specifier(node: &Value) -> Result<ImportDefaultDeclaration> {
+    let local = identifier(expect_value(node, "local"))?;
+    Ok(ImportDefaultDeclaration{ identifier: local})
+}
+
+fn import_specifier(node: &Value) -> Result<ImportDefaultDeclaration> {
+    match expect_string(node, "type") {
+        "ImportDefaultSpecifier" => {
+            import_default_specifier(node)
+        },
+        _ => Err(())
+    }
+}
+
+fn import_declaration(node: &Value) -> Result<Statement> {
+    let source = string_literal(expect_value(node, "source"))?;
+
+    let mut specifiers = Vec::new();
+    for s in expect_array(node, "specifiers")  {
+        specifiers.push(import_specifier(s)?)
+    }
+
+    let declaration = ImportDeclaration {
+        source: source,
+        specifiers: specifiers,
+    };
+
+    Ok(Statement::ImportDeclaration(span(node)?, declaration))
+}
+
 fn export_default_declaration(node: &Value) -> Result<Statement> {
     let val = expect_value(node, "declaration");
     let declaration = statement(val)
@@ -809,6 +839,7 @@ fn statement(node: &Value) -> Result<Statement> {
         "LabeledStatement" => labeled_statement(node),
         "ExportNamedDeclaration" => export_named_declaration(node),
         "ExportDefaultDeclaration" => export_default_declaration(node),
+        "ImportDeclaration" => import_declaration(node),
         "ExportAllDeclaration" => export_all_declaration(node),
         "BreakStatement" => {
             let id = maybe_key(node, "label", &identifier)?;

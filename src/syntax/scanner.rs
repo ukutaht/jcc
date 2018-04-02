@@ -616,6 +616,7 @@ impl<'a> Scanner<'a> {
             "with" => Token::WithKeyword,
             "yield" => Token::YieldKeyword,
             "export" => Token::ExportKeyword,
+            "import" => Token::ImportKeyword,
             _ => {
                 Token::Ident(interner::intern(value))
             }

@@ -48,6 +48,7 @@ pub enum Token {
     If,
     In,
     Instanceof,
+    ImportKeyword,
     LShift,
     LShiftEq,
     LogicalAnd,
