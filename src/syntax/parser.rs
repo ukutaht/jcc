@@ -2060,10 +2060,9 @@ impl<'a> Parser<'a> {
                 self.scanner.next_token()?;
                 self.expect(Token::Ident(interner::RESERVED_AS))?;
                 let local = self.parse_identifier_name()?;
+                let specifiers = vec!(ImportSpecification::ImportNamespaceSpecifier(ImportNamespaceSpecifier{local: local}));
                 self.expect(Token::Ident(interner::RESERVED_FROM))?;
                 let source = self.parse_module_specifier()?;
-
-                let specifiers = vec!(ImportSpecification::ImportNamespaceSpecifier(ImportNamespaceSpecifier{local: local}));
 
                 Ok(Statement::ImportDeclaration(
                         self.consume_semicolon(start)?,
@@ -2072,7 +2071,6 @@ impl<'a> Parser<'a> {
             },
             Token::OpenCurly => {
                 let mut specifiers = self.parse_multiple_import_specifiers()?;
-
                 self.expect(Token::Ident(interner::RESERVED_FROM))?;
                 let source = self.parse_module_specifier()?;
                 Ok(Statement::ImportDeclaration(
@@ -2090,7 +2088,15 @@ impl<'a> Parser<'a> {
 
                 if self.scanner.lookahead == Token::Comma {
                     self.scanner.next_token()?;
-                    specifiers.append(&mut self.parse_multiple_import_specifiers()?);
+
+                    if self.scanner.lookahead == Token::Star {
+                        self.scanner.next_token()?;
+                        self.expect(Token::Ident(interner::RESERVED_AS))?;
+                        let local = self.parse_identifier_name()?;
+                        specifiers.push(ImportSpecification::ImportNamespaceSpecifier(ImportNamespaceSpecifier{local: local}));
+                    } else {
+                        specifiers.append(&mut self.parse_multiple_import_specifiers()?);
+                    }
                 }
 
                 self.expect(Token::Ident(interner::RESERVED_FROM))?;
