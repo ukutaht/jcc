@@ -2023,8 +2023,14 @@ impl<'a> Parser<'a> {
     }
 
     fn parser_import_specification(&mut self) -> Result<ImportSpecification> {
-        let local = self.parse_identifier_name()?;
-        let imported = local.clone();
+        let imported = self.parse_identifier_name()?;
+        let local = if self.match_contextual_keyword(interner::RESERVED_AS) {
+            self.scanner.next_token()?;
+            self.parse_identifier_name()?
+        } else {
+            imported.clone()
+        };
+
         Ok(ImportSpecification::ImportSpecifier(ImportSpecifier {
             local: local,
             imported: imported,

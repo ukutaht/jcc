@@ -21,7 +21,6 @@ es2018/**
 
 ES6/import-declaration/import-default-and-named-specifiers
 ES6/import-declaration/import-default-and-namespace-specifiers
-ES6/import-declaration/import-default-as
 ES6/import-declaration/import-jquery
 ES6/import-declaration/import-named-as-specifier
 ES6/import-declaration/import-named-as-specifiers
