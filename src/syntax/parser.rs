@@ -2022,11 +2022,13 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn parse_import_specifier(&mut self) -> Result<ImportDefaultDeclaration> {
-        let id = self.parse_identifier_name()?;
-        Ok(ImportDefaultDeclaration {
-            identifier: id,
-        })
+    fn parser_import_specification(&mut self) -> Result<ImportSpecification> {
+        let local = self.parse_identifier_name()?;
+        let imported = local.clone();
+        Ok(ImportSpecification::ImportSpecifier(ImportSpecifier {
+            local: local,
+            imported: imported,
+        }))
     }
 
     fn parse_import_declaration(&mut self) -> Result<Statement> {
@@ -2034,15 +2036,39 @@ impl<'a> Parser<'a> {
         self.expect(Token::ImportKeyword)?;
 
         match self.scanner.lookahead {
+            Token::OpenCurly => {
+                self.expect(Token::OpenCurly)?;
+
+                let mut specifiers = Vec::new();
+                while self.scanner.lookahead != Token::CloseCurly {
+                    specifiers.push(self.parser_import_specification()?);
+
+                    if self.scanner.lookahead != Token::CloseCurly {
+                        self.expect(Token::Comma)?;
+                    }
+                }
+                self.expect(Token::CloseCurly)?;
+
+                self.expect(Token::Ident(interner::RESERVED_FROM))?;
+                let source = self.parse_module_specifier()?;
+                Ok(Statement::ImportDeclaration(
+                        self.consume_semicolon(start)?,
+                        ImportDeclaration { source, specifiers: specifiers}
+                ))
+
+            },
             Token::Ident(_) => {
-                let declaration = self.parse_import_specifier()?;
+                let id = self.parse_identifier_name()?;
+                let specifier = ImportSpecification::ImportDefaultDeclaration(ImportDefaultDeclaration {
+                    identifier: id,
+                });
                 self.expect(Token::Ident(interner::RESERVED_FROM))?;
                 let source = self.parse_module_specifier()?;
 
 
                 Ok(Statement::ImportDeclaration(
                         self.consume_semicolon(start)?,
-                        ImportDeclaration { source, specifiers: vec!(declaration)}
+                        ImportDeclaration { source, specifiers: vec!(specifier)}
                 ))
             }
             Token::String(_,_) => {

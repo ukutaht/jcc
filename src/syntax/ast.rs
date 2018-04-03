@@ -327,14 +327,26 @@ pub struct ExportDefaultDeclaration {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct ImportSpecifier {
+    pub local: Id,
+    pub imported: Id
+}
+
+#[derive(Debug, PartialEq)]
 pub struct ImportDefaultDeclaration {
     pub identifier: Id
 }
 
 #[derive(Debug, PartialEq)]
+pub enum ImportSpecification {
+    ImportSpecifier(ImportSpecifier),
+    ImportDefaultDeclaration(ImportDefaultDeclaration)
+}
+
+#[derive(Debug, PartialEq)]
 pub struct ImportDeclaration {
     pub source: StringLiteral,
-    pub specifiers: Vec<ImportDefaultDeclaration>,
+    pub specifiers: Vec<ImportSpecification>,
 }
 
 #[derive(Debug, PartialEq)]

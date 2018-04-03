@@ -743,13 +743,23 @@ fn export_named_declaration(node: &Value) -> Result<Statement> {
     }))
 }
 
-fn import_default_specifier(node: &Value) -> Result<ImportDefaultDeclaration> {
+fn named_import_specifier(node: &Value) -> Result<ImportSpecification> {
     let local = identifier(expect_value(node, "local"))?;
-    Ok(ImportDefaultDeclaration{ identifier: local})
+    let imported = identifier(expect_value(node, "imported"))?;
+
+    Ok(ImportSpecification::ImportSpecifier(ImportSpecifier{local: local, imported: imported}))
 }
 
-fn import_specifier(node: &Value) -> Result<ImportDefaultDeclaration> {
+fn import_default_specifier(node: &Value) -> Result<ImportSpecification> {
+    let local = identifier(expect_value(node, "local"))?;
+    Ok(ImportSpecification::ImportDefaultDeclaration(ImportDefaultDeclaration{ identifier: local}))
+}
+
+fn import_specifier(node: &Value) -> Result<ImportSpecification> {
     match expect_string(node, "type") {
+        "ImportSpecifier" => {
+            named_import_specifier(node)
+        }
         "ImportDefaultSpecifier" => {
             import_default_specifier(node)
         },
