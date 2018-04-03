@@ -338,9 +338,15 @@ pub struct ImportDefaultDeclaration {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct ImportNamespaceSpecifier {
+    pub local: Id,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum ImportSpecification {
     ImportSpecifier(ImportSpecifier),
-    ImportDefaultDeclaration(ImportDefaultDeclaration)
+    ImportDefaultDeclaration(ImportDefaultDeclaration),
+    ImportNamespaceSpecifier(ImportNamespaceSpecifier)
 }
 
 #[derive(Debug, PartialEq)]

@@ -743,6 +743,12 @@ fn export_named_declaration(node: &Value) -> Result<Statement> {
     }))
 }
 
+fn import_namespace_specifier(node: &Value) -> Result<ImportSpecification> {
+    let local = identifier(expect_value(node, "local"))?;
+
+    Ok(ImportSpecification::ImportNamespaceSpecifier(ImportNamespaceSpecifier{local: local}))
+}
+
 fn named_import_specifier(node: &Value) -> Result<ImportSpecification> {
     let local = identifier(expect_value(node, "local"))?;
     let imported = identifier(expect_value(node, "imported"))?;
@@ -762,6 +768,9 @@ fn import_specifier(node: &Value) -> Result<ImportSpecification> {
         }
         "ImportDefaultSpecifier" => {
             import_default_specifier(node)
+        },
+        "ImportNamespaceSpecifier" => {
+            import_namespace_specifier(node)
         },
         _ => Err(())
     }

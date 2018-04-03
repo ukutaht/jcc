@@ -2042,6 +2042,20 @@ impl<'a> Parser<'a> {
         self.expect(Token::ImportKeyword)?;
 
         match self.scanner.lookahead {
+            Token::Star => {
+                self.scanner.next_token()?;
+                self.expect(Token::Ident(interner::RESERVED_AS))?;
+                let local = self.parse_identifier_name()?;
+                self.expect(Token::Ident(interner::RESERVED_FROM))?;
+                let source = self.parse_module_specifier()?;
+
+                let specifiers = vec!(ImportSpecification::ImportNamespaceSpecifier(ImportNamespaceSpecifier{local: local}));
+
+                Ok(Statement::ImportDeclaration(
+                        self.consume_semicolon(start)?,
+                        ImportDeclaration { source, specifiers:  specifiers }
+                        ))
+            },
             Token::OpenCurly => {
                 self.expect(Token::OpenCurly)?;
 
