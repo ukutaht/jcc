@@ -2022,19 +2022,23 @@ impl<'a> Parser<'a> {
         })
     }
 
+    fn parse_import_specifier(&mut self) -> Result<ImportDefaultDeclaration> {
+        let id = self.parse_identifier_name()?;
+        Ok(ImportDefaultDeclaration {
+            identifier: id,
+        })
+    }
+
     fn parse_import_declaration(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::ImportKeyword)?;
 
         match self.scanner.lookahead {
             Token::Ident(_) => {
-                let id = self.parse_identifier_name()?;
+                let declaration = self.parse_import_specifier()?;
                 self.expect(Token::Ident(interner::RESERVED_FROM))?;
                 let source = self.parse_module_specifier()?;
 
-                let declaration = ImportDefaultDeclaration {
-                    identifier: id,
-                };
 
                 Ok(Statement::ImportDeclaration(
                         self.consume_semicolon(start)?,
