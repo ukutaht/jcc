@@ -19,7 +19,6 @@ ES2016/**
 es2017/**
 es2018/**
 
-ES6/import-declaration/import-default-and-named-specifiers
 ES6/import-declaration/import-default-and-namespace-specifiers
 ES6/import-declaration/invalid-import-boolean.module
 ES6/import-declaration/invalid-import-default-after-named-after-default.module

@@ -2079,16 +2079,30 @@ impl<'a> Parser<'a> {
             },
             Token::Ident(_) => {
                 let id = self.parse_identifier_name()?;
-                let specifier = ImportSpecification::ImportDefaultDeclaration(ImportDefaultDeclaration {
+                let mut specifiers = Vec::new();
+                specifiers.push(ImportSpecification::ImportDefaultDeclaration(ImportDefaultDeclaration {
                     identifier: id,
-                });
+                }));
+
+                if self.scanner.lookahead == Token::Comma {
+                    self.scanner.next_token()?;
+                    self.expect(Token::OpenCurly)?;
+                    while self.scanner.lookahead != Token::CloseCurly {
+                        specifiers.push(self.parser_import_specification()?);
+
+                        if self.scanner.lookahead != Token::CloseCurly {
+                            self.expect(Token::Comma)?;
+                        }
+                    }
+                    self.expect(Token::CloseCurly)?;
+                }
+
                 self.expect(Token::Ident(interner::RESERVED_FROM))?;
                 let source = self.parse_module_specifier()?;
 
-
                 Ok(Statement::ImportDeclaration(
                         self.consume_semicolon(start)?,
-                        ImportDeclaration { source, specifiers: vec!(specifier)}
+                        ImportDeclaration { source, specifiers: specifiers}
                 ))
             }
             Token::String(_,_) => {
