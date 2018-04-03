@@ -2037,6 +2037,20 @@ impl<'a> Parser<'a> {
         }))
     }
 
+    fn parse_multiple_import_specifiers(&mut self) -> Result<Vec<ImportSpecification>> {
+        let mut specifiers = Vec::new();
+        self.expect(Token::OpenCurly)?;
+        while self.scanner.lookahead != Token::CloseCurly {
+            specifiers.push(self.parser_import_specification()?);
+
+            if self.scanner.lookahead != Token::CloseCurly {
+                self.expect(Token::Comma)?;
+            }
+        }
+        self.expect(Token::CloseCurly)?;
+        Ok(specifiers)
+    }
+
     fn parse_import_declaration(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::ImportKeyword)?;
@@ -2057,17 +2071,7 @@ impl<'a> Parser<'a> {
                         ))
             },
             Token::OpenCurly => {
-                self.expect(Token::OpenCurly)?;
-
-                let mut specifiers = Vec::new();
-                while self.scanner.lookahead != Token::CloseCurly {
-                    specifiers.push(self.parser_import_specification()?);
-
-                    if self.scanner.lookahead != Token::CloseCurly {
-                        self.expect(Token::Comma)?;
-                    }
-                }
-                self.expect(Token::CloseCurly)?;
+                let mut specifiers = self.parse_multiple_import_specifiers()?;
 
                 self.expect(Token::Ident(interner::RESERVED_FROM))?;
                 let source = self.parse_module_specifier()?;
@@ -2086,15 +2090,7 @@ impl<'a> Parser<'a> {
 
                 if self.scanner.lookahead == Token::Comma {
                     self.scanner.next_token()?;
-                    self.expect(Token::OpenCurly)?;
-                    while self.scanner.lookahead != Token::CloseCurly {
-                        specifiers.push(self.parser_import_specification()?);
-
-                        if self.scanner.lookahead != Token::CloseCurly {
-                            self.expect(Token::Comma)?;
-                        }
-                    }
-                    self.expect(Token::CloseCurly)?;
+                    specifiers.append(&mut self.parse_multiple_import_specifiers()?);
                 }
 
                 self.expect(Token::Ident(interner::RESERVED_FROM))?;
