@@ -19,6 +19,24 @@ ES2016/**
 es2017/**
 es2018/**
 
+ES6/import-declaration/invalid-import-boolean.module
+ES6/import-declaration/invalid-import-default-after-named-after-default.module
+ES6/import-declaration/invalid-import-default-after-named.module
+ES6/import-declaration/invalid-import-default-missing-module-specifier.module
+ES6/import-declaration/invalid-import-default-module-specifier.module
+ES6/import-declaration/invalid-import-default.module
+ES6/import-declaration/invalid-import-keyword.module
+ES6/import-declaration/invalid-import-missing-comma.module
+ES6/import-declaration/invalid-import-missing-module-specifier.module
+ES6/import-declaration/invalid-import-module-specifier.module
+ES6/import-declaration/invalid-import-named-after-named.module
+ES6/import-declaration/invalid-import-named-after-namespace.module
+ES6/import-declaration/invalid-import-named-as-missing-from.module
+ES6/import-declaration/invalid-import-namespace-after-named.module
+ES6/import-declaration/invalid-import-namespace-missing-as.module
+ES6/import-declaration/invalid-import-null.module
+ES6/import-declaration/invalid-import-specifiers.module
+
 # Not sure about these
 ES6/arrow-function/array-binding-pattern/invalid-dup-param
 ES6/arrow-function/invalid-duplicated-names-rest-parameter
@@ -38,7 +56,6 @@ ES6/export-declaration/invalid-export-batch-missing-from-clause.module
 ES6/export-declaration/invalid-export-batch-token.module
 
 ES6/identifier/**
-ES6/import-declaration/**
 ES6/meta-property/**
 ES6/program/**
 ES6/template-literals/**

@@ -2022,6 +2022,106 @@ impl<'a> Parser<'a> {
         })
     }
 
+    fn parser_import_specification(&mut self) -> Result<ImportSpecification> {
+        let imported = self.parse_identifier_name()?;
+        let local = if self.match_contextual_keyword(interner::RESERVED_AS) {
+            self.scanner.next_token()?;
+            self.parse_identifier_name()?
+        } else {
+            imported.clone()
+        };
+
+        Ok(ImportSpecification::ImportSpecifier(ImportSpecifier {
+            local: local,
+            imported: imported,
+        }))
+    }
+
+    fn parse_multiple_import_specifiers(&mut self) -> Result<Vec<ImportSpecification>> {
+        let mut specifiers = Vec::new();
+        self.expect(Token::OpenCurly)?;
+        while self.scanner.lookahead != Token::CloseCurly {
+            specifiers.push(self.parser_import_specification()?);
+
+            if self.scanner.lookahead != Token::CloseCurly {
+                self.expect(Token::Comma)?;
+            }
+        }
+        self.expect(Token::CloseCurly)?;
+        Ok(specifiers)
+    }
+
+    fn parse_import_declaration(&mut self) -> Result<Statement> {
+        let start = self.scanner.lookahead_start;
+        self.expect(Token::ImportKeyword)?;
+
+        match self.scanner.lookahead {
+            Token::Star => {
+                self.scanner.next_token()?;
+                self.expect(Token::Ident(interner::RESERVED_AS))?;
+                let local = self.parse_identifier_name()?;
+                let specifiers = vec!(ImportSpecification::ImportNamespaceSpecifier(ImportNamespaceSpecifier{local: local}));
+                self.expect(Token::Ident(interner::RESERVED_FROM))?;
+                let source = self.parse_module_specifier()?;
+
+                Ok(Statement::ImportDeclaration(
+                        self.consume_semicolon(start)?,
+                        ImportDeclaration { source, specifiers:  specifiers }
+                        ))
+            },
+            Token::OpenCurly => {
+                let mut specifiers = self.parse_multiple_import_specifiers()?;
+                self.expect(Token::Ident(interner::RESERVED_FROM))?;
+                let source = self.parse_module_specifier()?;
+                Ok(Statement::ImportDeclaration(
+                        self.consume_semicolon(start)?,
+                        ImportDeclaration { source, specifiers: specifiers}
+                ))
+
+            },
+            Token::Ident(_) => {
+                let id = self.parse_identifier_name()?;
+                let mut specifiers = Vec::new();
+                specifiers.push(ImportSpecification::ImportDefaultDeclaration(ImportDefaultDeclaration {
+                    identifier: id,
+                }));
+
+                if self.scanner.lookahead == Token::Comma {
+                    self.scanner.next_token()?;
+
+                    if self.scanner.lookahead == Token::Star {
+                        self.scanner.next_token()?;
+                        self.expect(Token::Ident(interner::RESERVED_AS))?;
+                        let local = self.parse_identifier_name()?;
+                        specifiers.push(ImportSpecification::ImportNamespaceSpecifier(ImportNamespaceSpecifier{local: local}));
+                    } else {
+                        specifiers.append(&mut self.parse_multiple_import_specifiers()?);
+                    }
+                }
+
+                self.expect(Token::Ident(interner::RESERVED_FROM))?;
+                let source = self.parse_module_specifier()?;
+
+                Ok(Statement::ImportDeclaration(
+                        self.consume_semicolon(start)?,
+                        ImportDeclaration { source, specifiers: specifiers}
+                ))
+            }
+            Token::String(_,_) => {
+                let source = self.parse_module_specifier()?;
+
+                Ok(Statement::ImportDeclaration(
+                        self.consume_semicolon(start)?,
+                        ImportDeclaration{ source: source, specifiers: vec!() }
+                ))
+            }
+
+            other => {
+                Err(CompileError::new(start, ErrorCause::UnexpectedToken(other)))
+            }
+        }
+    }
+
     fn parse_export_declaration(&mut self) -> Result<Statement> {
         let start = self.scanner.lookahead_start;
         self.expect(Token::ExportKeyword)?;
@@ -2146,6 +2246,9 @@ impl<'a> Parser<'a> {
             },
             Token::ExportKeyword => {
                 self.parse_export_declaration()
+            },
+            Token::ImportKeyword => {
+                self.parse_import_declaration()
             },
             Token::ClassKeyword => {
                 let class = self.parse_class(false)?;
