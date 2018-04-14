@@ -1,5 +1,6 @@
 extern crate fnv;
 extern crate serde;
+extern crate unic_ucd_ident;
 
 pub mod syntax;
 pub mod trans;

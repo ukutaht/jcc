@@ -20,6 +20,10 @@ serde = "1.0"
 serde_json = "1.0"
 fnv = "1.0.3"
 
+[dependencies.unic-ucd-ident]
+version = "0.7.0"
+features = ["id"]
+
 [dev-dependencies]
 rustc-test = "0.1"
 glob = "0.2"
