@@ -84,6 +84,7 @@ impl<'a> Parser<'a> {
 
     pub fn parse(&mut self) -> Result<Program> {
         self.scanner.position_at_start()?;
+
         let mut body = self.parse_directive_prologues()?;
 
         while self.scanner.lookahead != Token::Eof {

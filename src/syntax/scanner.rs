@@ -699,7 +699,7 @@ impl<'a> Scanner<'a> {
 
 
     fn next_char(&mut self) -> Option<char> {
-        unsafe { str::from_utf8_unchecked(&self.bytes[self.index..]) }.chars().next().map(|c| {
+        self.current_char().map(|c| {
             self.index += c.len_utf8();
             self.column += 1;
             c
