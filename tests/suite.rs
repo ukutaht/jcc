@@ -3,7 +3,8 @@
 #[macro_use]
 extern crate pretty_assertions;
 extern crate jcc;
-extern crate test;
+
+extern crate rustc_test;
 extern crate glob;
 extern crate serde_json;
 
@@ -13,8 +14,8 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use glob::glob;
-use test::{TestDesc, TestDescAndFn, TestName, TestFn, test_main};
-use test::ShouldPanic::No;
+use rustc_test::{TestDesc, TestDescAndFn, TestName, TestFn, test_main};
+use rustc_test::ShouldPanic::No;
 use serde_json::value::Value;
 
 fn add_test<F: FnOnce() + Send + 'static>(tests: &mut Vec<TestDescAndFn>, name: String, ignore: bool, f: F) {
@@ -22,7 +23,8 @@ fn add_test<F: FnOnce() + Send + 'static>(tests: &mut Vec<TestDescAndFn>, name: 
         desc: TestDesc {
             name: TestName::DynTestName(name),
             ignore: ignore,
-            should_panic: No
+            should_panic: No,
+            allow_fail: false
         },
         testfn: TestFn::dyn_test_fn(f)
     });

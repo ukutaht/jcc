@@ -25,6 +25,6 @@ version = "0.7.0"
 features = ["id"]
 
 [dev-dependencies]
-rustc-test = "0.1"
+rustc-test = "0.3"
 glob = "0.2"
 pretty_assertions = "0.3.4"
