@@ -55,7 +55,18 @@ ES6/generator/malformed-generator-method-2
 ES6/export-declaration/invalid-export-batch-missing-from-clause.module
 ES6/export-declaration/invalid-export-batch-token.module
 
-ES6/identifier/**
+ES6/identifier/escaped_all
+ES6/identifier/escaped_math_alef
+ES6/identifier/escaped_math_dal_part
+ES6/identifier/escaped_math_kaf_lam
+ES6/identifier/escaped_math_zain_start
+ES6/identifier/escaped_part
+ES6/identifier/escaped_start
+ES6/identifier/invalid_escaped_surrogate_pairs
+ES6/identifier/invalid_expression_await.module
+ES6/identifier/invalid_function_await.module
+ES6/identifier/invalid_var_await.module
+ES6/identifier/weierstrass_weierstrass
 ES6/meta-property/**
 ES6/program/**
 ES6/template-literals/**

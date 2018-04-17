@@ -697,11 +697,10 @@ impl<'a> Scanner<'a> {
       unsafe { str::from_utf8_unchecked(&self.bytes[self.index..]) }.chars().next()
     }
 
-
     fn next_char(&mut self) -> Option<char> {
         self.current_char().map(|c| {
             self.index += c.len_utf8();
-            self.column += 1;
+            self.column += c.len_utf16() as u32;
             c
         })
     }
