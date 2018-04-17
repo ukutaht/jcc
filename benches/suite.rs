@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 extern crate jcc;
-extern crate test;
+extern crate rustc_test;
 extern crate glob;
 
 use std::env;
@@ -9,8 +9,8 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 use glob::glob;
-use test::{Bencher, TestDesc, TestDescAndFn, TestName, TestFn, TDynBenchFn, test_main};
-use test::ShouldPanic::No;
+use rustc_test::{Bencher, TestDesc, TestDescAndFn, TestName, TestFn, TDynBenchFn, test_main};
+use rustc_test::ShouldPanic::No;
 
 struct DynBenchFn<F> {
     run: F
@@ -27,7 +27,9 @@ fn add_bench<F: Fn(&mut Bencher) + Send + 'static>(tests: &mut Vec<TestDescAndFn
         desc: TestDesc {
             name: TestName::DynTestName(name),
             ignore: false,
-            should_panic: No
+            should_panic: No,
+            allow_fail: false
+
         },
         testfn: TestFn::DynBenchFn(Box::new(DynBenchFn { run: f }))
     });
@@ -48,7 +50,7 @@ fn parse_benches(target: &mut Vec<TestDescAndFn>) {
             File::open(&path).unwrap().read_to_string(&mut source).unwrap();
 
             bench.iter(|| {
-                test::black_box(jcc::parse(&source))
+                rustc_test::black_box(jcc::parse(&source))
             })
         });
 
