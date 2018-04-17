@@ -15,18 +15,27 @@ impl ESCharExt for char {
     }
 
     fn is_es_identifier_start(self) -> bool {
-        match self {
-            '$' | '_' => true,
-            c => unic_ucd_ident::is_id_start(c),
+        if self.is_ascii() {
+            match self {
+                '$' | '_' | 'a'...'z' | 'A'...'Z' => true,
+                _ => false,
+            }
+        } else {
+            unic_ucd_ident::is_id_start(self)
         }
     }
 
     fn is_es_identifier_continue(self) -> bool {
-        match self {
-            '$' | '_' => true,
-            c => unic_ucd_ident::is_id_continue(c),
+        if self.is_ascii() {
+           match self {
+                '$' | '_' | 'a'...'z' | 'A'...'Z' | '0'...'9' => true,
+                _ => false,
+            }
+        } else {
+            unic_ucd_ident::is_id_continue(self)
         }
     }
+
 }
 
 #[cfg(test)]
